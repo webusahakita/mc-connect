@@ -1498,37 +1498,102 @@ window.renderDashEvents = renderDashEvents;
 // ============================================================
 function showAgendaInspector(dateStr, status, eventObj, eventsOnDate) {
     try {
-        const inspector = document.getElementById('agendaListContainer');
-        const title = document.getElementById('calendarAgendaTitle');
-        const body = document.getElementById('agendaListContainer');
-        
-        if (title) {
-            title.textContent = 'Agenda: ' + dateStr;
-        }
-        
-        if (body) {
-            if (!eventsOnDate || eventsOnDate.length === 0) {
-                body.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--adm-text-muted);">Tanggal ini tersedia. Klik tombol + untuk membuat booking baru.</div>';
-            } else {
-                body.innerHTML = eventsOnDate.map(ev => {
-                    return '<div style="padding:0.75rem; margin-bottom:0.5rem; background:rgba(255,255,255,0.03); border-radius:8px; border-left:3px solid ' + (ev.status === 'Terkunci' ? '#10B981' : '#F59E0B') + ';">' +
-                        '<strong>' + escapeHtml(ev.title || 'Acara') + '</strong>' +
-                        '<div style="font-size:0.8rem; color:var(--adm-text-muted); margin-top:0.25rem;">' + (ev.time || '19:00 - 22:00 WIB') + ' | ' + (ev.venue || 'Venue TBD') + '</div>' +
-                        '<div style="margin-top:0.25rem;"><span style="color:' + (ev.status === 'Terkunci' ? '#10B981' : '#F59E0B') + '; font-weight:600; font-size:0.8rem;">' + (ev.status || 'Review') + '</span></div>' +
-                    '</div>';
-                }).join('');
-            }
-        }
+        const inspector = document.getElementById('calendarConflictInspector');
         
         if (inspector) {
-            inspector.style.display = '';
-            inspector.classList.add('active');
+            document.getElementById('inspectorDate').textContent = dateStr;
+            
+            if (eventObj) {
+                document.getElementById('inspectorTitle').textContent = eventObj.title || 'Agenda Acara';
+                document.getElementById('inspectorLocation').textContent = (eventObj.venue || '') + ' ' + (eventObj.time || '');
+                
+                const badge = document.getElementById('inspectorBadge');
+                const msg = document.getElementById('inspectorConflictMsg');
+                
+                if (status === 'Terkunci') {
+                    badge.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+                    badge.className = 'badge badge-locked';
+                    msg.innerHTML = '<span style="font-size:1.2rem;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg></span>' +
+                        '<div><strong>Proteksi Anti-Bentrok Aktif:</strong> Jadwal ini telah terkunci secara resmi (DP Paid). Sistem otomatis memblokir pemesanan ganda di tanggal & jam yang sama.</div>';
+                    msg.style.display = 'flex';
+                } else {
+                    badge.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>';
+                    badge.className = 'badge badge-tentative';
+                    msg.style.display = 'none';
+                }
+            } else {
+                document.getElementById('inspectorTitle').textContent = 'Hari Bebas / Tersedia';
+                document.getElementById('inspectorLocation').textContent = 'Belum ada acara di tanggal ini.';
+                document.getElementById('inspectorBadge').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>';
+                document.getElementById('inspectorBadge').className = 'badge badge-available';
+                document.getElementById('inspectorConflictMsg').style.display = 'none';
+            }
+            
+            inspector.style.display = 'block';
+            
+            // Set active event if it's an admin flow
+            if (eventObj && eventObj.id) {
+                window.activeCommandCenterEventId = eventObj.id;
+            }
         }
     } catch(e) {
         console.warn('showAgendaInspector:', e.message);
     }
 }
 window.showAgendaInspector = showAgendaInspector;
+
+window.renderCalendarAgendaList = function(filter = 'all', btn = null) {
+    if (btn) {
+        document.querySelectorAll('.cal-agenda-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+    
+    const container = document.getElementById('agendaListContainer');
+    if (!container) return;
+    
+    let events = window.adminEventsDb || [];
+    
+    if (filter !== 'all') {
+        events = events.filter(e => e.status && e.status.toLowerCase() === filter.toLowerCase());
+    }
+    
+    // Sort by date descending
+    events.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    if (events.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:1.5rem; color:var(--adm-text-muted);">Tidak ada agenda yang cocok dengan filter.</div>';
+        return;
+    }
+    
+    container.innerHTML = events.map((ev, i) => {
+        let stColor = '#3B82F6';
+        if (ev.status === 'Terkunci') stColor = '#10B981';
+        if (ev.status === 'Tentative') stColor = '#F59E0B';
+        
+        return '<div class="ecc-card" style="padding:1rem; border-left:3px solid ' + stColor + '; cursor:pointer; background:rgba(255,255,255,0.02);" onclick="showAgendaInspector(\\''+escapeHtml(ev.date)+'\\', \\''+escapeHtml(ev.status)+'\\', window.adminEventsDb.find(x => x.id == \\''+escapeHtml(ev.id)+'\\'), [window.adminEventsDb.find(x => x.id == \\''+escapeHtml(ev.id)+'\\')])">' +
+            '<div style="display:flex; justify-content:space-between; align-items:flex-start;">' +
+                '<div>' +
+                    '<div style="font-weight:800; font-size:1.05rem; margin-bottom:0.25rem;">' + escapeHtml(ev.title || 'Acara') + '</div>' +
+                    '<div style="font-size:0.85rem; color:var(--adm-text-secondary);">' + escapeHtml(ev.date) + ' | ' + escapeHtml(ev.time || '') + '</div>' +
+                    '<div style="font-size:0.85rem; color:var(--adm-text-secondary);">' + escapeHtml(ev.venue || '') + '</div>' +
+                '</div>' +
+                '<span class="badge" style="background:'+stColor+'20; color:'+stColor+';">' + escapeHtml(ev.status || 'Review') + '</span>' +
+            '</div>' +
+        '</div>';
+    }).join('');
+};
+
+// Override initialization to also render the agenda list
+const _origLoadUnified = window.loadUnifiedEventsDatabase;
+if(_origLoadUnified) {
+    window.loadUnifiedEventsDatabase = async function() {
+        await _origLoadUnified();
+        if(typeof renderCalendarAgendaList === 'function' && document.getElementById('agendaListContainer')) {
+            renderCalendarAgendaList('all');
+        }
+    }
+}
+
 
 // ============================================================
 // Admin Render Stubs for Command Center Tabs
