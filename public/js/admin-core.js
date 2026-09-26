@@ -1611,20 +1611,12 @@ window.renderAdminVendorCollab = renderAdminVendorCollab;
 // Wardrobe Renderer
 // ============================================================
 
-function renderWardrobe() {
+async function renderWardrobe() {
     try {
-        let rawData = null;
-        if (typeof AdminDB !== 'undefined') {
-            rawData = AdminDB.getItem('mc_wardrobe_catalog');
-        }
-        if (!rawData) {
-            rawData = localStorage.getItem('mc_wardrobe_db');
-        }
-        
+        const res = await fetch('/api/cms/wardrobe-catalog');
+        const json = await res.json();
         let items = [];
-        if (rawData) {
-            try { items = typeof rawData === 'string' ? JSON.parse(rawData) : rawData; } catch(e) {}
-        }
+        if(json.success && json.data) items = json.data;
 
         // 1. Render in Command Center (adminWardrobeGrid)
         const grid = document.getElementById('adminWardrobeGrid');
@@ -1659,7 +1651,7 @@ function renderWardrobe() {
                         '<td><span class="badge" style="background:rgba(59,130,246,0.1); color:#60A5FA;">' + escapeHtml(item.status || 'Tersedia') + '</span></td>' +
                         '<td style="text-align:center;">' + (item.frequency || 0) + 'x</td>' +
                         '<td style="text-align:right;">' +
-                            '<button class="btn btn-secondary btn-sm" onclick="editWardrobe('+escapeHtml(JSON.stringify(item.id||item.name))+')">Edit</button>' +
+                            '<button class="btn btn-secondary btn-sm" onclick="editWardrobe('+escapeHtml(JSON.stringify(item.id||item.name))+')">Hapus</button>' +
                         '</td>' +
                     '</tr>';
                 }).join('');
@@ -2775,5 +2767,93 @@ window.promptAddExpense = async function() {
         }
     } else {
         alert('Fitur ini memerlukan custom-modal.js.');
+    }
+};
+
+window.promptAddGlobalWardrobe = async function() {
+    if(typeof uiCustomForm === 'function') {
+        const data = await uiCustomForm([
+            { id: 'name', label: 'Kode / Nama Gaun', type: 'text' },
+            { id: 'desc', label: 'Deskripsi Singkat', type: 'text' },
+            { id: 'colorName', label: 'Kategori / Warna', type: 'text' },
+            { id: 'status', label: 'Status Gaun', type: 'select', options: [{value: 'Tersedia', label: 'Tersedia'}, {value: 'Sedang Dipakai', label: 'Sedang Dipakai'}, {value: 'Laundry / Rusak', label: 'Laundry / Rusak'}] }
+        ], 'Tambah Wardrobe Baru');
+        
+        if(data) {
+            if(!data.name) {
+                uiAlert('Nama Gaun wajib diisi!');
+                return;
+            }
+            try {
+                // Fetch existing first
+                const res = await fetch('/api/cms/wardrobe-catalog');
+                const json = await res.json();
+                let items = [];
+                if(json.success && json.data) items = json.data;
+                
+                items.push({
+                    name: data.name,
+                    desc: data.desc,
+                    colorName: data.colorName,
+                    status: data.status,
+                    frequency: 0
+                });
+                
+                const saveRes = await fetch('/api/cms/wardrobe-catalog', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ wardrobe: items })
+                });
+                
+                if(saveRes.ok) {
+                    uiAlert('Wardrobe berhasil ditambahkan!');
+                    renderWardrobe();
+                } else {
+                    uiAlert('Gagal menyimpan ke server.');
+                }
+            } catch(e) {
+                console.error(e);
+                uiAlert('Terjadi kesalahan jaringan.');
+            }
+        }
+    } else {
+        alert('Fitur ini memerlukan custom-modal.js.');
+    }
+};
+
+window.editWardrobe = async function(id) {
+    if(typeof uiConfirm === 'function') {
+        const confirmDelete = await uiConfirm('Fitur edit detail segera hadir. Apakah Anda ingin MENGHAPUS item ini dari database?');
+        if(confirmDelete) {
+            try {
+                // Remove from API
+                const res = await fetch('/api/cms/wardrobe-catalog');
+                const json = await res.json();
+                let items = [];
+                if(json.success && json.data) items = json.data;
+                
+                items = items.filter(i => i.id !== id && i.name !== id);
+                
+                const saveRes = await fetch('/api/cms/wardrobe-catalog', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ wardrobe: items })
+                });
+
+                if(saveRes.ok) {
+                    uiAlert('Wardrobe berhasil dihapus!');
+                    renderWardrobe();
+                } else {
+                    uiAlert('Gagal menghapus dari server.');
+                }
+            } catch(e) {
+                uiAlert('Terjadi kesalahan jaringan.');
+            }
+        }
+    } else {
+        if(confirm('Hapus item ini?')) {
+            // Simplified fallback
+            alert('Harap update di versi baru.');
+        }
     }
 };
