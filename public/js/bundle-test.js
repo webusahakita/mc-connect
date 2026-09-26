@@ -1509,7 +1509,7 @@ function initTheme() {
     if (savedTheme === 'light') {
         document.documentElement.setAttribute('data-theme', 'light');
         const btn = document.getElementById('themeToggleBtn');
-        if (btn) btn.textContent = 'xR"';
+        if (btn) btn.textContent = '🌞';
     }
 }
 function toggleTheme() {
@@ -1520,7 +1520,7 @@ function toggleTheme() {
     
     const btn = document.getElementById('themeToggleBtn');
     if (btn) {
-        btn.textContent = newTheme === 'dark' ? 'ܬ️' : 'xR"';
+        btn.textContent = newTheme === 'dark' ? '🌙' : '🌞';
     }
 }
 window.toggleTheme = toggleTheme;

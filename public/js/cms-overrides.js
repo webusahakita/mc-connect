@@ -842,10 +842,10 @@ window.savePaymentSettings = async function() {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(data)
         });
-        if (res.ok) alert('Pengaturan Pembayaran & QRIS berhasil disimpan ke Server!');
-        else alert('Gagal menyimpan ke server: ' + res.statusText);
+        if (res.ok) { if (typeof window.uiAlert === 'function') window.uiAlert('Pengaturan Pembayaran & QRIS berhasil disimpan ke Server!', 'Sukses'); else { if (typeof window.uiAlert === 'function') window.uiAlert('Pengaturan Pembayaran & QRIS berhasil disimpan ke Server!', 'Gagal'); else alert('Pengaturan Pembayaran & QRIS berhasil disimpan ke Server!'); } }
+        else { if (typeof window.uiAlert === 'function') window.uiAlert('Gagal menyimpan ke server: ' + res.statusText, 'Gagal'); else alert('Gagal menyimpan ke server: ' + res.statusText); }
     } catch(e) {
-        alert('Gagal menyambung ke server. Pastikan server aktif.');
+        if (typeof window.uiAlert === 'function') window.uiAlert('Gagal menyambung ke server. Pastikan server aktif.', 'Notifikasi'); else alert('Gagal menyambung ke server. Pastikan server aktif.');
     }
 };
 
@@ -879,10 +879,10 @@ window.handleSaveEventCategories = async function() {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ categories })
         });
-        if (res.ok) alert('Kategori acara berhasil disimpan ke Server!');
-        else alert('Gagal menyimpan ke server.');
+        if (res.ok) { if (typeof window.uiAlert === 'function') window.uiAlert('Kategori acara berhasil disimpan ke Server!', 'Sukses'); else { if (typeof window.uiAlert === 'function') window.uiAlert('Kategori acara berhasil disimpan ke Server!', 'Gagal'); else alert('Kategori acara berhasil disimpan ke Server!'); } }
+        else { if (typeof window.uiAlert === 'function') window.uiAlert('Gagal menyimpan ke server.', 'Gagal'); else alert('Gagal menyimpan ke server.'); }
     } catch (e) {
-        alert('Koneksi server gagal.');
+        if (typeof window.uiAlert === 'function') window.uiAlert('Koneksi server gagal.', 'Notifikasi'); else alert('Koneksi server gagal.');
     }
 };
 
@@ -948,10 +948,10 @@ async function saveCashflowCategoriesBulk() {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ categories })
         });
-        if (res.ok) alert('Kategori arus kas berhasil disimpan ke Server!');
-        else alert('Gagal menyimpan kategori ke server.');
+        if (res.ok) { if (typeof window.uiAlert === 'function') window.uiAlert('Kategori arus kas berhasil disimpan ke Server!', 'Sukses'); else { if (typeof window.uiAlert === 'function') window.uiAlert('Kategori arus kas berhasil disimpan ke Server!', 'Gagal'); else alert('Kategori arus kas berhasil disimpan ke Server!'); } }
+        else { if (typeof window.uiAlert === 'function') window.uiAlert('Gagal menyimpan kategori ke server.', 'Gagal'); else alert('Gagal menyimpan kategori ke server.'); }
     } catch (e) {
-        alert('Koneksi server terputus.');
+        if (typeof window.uiAlert === 'function') window.uiAlert('Koneksi server terputus.', 'Notifikasi'); else alert('Koneksi server terputus.');
     }
 }
 
@@ -985,10 +985,10 @@ window.handleSaveClientCategories = async function() {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ categories })
         });
-        if (res.ok) alert('Kategori klien berhasil disimpan ke Server!');
-        else alert('Server gagal memproses.');
+        if (res.ok) { if (typeof window.uiAlert === 'function') window.uiAlert('Kategori klien berhasil disimpan ke Server!', 'Sukses'); else { if (typeof window.uiAlert === 'function') window.uiAlert('Kategori klien berhasil disimpan ke Server!', 'Gagal'); else alert('Kategori klien berhasil disimpan ke Server!'); } }
+        else { if (typeof window.uiAlert === 'function') window.uiAlert('Server gagal memproses.', 'Gagal'); else alert('Server gagal memproses.'); }
     } catch (e) {
-        alert('Tidak ada koneksi ke server.');
+        if (typeof window.uiAlert === 'function') window.uiAlert('Tidak ada koneksi ke server.', 'Notifikasi'); else alert('Tidak ada koneksi ke server.');
     }
 };
 
@@ -1032,10 +1032,10 @@ window.handleSaveWaTemplates = async function() {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ templates })
         });
-        if (res.ok) alert('Template WA berhasil disimpan ke Server!');
-        else alert('Gagal menyimpan ke server.');
+        if (res.ok) { if (typeof window.uiAlert === 'function') window.uiAlert('Template WA berhasil disimpan ke Server!', 'Sukses'); else { if (typeof window.uiAlert === 'function') window.uiAlert('Template WA berhasil disimpan ke Server!', 'Gagal'); else alert('Template WA berhasil disimpan ke Server!'); } }
+        else { if (typeof window.uiAlert === 'function') window.uiAlert('Gagal menyimpan ke server.', 'Gagal'); else alert('Gagal menyimpan ke server.'); }
     } catch (e) {
-        alert('Koneksi terputus.');
+        if (typeof window.uiAlert === 'function') window.uiAlert('Koneksi terputus.', 'Notifikasi'); else alert('Koneksi terputus.');
     }
 };
 
@@ -1045,7 +1045,7 @@ window.handleWebLogoUpload = function(event) {
     if (file) {
         // Cek ukuran max 500KB agar database tidak berat
         if (file.size > 500 * 1024) {
-            alert('Ukuran file logo terlalu besar. Maksimal 500KB untuk logo.');
+            if (typeof window.uiAlert === 'function') window.uiAlert('Ukuran file logo terlalu besar. Maksimal 500KB untuk logo.', 'Notifikasi'); else alert('Ukuran file logo terlalu besar. Maksimal 500KB untuk logo.');
             event.target.value = '';
             return;
         }
@@ -1173,7 +1173,7 @@ window.loadCmsWebSettings = async function() {
 
     } catch (e) {
         console.error('Error fetching settings data from server:', e);
-        alert('Gagal memuat beberapa data pengaturan dari server.');
+        if (typeof window.uiAlert === 'function') window.uiAlert('Gagal memuat beberapa data pengaturan dari server.', 'Notifikasi'); else alert('Gagal memuat beberapa data pengaturan dari server.');
     }
 };
 
