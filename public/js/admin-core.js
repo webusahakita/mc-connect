@@ -2642,3 +2642,138 @@ window.handleCreateQuickEvent = async function(e) {
         if(btn) btn.disabled = false;
     }
 };
+
+// ==========================================
+// EVENT COMMAND CENTER - MISSING FUNCTIONS
+// ==========================================
+
+window.updateAdminFinance = async function(val) {
+    if(!activeCommandCenterEventId) {
+        if(typeof uiAlert === 'function') uiAlert('Pilih acara terlebih dahulu!');
+        return;
+    }
+    const confirmed = typeof uiConfirm === 'function' ? await uiConfirm(`Ubah status pembayaran menjadi: ${val}?`) : confirm(`Ubah status pembayaran menjadi: ${val}?`);
+    if(!confirmed) {
+        const sel = document.getElementById('adminFinanceSelect');
+        if(sel) sel.value = sel.getAttribute('data-original-value') || sel.options[0].value;
+        return;
+    }
+    
+    try {
+        const res = await fetch('/api/cms/events/' + activeCommandCenterEventId, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ status_pembayaran: val })
+        });
+        if(res.ok) {
+            if(typeof uiAlert === 'function') uiAlert('Status pembayaran berhasil diupdate!');
+            const sel = document.getElementById('adminFinanceSelect');
+            if(sel) sel.setAttribute('data-original-value', val);
+            if(typeof loadUnifiedEventsDatabase === 'function') {
+                await loadUnifiedEventsDatabase();
+                switchCommandCenterEvent(activeCommandCenterEventId);
+            }
+        } else {
+            if(typeof uiAlert === 'function') uiAlert('Gagal update status pembayaran.');
+        }
+    } catch(e) {
+        console.error(e);
+        if(typeof uiAlert === 'function') uiAlert('Terjadi kesalahan jaringan.');
+    }
+};
+
+window.openEditInvoiceModal = function() {
+    if(!activeCommandCenterEventId) {
+        if(typeof uiAlert === 'function') uiAlert('Pilih acara terlebih dahulu!');
+        return;
+    }
+    const m = document.getElementById('editInvoiceModal');
+    if(m) m.classList.add('active');
+};
+
+window.addInvoiceItemRow = function() {
+    const container = document.getElementById('invoiceItemsContainer');
+    if(!container) return;
+    const div = document.createElement('div');
+    div.style.display = 'flex';
+    div.style.gap = '10px';
+    div.style.marginBottom = '5px';
+    div.innerHTML = `
+        <input type="text" class="form-input" style="flex:1;" placeholder="Deskripsi layanan (ex: Aditional MC)">
+        <input type="number" class="form-input" style="width:150px;" placeholder="1000000">
+        <button type="button" class="btn btn-secondary btn-sm" style="color:var(--adm-danger); border-color:transparent; background:transparent;" onclick="this.parentElement.remove()">X</button>
+    `;
+    container.appendChild(div);
+};
+
+window.promptAssignWardrobe = async function() {
+    if(!activeCommandCenterEventId) {
+        if(typeof uiAlert === 'function') uiAlert('Pilih acara terlebih dahulu!');
+        return;
+    }
+    
+    let wardrobeOptions = [{value: '', label: 'Belum ada data gaun. Buka menu Wardrobe.'}];
+    
+    if(typeof uiCustomForm === 'function') {
+        const data = await uiCustomForm([
+            { id: 'wardrobe_id', label: 'Pilih Gaun / Koleksi', type: 'select', options: wardrobeOptions },
+            { id: 'note', label: 'Catatan (Opsional)', type: 'text' }
+        ], 'Assign Wardrobe ke Acara');
+        
+        if(data) {
+            uiAlert('Fitur integrasi Wardrobe masih dalam pengembangan. Data yang dimasukkan: ' + JSON.stringify(data));
+        }
+    } else {
+        alert('Fitur ini memerlukan custom-modal.js.');
+    }
+};
+
+window.promptAddExpense = async function() {
+    if(!activeCommandCenterEventId) {
+        if(typeof uiAlert === 'function') uiAlert('Pilih acara terlebih dahulu!');
+        return;
+    }
+    if(typeof uiCustomForm === 'function') {
+        const data = await uiCustomForm([
+            { id: 'item', label: 'Nama Pengeluaran (Beban)', type: 'text' },
+            { id: 'amount', label: 'Nominal (Rp)', type: 'number' },
+            { id: 'date', label: 'Tanggal', type: 'date', value: new Date().toISOString().split('T')[0] }
+        ], 'Tambah Pengeluaran Acara');
+        
+        if(data) {
+            if(!data.item || !data.amount) {
+                uiAlert('Nama pengeluaran dan nominal wajib diisi!');
+                return;
+            }
+            const ev = adminEventsDb.find(e => String(e.id) === String(activeCommandCenterEventId));
+            if(!ev) return;
+            
+            const expList = ev.expenses || [];
+            expList.push({ item: data.item, amount: data.amount, date: data.date });
+            
+            const payload = { metadata: { expenses: expList } };
+            
+            try {
+                const res = await fetch('/api/cms/events/' + ev.id, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                if(res.ok) {
+                    uiAlert('Pengeluaran berhasil dicatat!');
+                    if(typeof loadUnifiedEventsDatabase === 'function') {
+                        await loadUnifiedEventsDatabase();
+                        switchCommandCenterEvent(ev.id);
+                    }
+                } else {
+                    uiAlert('Gagal mencatat pengeluaran.');
+                }
+            } catch(e) {
+                console.error(e);
+                uiAlert('Terjadi kesalahan jaringan saat menyimpan pengeluaran.');
+            }
+        }
+    } else {
+        alert('Fitur ini memerlukan custom-modal.js.');
+    }
+};

@@ -2184,7 +2184,7 @@ Kebutuhan Hospitality:
                                         style="display:flex; align-items:center; gap:0.4rem; background:rgba(212,175,55,0.08); padding:0.25rem 0.6rem; border-radius:var(--adm-radius-sm); border:1px solid rgba(212,175,55,0.3);">
                                         <label for="eccEventSelector"
                                             style="font-size:0.75rem; font-weight:800; color:var(--adm-gold); text-transform:uppercase; letter-spacing:0.04em;">Ganti
-                                            Acara ktif:</label>
+                                            Acara Aktif:</label>
                                         <select id="eccEventSelector" class="form-select"
                                             style="max-width:320px; padding:0.25rem 0.65rem; font-size:0.82rem; font-weight:700; background:var(--adm-bg-surface); color:var(--adm-text-primary); border-color:var(--adm-gold);"
                                             onchange="switchCommandCenterEvent(this.value)">
@@ -2206,21 +2206,21 @@ Kebutuhan Hospitality:
                                 <select class="form-select" id="ccStatusSelect"
                                     style="width:auto; padding:0.55rem 1rem; font-size:0.88rem;"
                                     onchange="updateCcStatus(this.value)">
-                                    <option>et: Review</option>
-                                    <option>et: Tentative</option>
-                                    <option>et: Terkunci (DP Paid)</option>
-                                    <option>et: Selesai</option>
+                                    <option>Set: Review</option>
+                                    <option>Set: Tentative</option>
+                                    <option>Set: Terkunci (DP Paid)</option>
+                                    <option>Set: Selesai</option>
                                 </select>
 
                                 <button class="btn btn-secondary btn-sm"
                                     onclick="if(activeCommandCenterEventId) window.deleteEventByCustomerId(activeCommandCenterEventId)"
-                                    style="color:#EF4444; border-color:rgba(239,68,68,0.3);" title="Hapus Acara apus Acara</button>
+                                    style="color:#EF4444; border-color:rgba(239,68,68,0.3);" title="Hapus Acara">Hapus Acara</button>
 
-                                <a href=" stage.html" target="_blank" class="btn btn-primary btn-sm">ukStage Mode
+                                <a href="stage.html" target="_blank" class="btn btn-primary btn-sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right:4px;"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg> Masuk Stage Mode
                                     </a>
 
                                     <a href="vendor.html" target="_blank" class="btn btn-secondary btn-sm"
-                                        title="Layar Khusus Operator Suar/ DJ">ayar Vendor Musik
+                                        title="Layar Khusus Operator Suara/ DJ"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right:4px;"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg> Layar Vendor Musik
                                     </a>
 
                                     <button class="btn btn-outline-gold btn-sm"
@@ -2238,22 +2238,22 @@ Kebutuhan Hospitality:
                         <!-- 6 Tabs Bar -->
                         <div class="ecc-nav-tabs">
                             <button class="ecc-tab-btn active" data-tab="tab-crm" onclick="switchTab('tab-crm')">
-                                <span>9 Ikhtisar & CRM</span>
+                                <span>1. Ikhtisar & CRM</span>
                             </button>
                             <button class="ecc-tab-btn" data-tab="tab-finance" onclick="switchTab('tab-finance')">
                                 <span>Keuangan & Invoice</span>
                             </button>
                             <button class="ecc-tab-btn" data-tab="tab-stage" onclick="switchTab('tab-stage')">
-                                <span>tage, Rundown & AI</span>
+                                <span>2. Stage, Rundown & AI</span>
                             </button>
                             <button class="ecc-tab-btn" data-tab="tab-review" onclick="switchTab('tab-review')">
-                                <span>P Post-Event Review</span>
+                                <span>3. Post-Event Review</span>
                             </button>
                             <button class="ecc-tab-btn" data-tab="tab-music" onclick="switchTab('tab-music')">
-                                <span>usik & Sound Acara</span>
+                                <span>4. Musik & Sound Acara</span>
                             </button>
                             <button class="ecc-tab-btn" data-tab="tab-vendor" onclick="switchTab('tab-vendor')">
-                                <span>olaborasi Vendor</span>
+                                <span>5. Kolaborasi Vendor</span>
                             </button>
                         </div>
 
@@ -2334,7 +2334,7 @@ Kebutuhan Hospitality:
                                 <!-- R STICKY NOTES & VIP INFO (Terintegrasi Penuh dalam Tab 1) -->
                                 <div class="ecc-card" style="border-left: 4px solid var(--adm-gold);">
                                     <div class="ecc-card-header">
-                                        <div class="ecc-card-title">R Sticky Notes & VIP Info</div>
+                                        <div class="ecc-card-title">Sticky Notes & VIP Info</div>
                                         <span class="badge badge-locked"
                                             style="background:rgba(212,175,55,0.15); color:var(--adm-gold);">Prioritas
                                             Tinggi</span>
@@ -2344,7 +2344,7 @@ Kebutuhan Hospitality:
                                     <div class="sticky-note-card" style="margin-bottom:1.25rem;">
                                         <div class="sticky-note-header"
                                             style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem; font-weight:800; font-size:0.85rem; color:#78350F;">
-                                            <span>Catatan Khusus Acar(Urgent)</span>
+                                            <span>Catatan Khusus Acara (Urgent)</span>
                                             <span
                                                 style="font-size:0.7rem; background:rgba(120,53,15,0.15); padding:0.1rem 0.45rem; border-radius:4px;">Auto-saved</span>
                                         </div>
@@ -2382,7 +2382,7 @@ Kebutuhan Hospitality:
                                                     M.B.A.</strong>
                                             </div>
                                             <div style="display:flex; justify-content:space-between;">
-                                                <span style="color:var(--adm-text-muted);">Orang TuMempelai:</span>
+                                                <span style="color:var(--adm-text-muted);">Orang Tua Mempelai:</span>
                                                 <strong style="color:#F8FAFC;">Bpk. Dr. Ir. Hendrawan & Ibu
                                                     Farida</strong>
                                             </div>
@@ -2396,7 +2396,7 @@ Kebutuhan Hospitality:
                                 <!-- Checklist Kesiapan MC -->
                                 <div class="ecc-card">
                                     <div class="ecc-card-header">
-                                        <div class="ecc-card-title">hecklist Kesiapan MC Panggung</div>
+                                        <div class="ecc-card-title">Checklist Kesiapan MC Panggung</div>
                                         <span class="badge badge-available" id="adminChkCount">4/5 Selesai (80%)</span>
                                     </div>
 
@@ -2458,8 +2458,8 @@ Kebutuhan Hospitality:
                                         dari Koleksi</button>
                                 </div>
                                 <p style="font-size:0.88rem; color:var(--text-secondary); margin-bottom:1rem;">
-                                    Daftar gaun yang ditugaskan untuk acara . Untuk menambah datgaun baru, silakan
-                                    bukmenu <strong>Wardrobe Tracker</strong> di Sidebar.
+                                    Daftar gaun yang ditugaskan untuk acara . Untuk menambah data gaun baru, silakan
+                                    buka menu <strong>Wardrobe Tracker</strong> di Sidebar.
                                 </p>
                                 <div class="wardrobe-grid" id="adminWardrobeGrid">
                                     <!-- Rendered dynamically virenderWardrobe() -->
@@ -2475,11 +2475,11 @@ Kebutuhan Hospitality:
                                     <div class="finance-stat-value gold" id="adminContractVal">Rp 12.500.000</div>
                                 </div>
                                 <div class="finance-stat-card">
-                                    <div class="finance-stat-label">Nominal DP Diterim(50%)</div>
+                                    <div class="finance-stat-label">Nominal DP Diterima (50%)</div>
                                     <div class="finance-stat-value green" id="adminDpVal">Rp 6.250.000</div>
                                 </div>
                                 <div class="finance-stat-card">
-                                    <div class="finance-stat-label">SisTagihan Belum Lunas</div>
+                                    <div class="finance-stat-label">Sisa Tagihan Belum Lunas</div>
                                     <div class="finance-stat-value red" id="adminSisaVal">Rp 6.250.000</div>
                                 </div>
                                 <div class="finance-stat-card">
@@ -2505,7 +2505,7 @@ Kebutuhan Hospitality:
                                         <select class="form-select" id="adminFinanceSelect"
                                             onchange="updateAdminFinance(this.value)">
                                             <option value="Unpaid">Unpaid (Menunggu DP)</option>
-                                            <option value="DP Paid" selected>DP Paid (50% Diterim- Jadwal Terkunci)
+                                            <option value="DP Paid" selected>DP Paid (50% Diterima - Jadwal Terkunci)
                                             </option>
                                             <option value="Fully Paid">Fully Paid (Lunas)</option>
                                         </select>
@@ -2517,7 +2517,7 @@ Kebutuhan Hospitality:
                                             <div style="font-weight:700; font-size:0.95rem; margin-bottom:0.25rem;">Kode
                                                 QRIS Dinamis</div>
                                             <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.4;">
-                                                Klien dapat memindai kode QRIS di samping viBCA, Mandiri, BRI, GoPay,
+                                                Klien dapat memindai kode QRIS di samping via BCA, Mandiri, BRI, GoPay,
                                                 atau OVO.
                                             </p>
                                             <button class="btn btn-outline-gold btn-sm" style="margin-top:0.6rem;"
@@ -2530,7 +2530,7 @@ Kebutuhan Hospitality:
 
                                 <div class="ecc-card">
                                     <div class="ecc-card-header">
-                                        <div class="ecc-card-title">xpense Tracker (Pengeluaran Acara)</div>
+                                        <div class="ecc-card-title">Expense Tracker (Pengeluaran Acara)</div>
                                         <button class="btn btn-secondary btn-sm" onclick="promptAddExpense()">+ Tambah
                                             Biaya</button>
                                     </div>
