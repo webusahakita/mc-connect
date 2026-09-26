@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stage Mode (Tablet/HP) - MC-Connect</title>
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/stage-mode.css">
+</head>
+<body class="stage-body">
+    <div class="stage-container">
+        <!-- 70% Prompter Section -->
+        <div class="stage-prompter-pane">
+            <!-- Top Bar Navigation & Controls -->
+            <div class="prompter-top-bar">
+                <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+                    <a href="admin.html" class="prompter-ctrl-btn" title="Kembali ke Admin Portal">
+                        ◀ Keluar Stage
+                    </a>
+                    
+                    <!-- Navigation: Sebelum Segmen -->
+                    <button class="stage-nav-arrow-btn" id="btnTopPrev" onclick="prevSegment()" title="Kembali ke Segmen Sebelumnya (Hotkeys: ← atau PageUp)">
+                        ⏮ Sebelum
+                    </button>
+
+                    <!-- Active Segment Badge -->
+                    <span class="prompter-segment-badge" id="currentSegmentBadge">
+                        Segmen 1/7: Open Gate & Welcoming Cocktail (Akustik)
+                    </span>
+
+                    <!-- Navigation: Sesudah Segmen -->
+                    <button class="stage-nav-arrow-btn" id="btnTopNext" onclick="nextSegment()" title="Lanjut ke Segmen Berikutnya (Hotkeys: → atau PageDown)">
+                        Berikut ⏭
+                    </button>
+                </div>
+
+                <div class="prompter-controls">
+                    <button class="prompter-ctrl-btn" onclick="window.teleprompter.decreaseFont()" title="Kecilkan Font">A-</button>
+                    <button class="prompter-ctrl-btn" onclick="window.teleprompter.increaseFont()" title="Besarkan Font">A+</button>
+                    <button class="prompter-ctrl-btn" id="btnMirrorToggle" onclick="toggleMirrorMode()">🪞 Mirror</button>
+                    <button class="prompter-ctrl-btn" id="btnVoiceToggle" onclick="toggleVoiceMode()">🎙️ Voice Auto-Advance</button>
+                    <button class="prompter-ctrl-btn" id="btnScrollToggle" onclick="toggleAutoScroll()" style="background:var(--gold-primary); color:#000;">
+                        ▶ Auto-Scroll
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dual Stage Anticipation Bar: Sebelum & Sesudah Segmen -->
+            <div class="stage-anticipation-bar" id="stageAnticipationBar">
+                <!-- Sebelum Segmen Box -->
+                <div class="anticipation-box prev-box" id="boxPrevSegment" onclick="prevSegment()" title="Klik untuk kembali ke segmen sebelumnya (Hotkeys: ←)">
+                    <div class="anticipation-label">
+                        <span>⏮ SEBELUMNYA</span>
+                        <span id="prevSegmentTime" style="font-family:monospace; opacity:0.85;">--:--</span>
+                    </div>
+                    <div class="anticipation-title" id="prevSegmentTitle">— Awal Acara —</div>
+                    <div class="anticipation-cue" id="prevSegmentCue" style="opacity:0.75;">Tidak ada segmen sebelumnya</div>
+                </div>
+
+                <!-- Sesudah / Antisipasi Segmen Box -->
+                <div class="anticipation-box next-box" id="boxNextSegment" onclick="nextSegment()" title="Klik untuk antisipasi & langsung beralih ke segmen ini (Hotkeys: →)">
+                    <div class="anticipation-label">
+                        <span style="color:var(--gold-primary); display:flex; align-items:center; gap:0.35rem;">
+                            <span>⏭</span>
+                            <span>ANTISIPASI SEGMEN BERIKUTNYA</span>
+                        </span>
+                        <span id="nextSegmentTime" style="font-family:monospace; color:var(--gold-primary); font-weight:700;">19:00 - 19:20</span>
+                    </div>
+                    <div class="anticipation-title" id="nextSegmentTitle">Segmen 2/7: Opening MC & Grand Entrance Kedua Mempelai</div>
+                    <div class="anticipation-cue" id="nextSegmentCue">🎺 Cue: Royal Entrance Fanfare & Romantic Symphony</div>
+                    <div class="anticipation-peek-script" id="nextSegmentPeek">"Hadirin yang kami muliakan, marilah kita sambut..."</div>
+                </div>
+            </div>
+
+            <!-- Prompter Viewport -->
+            <div class="prompter-viewport" id="prompterViewport">
+                <div id="prompterMusicHint" class="prompter-music-hint">
+                    🎵 Music Cue: Fade-in Orchestral Romance Theme, volume 30%
+                </div>
+
+                <div class="prompter-text" id="prompterTextContainer">
+                    <p id="prompterActiveScript">
+                        Selamat malam dan selamat datang kepada seluruh keluarga besar serta tamu undangan yang terhormat. Silakan menikmati welcoming cocktail dan jamuan selamat datang sembari menanti dimulainya prosesi resepsi agung pernikahan.
+                    </p>
+                </div>
+
+                <!-- In-viewport Next Up Card for MC Anticipation -->
+                <div class="prompter-next-up-card" id="prompterNextUpCard" onclick="nextSegment()" title="Klik untuk lanjut ke segmen berikutnya">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem; flex-wrap:wrap; gap:0.5rem;">
+                        <span class="badge-next-up" id="prompterNextBadge">⚡ ANTISIPASI BERIKUTNYA: SEGMEN 2 DARI 7</span>
+                        <button class="btn-next-segment-cta" type="button">Lanjut ke Segmen Ini ⏭</button>
+                    </div>
+                    <div class="next-up-heading" id="prompterNextHeading">Opening MC & Grand Entrance Kedua Mempelai</div>
+                    <div class="next-up-cue" id="prompterNextCue">🎺 Music Cue: Royal Entrance Fanfare & Romantic Symphony</div>
+                    <p class="next-up-preview" id="prompterNextPreview">"Hadirin yang kami muliakan, marilah kita sambut dengan tepuk tangan paling meriah dan penuh cinta, raja dan ratu semalam kita..."</p>
+                </div>
+            </div>
+
+            <!-- Hotkey & Gesture Hint Bar -->
+            <div class="hotkey-hint-bar">
+                <span>Navigasi Cepat MC: <kbd>←</kbd> Segmen Sebelumnya &bull; <kbd>→</kbd> Segmen Berikutnya &bull; <kbd>Space</kbd> Auto-Scroll &bull; Geser Layar Sentuh Aktif</span>
+            </div>
+
+            <div class="speech-active-indicator" id="speechIndicator">
+                <span>●</span> Suara MC Terdeteksi (Prompter Bergulir Otomatis)
+            </div>
+        </div>
+
+        <!-- 30% Soundboard & Digital Timer Section -->
+        <div class="stage-sidebar-pane">
+            <!-- Stage Clock & Stopwatch -->
+            <div class="stage-timer-card">
+                <div class="stage-clock" id="stageDigitalClock">19:00:00</div>
+                <div class="stage-stopwatch-label">Durasi Segmen Berjalan</div>
+                <div class="stage-stopwatch" id="stageStopwatchDisplay">00:00:00</div>
+
+                <div class="stage-timer-controls">
+                    <button class="btn btn-secondary btn-sm" onclick="startStopwatch()">Start</button>
+                    <button class="btn btn-secondary btn-sm" onclick="pauseStopwatch()">Pause</button>
+                    <button class="btn btn-secondary btn-sm" onclick="resetStopwatch()">Reset</button>
+                </div>
+            </div>
+
+            <!-- Built-in Soundboard Module (Dynamically Configured per Event) -->
+            <div class="soundboard-card">
+                <div class="soundboard-header">
+                    <div class="soundboard-title">⚡ Stage Soundboard</div>
+                    <span style="font-size:0.75rem; color:var(--text-muted);" id="stageSoundboardEventBadge">Web Audio API</span>
+                </div>
+
+                <div class="soundboard-grid" id="stageSoundboardGrid">
+                    <!-- Populated dynamically via renderStageSoundboard() -->
+                </div>
+            </div>
+
+            <!-- Stage Segment Progress & Anticipation Preview in Sidebar -->
+            <div class="stage-sidebar-anticipation" style="background:#111827; border:1px solid #1F293D; border-radius:var(--radius-md); padding:1rem; display:flex; flex-direction:column; gap:0.5rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-muted); font-weight:700;">
+                    <span>PROGRES SEGMEN</span>
+                    <span id="stageNavProgress" style="color:#F8FAFC; font-family:monospace;">1 / 7</span>
+                </div>
+                <div style="background:#1E293B; height:6px; border-radius:3px; overflow:hidden;">
+                    <div id="stageProgressBar" style="background:var(--gold-primary); height:100%; width:14%; transition:width 0.3s ease;"></div>
+                </div>
+                <div style="margin-top:0.25rem;">
+                    <div style="font-size:0.7rem; color:var(--gold-primary); font-weight:800; text-transform:uppercase; letter-spacing:0.04em;">Antisipasi Berikutnya:</div>
+                    <div id="sideNextTitle" style="font-size:0.85rem; font-weight:700; color:#FFFFFF; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">-</div>
+                    <div id="sideNextCue" style="font-size:0.75rem; color:#38BDF8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">-</div>
+                </div>
+            </div>
+
+            <!-- Stage Segment Navigation Buttons -->
+            <div class="stage-nav-bar">
+                <button class="stage-nav-btn btn-secondary" id="btnSidePrev" onclick="prevSegment()" title="Segmen Sebelumnya (Hotkeys: ←)">
+                    ◀ Sebelum
+                </button>
+                <button class="stage-nav-btn btn-primary" id="btnSideNext" onclick="nextSegment()" title="Segmen Berikutnya (Hotkeys: →)">
+                    Berikutnya ▶
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/audio-storage.js"></script>
+    <script src="js/soundboard.js"></script>
+    <script src="js/teleprompter.js"></script>
+    <script src="js/live-sync.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        let activeEventId = 1;
+        try {
+            const stored = localStorage.getItem('activeCommandCenterEventId');
+            if (stored) activeEventId = stored;
+        } catch(e) {}
+
+        let rundownItems = [];
+
+        // 1. Try to load from ecc_rundown_[id]
+        try {
+            const raw = localStorage.getItem(`ecc_rundown_${activeEventId}`);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    rundownItems = parsed.map((item, i) => ({
+                        urutan: i + 1,
+                        judul_segmen: item.title,
+                        naskah_prompter: item.script,
+                        instruksi_musik: item.musicTitle ? `🎵 ${item.musicTitle} (${item.musicArtist || 'FOH'}) · ${item.cue || ''}` : (item.cue || ''),
+                        startTime: item.startTime || '',
+                        endTime: item.endTime || '',
+                        duration: item.duration || '',
+                        pic: item.pic || ''
+                    }));
+                }
+            }
+        } catch(e) {}
+
+        // 2. Fallback to adminEventsDb / unified_events_database_v8
+        if (rundownItems.length === 0) {
+            try {
+                const eventsRaw = localStorage.getItem('adminEventsDb') || localStorage.getItem('unified_events_database_v8');
+                if (eventsRaw) {
+                    const parsedEvents = JSON.parse(eventsRaw);
+                    const ev = Array.isArray(parsedEvents) ? parsedEvents.find(e => String(e.id) === String(activeEventId)) : null;
+                    if (ev && Array.isArray(ev.rundown) && ev.rundown.length > 0) {
+                        rundownItems = ev.rundown.map((item, i) => ({
+                            urutan: i + 1,
+                            judul_segmen: item.title,
+                            naskah_prompter: item.script,
+                            instruksi_musik: item.musicTitle ? `🎵 ${item.musicTitle} (${item.musicArtist || 'FOH'}) · ${item.cue || ''}` : (item.cue || ''),
+                            startTime: item.startTime || '',
+                            endTime: item.endTime || '',
+                            duration: item.duration || '',
+                            pic: item.pic || ''
+                        }));
+                    }
+                }
+            } catch(e) {}
+        }
+
+        // 3. Ultimate rich default 7-segment rundown
+        if (rundownItems.length === 0) {
+            rundownItems = [
+                {
+                    urutan: 1,
+                    startTime: '18:30',
+                    endTime: '19:00',
+                    duration: '30 Menit',
+                    judul_segmen: 'Open Gate & Welcoming Cocktail (Akustik)',
+                    naskah_prompter: 'Selamat malam dan selamat datang kepada seluruh keluarga besar serta tamu undangan yang terhormat. Silakan menikmati welcoming cocktail dan jamuan selamat datang sembari menanti dimulainya prosesi resepsi agung pernikahan.',
+                    instruksi_musik: '🎵 Acoustic Lounge & Jazz Classics, Volume 35%'
+                },
+                {
+                    urutan: 2,
+                    startTime: '19:00',
+                    endTime: '19:20',
+                    duration: '20 Menit',
+                    judul_segmen: 'Opening MC & Grand Entrance Kedua Mempelai',
+                    naskah_prompter: 'Hadirin yang kami muliakan, marilah kita sambut dengan tepuk tangan paling meriah dan penuh cinta, raja dan ratu semalam kita... The Newlyweds! (Sinyal Spotlight mengikuti langkah mempelai menuju pelaminan cinta).',
+                    instruksi_musik: '🎺 Royal Entrance Fanfare & Romantic Symphony'
+                },
+                {
+                    urutan: 3,
+                    startTime: '19:20',
+                    endTime: '19:40',
+                    duration: '20 Menit',
+                    judul_segmen: 'Sambutan Hangat Keluarga & Doa Keberkahan',
+                    naskah_prompter: 'Mewakili kedua keluarga besar, mari kita simak bersama untaian doa dan kata sambutan penuh restu yang akan disampaikan oleh perwakilan keluarga mempelai. Kepada yang terhormat kami persilakan.',
+                    instruksi_musik: '🎵 Warm Soft Piano Pad, Volume 20%'
+                },
+                {
+                    urutan: 4,
+                    startTime: '19:40',
+                    endTime: '20:05',
+                    duration: '25 Menit',
+                    judul_segmen: 'Wedding Cake Cutting & Champagne Toast',
+                    naskah_prompter: 'Sebagai simbol cinta abadi yang saling mengisi dan doa agar kebahagiaan mengalir tanpa henti, kami undang kedua mempelai memotong kue pernikahan dan bersulang cinta pertama... 1, 2, 3 Cheers!',
+                    instruksi_musik: '🍾 Champagne Pop SFX + Sweet Upbeat Symphony'
+                },
+                {
+                    urutan: 5,
+                    startTime: '20:05',
+                    endTime: '21:00',
+                    duration: '55 Menit',
+                    judul_segmen: 'Santap Malam & Live Performance Wedding Band',
+                    naskah_prompter: 'Bapak, Ibu, serta sahabat terkasih, hidangan istimewa persembahan kedua mempelai telah disajikan. Selamat menikmati santap malam diiringi lagu-lagu romantis persembahan wedding band.',
+                    instruksi_musik: '🎸 Live Band Romantic Medley / Soulful Jazz'
+                },
+                {
+                    urutan: 6,
+                    startTime: '21:00',
+                    endTime: '21:30',
+                    duration: '30 Menit',
+                    judul_segmen: 'Lempar Bunga (Bouquet Toss) & Fun Interactive Games',
+                    naskah_prompter: 'Saatnya momen paling mendebarkan! Kami undang seluruh sahabat single dan lajang untuk berkumpul di depan panggung. Siapakah yang akan menangkap bunga keberuntungan dan menyusul berikutnya?',
+                    instruksi_musik: '🥁 Drumroll Suspense + Upbeat Party Hit'
+                },
+                {
+                    urutan: 7,
+                    startTime: '21:30',
+                    endTime: '22:00',
+                    duration: '30 Menit',
+                    judul_segmen: 'Sesi Foto VIP Bersama Mempelai & Closing MC',
+                    naskah_prompter: 'Sebuah kebahagiaan dan kehormatan tiada tara dapat menjadi pemandu hari bahagia ini. Saya Loading... mengucapkan selamat menempuh hidup baru kepada kedua mempelai dan terima kasih kepada hadirin. Selamat malam!',
+                    instruksi_musik: '🎻 Grand Orchestral Outro & Warm Ambient Music'
+                }
+            ];
+        }
+
+        let currentIndex = 0;
+        const eventId = activeEventId;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.teleprompter && typeof window.teleprompter.init === 'function') {
+                window.teleprompter.init('prompterViewport', 'prompterTextContainer');
+            }
+            startClock();
+            loadStageSoundboard();
+            loadSegment(0);
+            setupTouchGestures();
+        });
+
+        function loadSegment(index) {
+            if (index < 0 || index >= rundownItems.length) return;
+            currentIndex = index;
+            const item = rundownItems[index];
+
+            // 1. Current Active Segment
+            const badgeEl = document.getElementById('currentSegmentBadge');
+            if (badgeEl) {
+                badgeEl.textContent = `Segmen ${item.urutan}/${rundownItems.length}: ${item.judul_segmen}`;
+            }
+
+            const scriptEl = document.getElementById('prompterActiveScript');
+            if (scriptEl) {
+                scriptEl.textContent = item.naskah_prompter || '— Tanpa naskah prompter —';
+            }
+            
+            const musicHint = document.getElementById('prompterMusicHint');
+            if (musicHint) {
+                if (item.instruksi_musik) {
+                    musicHint.style.display = 'block';
+                    const cueText = item.instruksi_musik.startsWith('🎵') || item.instruksi_musik.startsWith('🎺') || item.instruksi_musik.startsWith('🍾') || item.instruksi_musik.startsWith('🎸') || item.instruksi_musik.startsWith('🥁') || item.instruksi_musik.startsWith('🎻')
+                        ? item.instruksi_musik
+                        : `🎵 ${item.instruksi_musik}`;
+                    musicHint.textContent = `Music Cue: ${cueText}`;
+                } else {
+                    musicHint.style.display = 'none';
+                }
+            }
+
+            // 2. SEBELUM SEGMEN (Previous Segment Anticipation)
+            const prevItem = index > 0 ? rundownItems[index - 1] : null;
+            const boxPrev = document.getElementById('boxPrevSegment');
+            const prevTitleEl = document.getElementById('prevSegmentTitle');
+            const prevTimeEl = document.getElementById('prevSegmentTime');
+            const prevCueEl = document.getElementById('prevSegmentCue');
+            const btnTopPrev = document.getElementById('btnTopPrev');
+            const btnSidePrev = document.getElementById('btnSidePrev');
+
+            if (prevItem) {
+                if (boxPrev) {
+                    boxPrev.style.opacity = '1';
+                    boxPrev.style.cursor = 'pointer';
+                }
+                if (prevTitleEl) prevTitleEl.textContent = `Segmen ${prevItem.urutan}: ${prevItem.judul_segmen}`;
+                if (prevTimeEl) prevTimeEl.textContent = (prevItem.startTime && prevItem.endTime) ? `${prevItem.startTime} - ${prevItem.endTime}` : (prevItem.duration || 'Selesai');
+                if (prevCueEl) prevCueEl.textContent = prevItem.instruksi_musik || 'Segmen telah selesai';
+                if (btnTopPrev) btnTopPrev.disabled = false;
+                if (btnSidePrev) btnSidePrev.disabled = false;
+            } else {
+                if (boxPrev) {
+                    boxPrev.style.opacity = '0.5';
+                    boxPrev.style.cursor = 'default';
+                }
+                if (prevTitleEl) prevTitleEl.textContent = '— Awal Acara —';
+                if (prevTimeEl) prevTimeEl.textContent = item.startTime || 'Start';
+                if (prevCueEl) prevCueEl.textContent = 'Tidak ada segmen sebelumnya';
+                if (btnTopPrev) btnTopPrev.disabled = true;
+                if (btnSidePrev) btnSidePrev.disabled = true;
+            }
+
+            // 3. SESUDAH SEGMEN (Next Segment Anticipation)
+            const nextItem = index < rundownItems.length - 1 ? rundownItems[index + 1] : null;
+            const boxNext = document.getElementById('boxNextSegment');
+            const nextTitleEl = document.getElementById('nextSegmentTitle');
+            const nextTimeEl = document.getElementById('nextSegmentTime');
+            const nextCueEl = document.getElementById('nextSegmentCue');
+            const nextPeekEl = document.getElementById('nextSegmentPeek');
+            const btnTopNext = document.getElementById('btnTopNext');
+            const btnSideNext = document.getElementById('btnSideNext');
+
+            // In-Viewport Next Up Card Elements
+            const nextCard = document.getElementById('prompterNextUpCard');
+            const nextBadge = document.getElementById('prompterNextBadge');
+            const nextHeading = document.getElementById('prompterNextHeading');
+            const nextCardCue = document.getElementById('prompterNextCue');
+            const nextPreview = document.getElementById('prompterNextPreview');
+
+            // Sidebar Elements
+            const sideNextTitle = document.getElementById('sideNextTitle');
+            const sideNextCue = document.getElementById('sideNextCue');
+
+            if (nextItem) {
+                if (boxNext) {
+                    boxNext.style.opacity = '1';
+                    boxNext.style.cursor = 'pointer';
+                }
+                const timeStr = (nextItem.startTime && nextItem.endTime) ? `${nextItem.startTime} - ${nextItem.endTime}` : (nextItem.duration || 'Berikutnya');
+                if (nextTitleEl) nextTitleEl.textContent = `Segmen ${nextItem.urutan}/${rundownItems.length}: ${nextItem.judul_segmen}`;
+                if (nextTimeEl) nextTimeEl.textContent = timeStr;
+                if (nextCueEl) nextCueEl.textContent = nextItem.instruksi_musik ? `Cue: ${nextItem.instruksi_musik}` : '—';
+                
+                const peekText = nextItem.naskah_prompter 
+                    ? `"${nextItem.naskah_prompter.slice(0, 85)}${nextItem.naskah_prompter.length > 85 ? '...' : ''}"` 
+                    : '— Tanpa naskah —';
+                if (nextPeekEl) nextPeekEl.textContent = peekText;
+
+                if (btnTopNext) btnTopNext.disabled = false;
+                if (btnSideNext) btnSideNext.disabled = false;
+
+                // In-viewport Next Card
+                if (nextCard) {
+                    nextCard.style.display = 'block';
+                    nextCard.style.cursor = 'pointer';
+                }
+                if (nextBadge) nextBadge.textContent = `⚡ ANTISIPASI BERIKUTNYA: SEGMEN ${nextItem.urutan} DARI ${rundownItems.length}`;
+                if (nextHeading) nextHeading.textContent = nextItem.judul_segmen;
+                if (nextCardCue) nextCardCue.textContent = nextItem.instruksi_musik ? `Music Cue: ${nextItem.instruksi_musik}` : '';
+                if (nextPreview) nextPreview.textContent = peekText;
+
+                // Sidebar
+                if (sideNextTitle) sideNextTitle.textContent = nextItem.judul_segmen;
+                if (sideNextCue) sideNextCue.textContent = nextItem.instruksi_musik || 'Siap untuk segmen berikutnya';
+            } else {
+                // Finale Segment
+                if (boxNext) {
+                    boxNext.style.opacity = '0.75';
+                    boxNext.style.cursor = 'default';
+                }
+                if (nextTitleEl) nextTitleEl.textContent = '🏁 Segmen Terakhir (Grand Finale)';
+                if (nextTimeEl) nextTimeEl.textContent = 'Selesai';
+                if (nextCueEl) nextCueEl.textContent = 'Seluruh segmen acara tuntas';
+                if (nextPeekEl) nextPeekEl.textContent = 'Terima kasih atas penampilan luar biasa!';
+
+                if (btnTopNext) btnTopNext.disabled = true;
+                if (btnSideNext) btnSideNext.disabled = true;
+
+                // In-viewport Card Finale
+                if (nextCard) nextCard.style.cursor = 'default';
+                if (nextBadge) nextBadge.textContent = '🏁 SEGMEN PENUTUP';
+                if (nextHeading) nextHeading.textContent = 'Selamat! Anda Berada di Segmen Penutup Rundown';
+                if (nextCardCue) nextCardCue.textContent = '🎉 Grand Finale / Outro';
+                if (nextPreview) nextPreview.textContent = 'Seluruh rangkaian segmen rundown telah terlaksana dengan sukses.';
+
+                if (sideNextTitle) sideNextTitle.textContent = '🏁 Selesai (Grand Finale)';
+                if (sideNextCue) sideNextCue.textContent = 'Tidak ada segmen selanjutnya';
+            }
+
+            // 4. Update Sidebar Progress
+            const progPercent = Math.round(((index + 1) / rundownItems.length) * 100);
+            const stageNavProgress = document.getElementById('stageNavProgress');
+            if (stageNavProgress) stageNavProgress.textContent = `${index + 1} / ${rundownItems.length} (${progPercent}%)`;
+            const stageProgressBar = document.getElementById('stageProgressBar');
+            if (stageProgressBar) stageProgressBar.style.width = `${progPercent}%`;
+
+            // 5. Reset Prompter Scroll to Top
+            const vp = document.getElementById('prompterViewport');
+            if (vp) vp.scrollTop = 0;
+
+            // 6. Reset & Start Stopwatch
+            resetStopwatch();
+            startStopwatch();
+
+            // 7. Broadcast to Vendor Music Screen via LiveSync
+            if (window.liveSync && typeof window.liveSync.syncActiveSegment === 'function') {
+                window.liveSync.syncActiveSegment(eventId, index + 1, item.judul_segmen, item.instruksi_musik);
+            }
+        }
+
+        function nextSegment() {
+            if (currentIndex < rundownItems.length - 1) {
+                loadSegment(currentIndex + 1);
+            } else {
+                alert('Ini adalah segmen penutup terakhir dari rundown!');
+            }
+        }
+
+        function prevSegment() {
+            if (currentIndex > 0) {
+                loadSegment(currentIndex - 1);
+            }
+        }
+
+        function toggleAutoScroll() {
+            if (!window.teleprompter) return;
+            const isScrolling = window.teleprompter.toggleScroll();
+            const btn = document.getElementById('btnScrollToggle');
+            if (btn) {
+                if (isScrolling) {
+                    btn.textContent = '⏸ Pause Scroll';
+                    btn.style.background = '#EF4444';
+                    btn.style.color = '#FFF';
+                } else {
+                    btn.textContent = '▶ Auto-Scroll';
+                    btn.style.background = 'var(--gold-primary)';
+                    btn.style.color = '#000';
+                }
+            }
+        }
+
+        function toggleVoiceMode() {
+            if (!window.teleprompter) return;
+            const active = window.teleprompter.toggleVoiceMode();
+            const btn = document.getElementById('btnVoiceToggle');
+            if (btn) btn.classList.toggle('active', active);
+        }
+
+        function toggleMirrorMode() {
+            if (!window.teleprompter) return;
+            const isMirror = window.teleprompter.toggleMirror();
+            const btn = document.getElementById('btnMirrorToggle');
+            if (btn) btn.classList.toggle('active', isMirror);
+        }
+
+        let stageSoundboardList = [];
+
+        function loadStageSoundboard() {
+            try {
+                const raw = localStorage.getItem(`ecc_soundboard_${activeEventId}`);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        stageSoundboardList = parsed;
+                    }
+                }
+            } catch(e) {}
+
+            if (!stageSoundboardList || stageSoundboardList.length === 0) {
+                stageSoundboardList = [
+                    { id: 'sb_1', name: 'Applause', icon: '👏', preset: 'applause', key: '1', volume: 80, enabled: true },
+                    { id: 'sb_2', name: 'Drum Roll', icon: '🥁', preset: 'drumroll', key: '2', volume: 85, enabled: true },
+                    { id: 'sb_3', name: 'Fanfare', icon: '🎺', preset: 'fanfare', key: '3', volume: 90, enabled: true },
+                    { id: 'sb_4', name: 'Chime / Ding', icon: '🔔', preset: 'ding', key: '4', volume: 75, enabled: true },
+                    { id: 'sb_5', name: 'Buzzer', icon: '🚨', preset: 'buzzer', key: '5', volume: 80, enabled: true },
+                    { id: 'sb_6', name: 'Suspense', icon: '🎻', preset: 'suspense', key: '6', volume: 75, enabled: true }
+                ];
+            }
+
+            renderStageSoundboard();
+        }
+
+        function renderStageSoundboard() {
+            const grid = document.getElementById('stageSoundboardGrid');
+            if (!grid) return;
+
+            const activePads = stageSoundboardList.filter(item => item.enabled !== false);
+            if (activePads.length === 0) {
+                grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.85rem;">Soundboard dinonaktifkan untuk acara ini</div>';
+                return;
+            }
+
+            grid.innerHTML = activePads.map((item, idx) => {
+                const vol = (item.volume !== undefined ? item.volume : 80) / 100;
+                let badgeHtml = '';
+                if (item.sourceType === 'upload') {
+                    badgeHtml = `<span style="position:absolute; bottom:3px; right:4px; font-size:0.55rem; color:#10B981; background:rgba(16,185,129,0.18); border:1px solid rgba(16,185,129,0.3); border-radius:3px; padding:0 3px;" title="Offline Audio File">📁</span>`;
+                } else if (item.sourceType === 'link') {
+                    badgeHtml = `<span style="position:absolute; bottom:3px; right:4px; font-size:0.55rem; color:#38BDF8; background:rgba(56,189,248,0.18); border:1px solid rgba(56,189,248,0.3); border-radius:3px; padding:0 3px;" title="Web Audio Link">🔗</span>`;
+                }
+                return `
+                    <button class="sound-pad" id="stage-pad-${idx}" onclick="triggerStageSound(${idx}, this)" title="${item.name} (${item.sourceType === 'upload' ? 'File Offline' : item.sourceType === 'link' ? 'Web Link' : item.preset}) (Shortcut: ${item.key || '-'})" style="position:relative;">
+                        ${item.key ? `<span style="position:absolute; top:4px; right:6px; font-size:0.68rem; font-family:monospace; color:var(--gold-primary); font-weight:800; background:rgba(0,0,0,0.5); padding:1px 4px; border-radius:3px;">[${item.key}]</span>` : ''}
+                        <span class="sound-pad-icon">${item.icon || '⚡'}</span>
+                        <span style="font-size:0.82rem; font-weight:700; line-height:1.2; text-align:center;">${item.name}</span>
+                        ${badgeHtml}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        async function triggerStageSound(padIdx, btn) {
+            const activePads = stageSoundboardList ? stageSoundboardList.filter(p => p.enabled !== false) : [];
+            const item = activePads[padIdx];
+            if (!item) return;
+
+            const vol = (item.volume !== undefined ? item.volume : 80) / 100;
+            if (window.soundboard) {
+                if (typeof window.soundboard.triggerSoundboardItem === 'function') {
+                    await window.soundboard.triggerSoundboardItem(item, vol);
+                } else if (typeof window.soundboard.playSound === 'function') {
+                    window.soundboard.playSound(item.preset || 'ding', vol);
+                }
+            }
+
+            if (btn) {
+                btn.classList.add('triggered');
+                setTimeout(() => btn.classList.remove('triggered'), 220);
+            }
+        }
+
+        function triggerSound(sound, btn, volume) {
+            if (!window.soundboard) return;
+            const vol = volume !== undefined ? volume : 0.8;
+            if (typeof window.soundboard.playSound === 'function') {
+                window.soundboard.playSound(sound, vol);
+            } else {
+                if (sound === 'applause') window.soundboard.playApplause(vol);
+                if (sound === 'drumroll') window.soundboard.playDrumRoll(vol);
+                if (sound === 'fanfare') window.soundboard.playFanfare(vol);
+                if (sound === 'ding') window.soundboard.playDing(vol);
+                if (sound === 'buzzer') window.soundboard.playBuzzer(vol);
+                if (sound === 'suspense') window.soundboard.playSuspense(vol);
+            }
+
+            if (btn) {
+                btn.classList.add('triggered');
+                setTimeout(() => btn.classList.remove('triggered'), 220);
+            }
+        }
+
+        function startClock() {
+            setInterval(() => {
+                const now = new Date();
+                const timeStr = now.toTimeString().split(' ')[0];
+                const clock = document.getElementById('stageDigitalClock');
+                if (clock) clock.textContent = timeStr;
+            }, 1000);
+        }
+
+        let stopwatchSeconds = 0;
+        let stopwatchInterval = null;
+
+        function startStopwatch() {
+            if (stopwatchInterval) return;
+            stopwatchInterval = setInterval(() => {
+                stopwatchSeconds++;
+                const h = String(Math.floor(stopwatchSeconds / 3600)).padStart(2, '0');
+                const m = String(Math.floor((stopwatchSeconds % 3600) / 60)).padStart(2, '0');
+                const s = String(stopwatchSeconds % 60).padStart(2, '0');
+                const disp = document.getElementById('stageStopwatchDisplay');
+                if (disp) disp.textContent = `${h}:${m}:${s}`;
+            }, 1000);
+        }
+
+        function pauseStopwatch() {
+            clearInterval(stopwatchInterval);
+            stopwatchInterval = null;
+        }
+
+        function resetStopwatch() {
+            pauseStopwatch();
+            stopwatchSeconds = 0;
+            const disp = document.getElementById('stageStopwatchDisplay');
+            if (disp) disp.textContent = '00:00:00';
+        }
+
+        // Stage MC Keyboard Hotkeys
+        window.addEventListener('keydown', (e) => {
+            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+
+            if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                e.preventDefault();
+                prevSegment();
+            } else if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+                e.preventDefault();
+                nextSegment();
+            } else if (e.code === 'Space') {
+                if (document.activeElement?.tagName !== 'BUTTON') {
+                    e.preventDefault();
+                    toggleAutoScroll();
+                }
+            } else {
+                // Soundboard hotkey triggers (e.g. key 1-9)
+                if (stageSoundboardList && stageSoundboardList.length > 0) {
+                    const activePads = stageSoundboardList.filter(p => p.enabled !== false);
+                    const matchedPad = activePads.find(p => p.key && String(p.key).toUpperCase() === e.key.toUpperCase());
+                    if (matchedPad) {
+                        const padIdx = activePads.indexOf(matchedPad);
+                        const btn = document.getElementById(`stage-pad-${padIdx}`);
+                        triggerStageSound(padIdx, btn);
+                    }
+                }
+            }
+        });
+
+        // Touch Swipe Gestures for Mobile & Tablets
+        let touchStartX = 0;
+        let touchEndX = 0;
+        function setupTouchGestures() {
+            const vp = document.getElementById('prompterViewport');
+            if (!vp) return;
+
+            vp.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+
+            vp.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                const deltaX = touchEndX - touchStartX;
+                if (deltaX < -70) {
+                    // Swiped Left -> Advance to next segment
+                    nextSegment();
+                } else if (deltaX > 70) {
+                    // Swiped Right -> Return to prev segment
+                    prevSegment();
+                }
+            }, { passive: true });
+        }
+    </script>
+</body>
+</html>

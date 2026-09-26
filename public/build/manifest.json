@@ -1,0 +1,52 @@
+{
+  "resources/css/app.css": {
+    "file": "assets/app-DG9m8TOt.css",
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/css/command-center.css": {
+    "file": "assets/command-center-Do-YLaDb.css",
+    "src": "resources/css/command-center.css",
+    "isEntry": true
+  },
+  "resources/css/landing.css": {
+    "file": "assets/landing-DiLoS4X_.css",
+    "src": "resources/css/landing.css",
+    "isEntry": true
+  },
+  "resources/css/stage-mode.css": {
+    "file": "assets/stage-mode-BJ6UBYZe.css",
+    "src": "resources/css/stage-mode.css",
+    "isEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-BXOHerYS.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true
+  },
+  "resources/js/calendar.js": {
+    "file": "assets/calendar-CfInikl0.js",
+    "name": "calendar",
+    "src": "resources/js/calendar.js",
+    "isEntry": true
+  },
+  "resources/js/live-sync.js": {
+    "file": "assets/live-sync-DZYlcprx.js",
+    "name": "live-sync",
+    "src": "resources/js/live-sync.js",
+    "isEntry": true
+  },
+  "resources/js/soundboard.js": {
+    "file": "assets/soundboard-CXsX_UaJ.js",
+    "name": "soundboard",
+    "src": "resources/js/soundboard.js",
+    "isEntry": true
+  },
+  "resources/js/teleprompter.js": {
+    "file": "assets/teleprompter-DD_WMbhW.js",
+    "name": "teleprompter",
+    "src": "resources/js/teleprompter.js",
+    "isEntry": true
+  }
+}

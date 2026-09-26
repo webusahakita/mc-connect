@@ -1,0 +1,105 @@
+/* Custom Modal Styles */
+.custom-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 100000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(4px);
+}
+.custom-modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.custom-modal-box {
+    background: var(--bg-surface, #1e293b);
+    border: 1px solid var(--border-subtle, #334155);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    transform: translateY(20px) scale(0.95);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    text-align: center;
+}
+.custom-modal-overlay.active .custom-modal-box {
+    transform: translateY(0) scale(1);
+}
+
+.custom-modal-title {
+    color: var(--gold-primary, #D4AF37);
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.custom-modal-message {
+    color: var(--text-secondary, #94a3b8);
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.custom-modal-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border-subtle, #334155);
+    color: var(--text-primary, #f8fafc);
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+    box-sizing: border-box;
+}
+.custom-modal-input:focus {
+    border-color: var(--gold-primary, #D4AF37);
+}
+
+select.custom-modal-input option {
+    background-color: var(--bg-surface, #1e293b);
+    color: var(--text-primary, #f8fafc);
+}
+
+.custom-modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+.custom-modal-btn {
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+.custom-modal-btn.primary {
+    background: linear-gradient(135deg, #D4AF37, #B38F26);
+    color: #0B0F19;
+}
+.custom-modal-btn.primary:hover {
+    background: linear-gradient(135deg, #F9D558, #D4AF37);
+}
+.custom-modal-btn.secondary {
+    background: transparent;
+    color: var(--text-secondary, #94a3b8);
+    border: 1px solid var(--border-subtle, #334155);
+}
+.custom-modal-btn.secondary:hover {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-primary, #f8fafc);
+}

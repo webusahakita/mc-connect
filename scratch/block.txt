@@ -1,0 +1,282 @@
+// 9. CMS Handlers
+function handleSaveCmsBio(e) {
+    e.preventDefault();
+    const name = document.getElementById('cmsNamaPanggung').value;
+    const email = document.getElementById('cmsEmail').value;
+    const bio = document.getElementById('cmsBioText').value;
+    const statEvents = document.getElementById('cmsStatEvents').value;
+    const statYears = document.getElementById('cmsStatYears').value;
+    const spec = document.getElementById('cmsSpesialisasi').value;
+    const photo = document.getElementById('cmsFotoUrl').value;
+    const ig = document.getElementById('cmsIg').value;
+    const tiktok = document.getElementById('cmsTiktok').value;
+    const fb = document.getElementById('cmsFb')?.value || '';
+
+    const bioData = { name, email, bio, statEvents, statYears, spec, photo, ig, tiktok, fb };
+    
+    // Save to Database API
+    fetch('/api/mc/profile', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(bioData)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const sbName = document.getElementById('sidebarMcName');
+            if (sbName) sbName.textContent = name;
+            const sbPhoto = document.getElementById('sidebarAvatarImg');
+            if (photo && sbPhoto) sbPhoto.src = photo;
+
+            showToast('Biodata, Jam Terbang & Showreel berhasil disimpan ke Database!', 'gold');
+        } else {
+            showToast('Gagal menyimpan ke Database.', 'red');
+        }
+    })
+    .catch(err => {
+        console.error("Error saving profile to API", err);
+        // Fallback to localStorage if server is down
+        localStorage.setItem('mc_biodata_config', JSON.stringify(bioData));
+        const sbName = document.getElementById('sidebarMcName');
+        if (sbName) sbName.textContent = name;
+        const sbPhoto = document.getElementById('sidebarAvatarImg');
+        if (photo && sbPhoto) sbPhoto.src = photo;
+        showToast('Tersimpan di Lokal (Server tidak terhubung).', 'gold');
+    });
+}
+window.handleSaveCmsBio = handleSaveCmsBio;
+
+function handleCmsPhotoUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 800;
+            const MAX_HEIGHT = 800;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+                if (width > MAX_WIDTH) {
+                    height *= MAX_WIDTH / width;
+                    width = MAX_WIDTH;
+                }
+            } else {
+                if (height > MAX_HEIGHT) {
+                    width *= MAX_HEIGHT / height;
+                    height = MAX_HEIGHT;
+                }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Compress to webp or jpeg
+            const dataUrl = canvas.toDataURL('image/webp', 0.8);
+            document.getElementById('cmsFotoUrl').value = dataUrl;
+            
+            const preview = document.getElementById('cmsFotoPreview');
+            if (preview) preview.src = dataUrl;
+        };
+        img.src = evt.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+window.handleCmsPhotoUpload = handleCmsPhotoUpload;
+
+function handleSaveCalendarWidgetConfig(e) {
+    e.preventDefault();
+    const buffer = document.getElementById('cfgCalBuffer').value;
+    const mode = document.getElementById('cfgCalMode').value;
+    const notice = document.getElementById('cfgCalNotice').value;
+    localStorage.setItem('mc_calendar_widget_config', JSON.stringify({ buffer, mode, notice }));
+    showToast('Pengaturan Widget Kalender Publik berhasil disimpan!', 'gold');
+}
+
+function getCmsFaqs() {
+    const savedPol = localStorage.getItem('mc_policies_config');
+    if (savedPol) {
+        try {
+            const p = JSON.parse(savedPol);
+            if (p.faqs && p.faqs.length > 0) return p.faqs;
+        } catch(e) {}
+    }
+    return [
+        { q: 'Apakah Kak Vanya bisa membawakan acara bilingual (Inggris-Indonesia)?', a: 'Ya, sangat fasih untuk corporate event multinasional maupun pernikahan multikultural.' },
+        { q: 'Kapan naskah panggung teleprompter disiapkan?', a: 'Maksimal 2x24 jam setelah rundown final disepakati bersama WO/EO.' }
+    ];
+}
+
+function renderAdminCmsFaqs() {
+    const container = document.getElementById('faqItemsList');
+    if (!container) return;
+    const faqs = getCmsFaqs();
+    container.innerHTML = '';
+    
+    faqs.forEach((faq, idx) => {
+        const div = document.createElement('div');
+        div.className = 'ecc-card';
+        div.style.cssText = 'background:var(--bg-surface); padding:0.9rem 1.1rem; border:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 0.75rem;';
+        div.innerHTML = `
+            <div>
+                <strong style="color:var(--gold-primary);">Q: ${escapeHtml(faq.q)}</strong>
+                <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">A: ${escapeHtml(faq.a)}</p>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" style="color:#F87171;" onclick="deleteCmsFaq(${idx})">Hapus</button>
+        `;
+        container.appendChild(div);
+    });
+}
+window.renderAdminCmsFaqs = renderAdminCmsFaqs;
+
+async function promptAddFaq() {
+    const q = await uiPrompt('Pertanyaan FAQ baru:');
+    if (!q) return;
+    const a = await uiPrompt('Jawaban FAQ:');
+    if (!a) return;
+    
+    const faqs = getCmsFaqs();
+    faqs.push({ q, a });
+    
+    const savedPol = localStorage.getItem('mc_policies_config') ? JSON.parse(localStorage.getItem('mc_policies_config')) : {};
+    savedPol.faqs = faqs;
+    localStorage.setItem('mc_policies_config', JSON.stringify(savedPol));
+    
+    renderAdminCmsFaqs();
+}
+window.promptAddFaq = promptAddFaq;
+
+async function deleteCmsFaq(idx) {
+    if (!await uiConfirm('Hapus FAQ ini?')) return;
+    const faqs = getCmsFaqs();
+    faqs.splice(idx, 1);
+    
+    const savedPol = localStorage.getItem('mc_policies_config') ? JSON.parse(localStorage.getItem('mc_policies_config')) : {};
+    savedPol.faqs = faqs;
+    localStorage.setItem('mc_policies_config', JSON.stringify(savedPol));
+    
+    renderAdminCmsFaqs();
+}
+window.deleteCmsFaq = deleteCmsFaq;
+
+function getCmsTestimonials() {
+    const raw = localStorage.getItem('mc_testimonials_config');
+    if (raw) {
+        try { return JSON.parse(raw); } catch(e) {}
+    }
+    return [
+        { rating: 5, text: '"Kak Vanya luar biasa profesional! Menguasai materi fintech dengan sangat baik, artikulasi jelas, bilingual-nya sangat natural saat memandu panelis dari Singapura."', author: 'Jessica Wijaya', role: 'Lead PM Epic Event Organizer' },
+        { rating: 5, text: '"Suasana wedding kami jadi luar biasa hidup dan berkelas berkat Kak Vanya. Semua tamu memuji keanggunan dan kehangatan pembawaannya. Sangat recommended!"', author: 'Natasha Hendrawan', role: 'Mempelai Wanita' }
+    ];
+}
+
+function renderAdminCmsTestimonials() {
+    const container = document.getElementById('testimonialItemsList');
+    if (!container) return;
+    const items = getCmsTestimonials();
+    container.innerHTML = '';
+    
+    items.forEach((item, idx) => {
+        const div = document.createElement('div');
+        div.className = 'ecc-card';
+        div.style.cssText = 'background:var(--bg-surface); padding:0.9rem 1.1rem; border:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:flex-start;';
+        div.innerHTML = `
+            <div>
+                <strong style="color:var(--gold-primary); display:block; margin-bottom:0.25rem;">${item.author} (${item.role || 'Klien'})</strong>
+                <span style="color:#F59E0B; font-size:0.85rem; margin-bottom:0.5rem; display:block;">${'★'.repeat(item.rating)}${'☆'.repeat(5-item.rating)}</span>
+                <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem; font-style:italic;">${item.text}</p>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" style="color:#F87171;" onclick="deleteCmsTestimonial(${idx})">Hapus</button>
+        `;
+        container.appendChild(div);
+    });
+}
+window.renderAdminCmsTestimonials = renderAdminCmsTestimonials;
+
+async function promptAddTestimonial() {
+    const text = await uiPrompt('Isi Testimoni:');
+    if (!text) return;
+    const author = await uiPrompt('Nama Klien:');
+    if (!author) return;
+    const role = await uiPrompt('Peran / Jabatan (contoh: Mempelai Wanita):', 'Klien');
+    
+    let items = getCmsTestimonials();
+    items.push({ rating: 5, text, author, role });
+    localStorage.setItem('mc_testimonials_config', JSON.stringify(items));
+    renderAdminCmsTestimonials();
+    
+    // Auto-save ke database
+    await apiPost('/cms/testimonials', { testimonials: items });
+}
+window.promptAddTestimonial = promptAddTestimonial;
+
+async function deleteCmsTestimonial(idx) {
+    if (!await uiConfirm('Hapus testimoni ini?')) return;
+    let items = getCmsTestimonials();
+    items.splice(idx, 1);
+    localStorage.setItem('mc_testimonials_config', JSON.stringify(items));
+    renderAdminCmsTestimonials();
+    
+    // Auto-save ke database
+    await apiPost('/cms/testimonials', { testimonials: items });
+}
+window.deleteCmsTestimonial = deleteCmsTestimonial;
+
+async function handleSaveCmsPolicies(e) {
+    e.preventDefault();
+    const terms = document.getElementById('cmsTermsText').value;
+    const refund = document.getElementById('cmsRefundText').value;
+    const riders = document.getElementById('cmsRidersText').value;
+
+    const faqs = getCmsFaqs(); // keep existing faqs
+
+    const dataPol = { terms, refund, riders, faqs };
+    localStorage.setItem('mc_policies_config', JSON.stringify(dataPol));
+    
+    const btn = e.target.querySelector('button[type="submit"]') || e.submitter;
+    const originalText = btn ? btn.textContent : 'Simpan';
+    if (btn) { btn.disabled = true; btn.textContent = 'Menyimpan...'; }
+
+    try {
+        await apiPost('/cms/policies', dataPol);
+        await apiPost('/cms/testimonials', { testimonials: getCmsTestimonials() });
+        
+        if (window.SyncEngine) {
+            window.SyncEngine.push('/api/cms/policies', dataPol);
+            window.SyncEngine.push('/api/cms/testimonials', { testimonials: getCmsTestimonials() });
+        }
+        
+        if(typeof showToast === 'function') showToast('Syarat & Ketentuan (T&C), Refund Policy, Riders, FAQ & Testimoni berhasil disimpan ke database!', 'gold');
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = originalText; }
+    }
+}
+window.handleSaveCmsPolicies = handleSaveCmsPolicies;
+
+function handleSavePressKitConfig(e) {
+    e.preventDefault();
+    const title = document.getElementById('pressKitTitle').value;
+    const url = document.getElementById('pressKitUrl').value;
+    const note = document.getElementById('pressKitRidersNote').value;
+
+    localStorage.setItem('mc_presskit_config', JSON.stringify({ title, url, note }));
+    showToast('Pengaturan Press Kit & Riders panggung berhasil disimpan!', 'gold');
+}
+window.handleSavePressKitConfig = handleSavePressKitConfig;
+
+function testDownloadPressKit() {
+    const url = document.getElementById('pressKitUrl').value;
+    window.open(url, '_blank');
+    showToast('Membuka pratinjau berkas Press Kit PDF...', 'gold');
+}
+window.testDownloadPressKit = testDownloadPressKit;
+

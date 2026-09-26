@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layar Operator Musik & Sound (Live Sync) - MC-Connect</title>
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/stage-mode.css">
+    <link rel="stylesheet" href="css/command-center.css">
+    <style>
+        .sync-active-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid #10B981;
+            color: #34D399;
+            padding: 0.4rem 1rem;
+            border-radius: var(--radius-full);
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+        .sync-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #10B981;
+            animation: pulseDot 1.2s infinite;
+        }
+        @keyframes pulseDot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.5; }
+        }
+        .vendor-table th {
+            background: rgba(15, 23, 42, 0.95);
+            color: var(--text-secondary);
+            font-weight: 700;
+            padding: 0.85rem 1rem;
+            border-bottom: 2px solid var(--border-subtle);
+            text-align: left;
+        }
+        .vendor-table td {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--border-subtle);
+            vertical-align: middle;
+        }
+        .vendor-table tr.active-live td {
+            background: rgba(212, 175, 55, 0.08);
+            border-top: 1px solid rgba(212, 175, 55, 0.4);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.4);
+        }
+        .vendor-btn-play {
+            background: linear-gradient(135deg, #0284C7, #0369A1);
+            color: #FFFFFF;
+            border: 1px solid #38BDF8;
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all 0.2s ease;
+        }
+        .vendor-btn-play:hover {
+            background: #0284C7;
+            transform: translateY(-1px);
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+        }
+        .vendor-btn-play.playing {
+            background: linear-gradient(135deg, #DC2626, #B91C1C);
+            border-color: #F87171;
+            color: #FFFFFF;
+        }
+        .vendor-btn-stop {
+            background: rgba(239, 68, 68, 0.15);
+            color: #F87171;
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 0.35rem 0.65rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .vendor-btn-stop:hover {
+            background: rgba(239, 68, 68, 0.25);
+            color: #FFFFFF;
+        }
+    </style>
+</head>
+<body class="vendor-screen">
+    <div class="container" style="max-width:1150px; padding:2rem 1.5rem;">
+        <!-- Top Bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-subtle); padding-bottom:1.5rem; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+            <div>
+                <div style="color:var(--gold-primary); font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.25rem;">
+                    🎛️ Layar Kolaborasi Vendor Musik & Soundman (FOH / DJ Live Console)
+                </div>
+                <h1 style="font-size:1.8rem; font-weight:800; margin:0.2rem 0;" id="vendorEventTitle">
+                    Wedding Reception Farhan & Natasha
+                </h1>
+                <div style="color:var(--text-secondary); font-size:0.9rem;" id="vendorEventMeta">
+                    Venue: Grand Ballroom Hotel Mulia Senayan · Host: Loading...
+                </div>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+                <div style="display:flex; align-items:center; gap:0.4rem; background:rgba(212,175,55,0.08); padding:0.35rem 0.65rem; border-radius:var(--radius-sm); border:1px solid rgba(212,175,55,0.3);">
+                    <label for="vendorEventSelect" style="font-size:0.75rem; font-weight:800; color:var(--gold-primary);">⚡ Acara:</label>
+                    <select id="vendorEventSelect" class="form-select" style="max-width:240px; padding:0.25rem 0.5rem; font-size:0.8rem; background:#0B0F19; color:#FFFFFF; border-color:var(--gold-primary);" onchange="onVendorEventChange(this.value)">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+                <div class="sync-active-badge">
+                    <span class="sync-dot"></span>
+                    <span id="syncStatusLabel">Tersinkronisasi Real-Time</span>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="downloadAllAudioPackVendor()" title="Download seluruh audio cue (.wav) ke memori laptop/HP untuk jaminan 100% offline tanpa internet" style="border-color:#38BDF8; color:#38BDF8; font-weight:700;">
+                    ⬇️ Unduh Audio Pack (.wav)
+                </button>
+                <a href="admin.html" class="btn btn-secondary btn-sm">
+                    ◀ Kembali ke Admin
+                </a>
+            </div>
+        </div>
+
+        <!-- Offline & Web Audio Notice Banner -->
+        <div style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.3); border-radius:var(--radius-md); padding:0.85rem 1.25rem; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+                <span style="font-size:1.5rem;">🎧</span>
+                <div>
+                    <div style="font-size:0.85rem; font-weight:800; color:#38BDF8;">Pemutar Audio FOH / DJ Siap Pakai di Web (100% Offline)</div>
+                    <div style="font-size:0.78rem; color:var(--text-secondary);">
+                        Operator dapat memutar/menghentikan cue suara langsung dari tombol <strong>Play</strong> di bawah tanpa perlu internet. Anda juga bisa mengunduh file WAV ke gadget.
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+                <button class="btn btn-secondary btn-sm" onclick="stopAllVendorAudio()" style="font-size:0.75rem; color:#EF4444; border-color:rgba(239,68,68,0.4);">
+                    ⏹ Stop Semua Audio
+                </button>
+            </div>
+        </div>
+
+        <!-- Active Live Segment Banner -->
+        <div style="background:linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(56, 189, 248, 0.15)); border:2px solid var(--gold-primary); border-radius:var(--radius-lg); padding:1.75rem 2rem; margin-bottom:2rem; box-shadow:var(--shadow-gold);">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem;">
+                <div style="flex:1;">
+                    <div style="font-size:0.85rem; font-weight:800; color:var(--gold-primary); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.4rem;">
+                        🔥 SEGMEN PANGGUNG AKTIF SAAT INI (LIVE ON STAGE):
+                    </div>
+                    <h2 id="activeLiveTitle" style="font-size:1.9rem; font-weight:800; margin-bottom:0.5rem;">
+                        Segmen 1: Opening Greeting & Welcoming VIP
+                    </h2>
+                    <div style="font-size:0.92rem; color:var(--text-secondary); margin-bottom:1rem;" id="activeLiveTrackName">
+                        🎵 Trek Terkait: <strong>Acoustic Lounge & Jazz Classics</strong> · Artis: <em>Vanya Acoustic Trio</em>
+                    </div>
+                </div>
+                <div style="display:flex; gap:0.6rem; align-items:center;">
+                    <button class="vendor-btn-play" id="btnLivePlay" onclick="playActiveLiveCue()" style="padding:0.6rem 1.25rem; font-size:0.95rem;">
+                        ▶ Putar Musik Segmen Ini (Live)
+                    </button>
+                    <button class="vendor-btn-stop" id="btnLiveStop" onclick="stopAllVendorAudio()" style="padding:0.6rem 1rem; font-size:0.95rem;">
+                        ⏹ Stop
+                    </button>
+                </div>
+            </div>
+
+            <div style="background:rgba(0,0,0,0.45); padding:1rem 1.5rem; border-radius:var(--radius-md); border-left:4px solid #38BDF8;">
+                <span style="font-size:0.82rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Instruksi Musik / Audio Cue Operator:</span>
+                <div id="activeLiveCue" style="font-size:1.35rem; font-weight:700; color:#38BDF8; margin-top:0.25rem;">
+                    Fade-in Orchestral Romance Theme, volume 30%
+                </div>
+            </div>
+        </div>
+
+        <!-- Full Rundown Cue Matrix -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+            <h3 style="font-size:1.25rem; font-weight:800; margin:0;">📋 Matriks Rundown Panggung & Cue Musik Lengkap:</h3>
+            <span style="font-size:0.8rem; color:var(--text-secondary);" id="vendorRundownCountLabel">7 Segmen Terdaftar</span>
+        </div>
+
+        <div style="overflow-x:auto; background:var(--bg-surface); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+            <table class="vendor-table" style="width:100%; border-collapse:collapse;">
+                <thead>
+                    <tr>
+                        <th style="width:55px; text-align:center;">Urutan</th>
+                        <th style="width:130px;">Waktu</th>
+                        <th style="width:230px;">Nama Segmen Acara</th>
+                        <th style="width:220px;">Musik Acara Melekat</th>
+                        <th>Instruksi Cue & Sound Effects</th>
+                        <th style="width:120px; text-align:center;">Status</th>
+                        <th style="width:145px; text-align:center;">Kontrol Audio</th>
+                    </tr>
+                </thead>
+                <tbody id="vendorRundownTableBody">
+                    <!-- Populated dynamically via renderVendorRundown() -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="js/soundboard.js"></script>
+    <script src="js/live-sync.js"></script>
+    <script>
+        // State
+        let activeEventId = 1;
+        let activeSegmentIndex = 1; // 1-indexed
+        let vendorRundown = [];
+        let vendorMusicList = [];
+        let currentPlayingRowIdx = null;
+
+        // Web Audio Synthesizer Engine
+        let vendorAudioCtx = null;
+        let vendorActiveOscillators = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initVendorScreen();
+        });
+
+        function initVendorScreen() {
+            // Read active event ID from localStorage or fallback
+            try {
+                const storedId = localStorage.getItem('activeCommandCenterEventId');
+                if (storedId) activeEventId = storedId;
+            } catch(e) {}
+
+            populateEventSelector();
+            loadActiveEventData();
+
+            // Listen for real-time broadcasts from MC Stage Mode or Admin Command Center
+            if (window.liveSync) {
+                window.liveSync.subscribe((data) => {
+                    if (data.type === 'SEGMENT_CHANGE') {
+                        const p = data.payload;
+                        if (p.eventId && String(p.eventId) !== String(activeEventId)) {
+                            activeEventId = p.eventId;
+                            populateEventSelector();
+                            loadActiveEventData();
+                        }
+                        activeSegmentIndex = p.segmentIndex || 1;
+                        updateLiveBanner(p.segmentIndex, p.segmentTitle, p.musicCue);
+                        highlightActiveRow(p.segmentIndex);
+
+                        // Sound alert for DJ / Operator
+                        if (window.soundboard) window.soundboard.playDing();
+                    } else if (data.type === 'MUSIC_LIST_UPDATED' || data.type === 'RUNDOWN_UPDATED') {
+                        loadActiveEventData();
+                    }
+                });
+            }
+        }
+
+        function populateEventSelector() {
+            let events = [];
+            try {
+                const raw = localStorage.getItem('unified_events_database_v8');
+                if (raw) events = JSON.parse(raw);
+            } catch(e) {}
+
+            if (!events || events.length === 0) {
+                events = [
+                    { id: 1, title: 'Wedding Reception Farhan & Natasha', venue: 'Grand Ballroom Hotel Mulia Senayan' },
+                    { id: 2, title: 'Corporate Gala Astra International', venue: 'Fairmont Hotel Ballroom Jakarta' },
+                    { id: 3, title: 'Intimate Akad Nikah Sarah & Dimas', venue: 'Plataran Dharmawangsa' }
+                ];
+            }
+
+            const sel = document.getElementById('vendorEventSelect');
+            if (sel) {
+                sel.innerHTML = events.map(e => `<option value="${e.id}" ${String(e.id) === String(activeEventId) ? 'selected' : ''}>${e.title}</option>`).join('');
+            }
+        }
+
+        function onVendorEventChange(newId) {
+            activeEventId = newId;
+            try {
+                localStorage.setItem('activeCommandCenterEventId', newId);
+            } catch(e) {}
+            loadActiveEventData();
+        }
+
+        function loadActiveEventData() {
+            // Load event info
+            let events = [];
+            try {
+                const raw = localStorage.getItem('unified_events_database_v8');
+                if (raw) events = JSON.parse(raw);
+            } catch(e) {}
+            const ev = events.find(e => String(e.id) === String(activeEventId)) || events[0] || {
+                id: 1,
+                title: 'Wedding Reception Farhan & Natasha',
+                venue: 'Grand Ballroom Hotel Mulia Senayan, Jakarta',
+                pic: 'Natasha'
+            };
+
+            const titleEl = document.getElementById('vendorEventTitle');
+            if (titleEl) titleEl.textContent = ev.title;
+
+            const metaEl = document.getElementById('vendorEventMeta');
+            if (metaEl) metaEl.textContent = `Venue: ${ev.venue || 'Grand Ballroom'} · Host: Loading...`;
+
+            // Load Rundown
+            try {
+                const rawRundown = localStorage.getItem(`ecc_rundown_${activeEventId}`);
+                if (rawRundown) {
+                    vendorRundown = JSON.parse(rawRundown);
+                } else if (ev.rundown && Array.isArray(ev.rundown)) {
+                    vendorRundown = ev.rundown;
+                }
+            } catch(e) {
+                vendorRundown = [];
+            }
+
+            if (!vendorRundown || vendorRundown.length === 0) {
+                vendorRundown = [
+                    { startTime: '18:30', endTime: '19:00', title: 'Open Gate & Welcoming Cocktail', cue: '🎵 Acoustic Lounge & Jazz Classics, Volume 35%', musicTitle: 'Acoustic Lounge & Jazz Classics', musicArtist: 'Vanya Acoustic Trio', musicGenre: 'Jazz' },
+                    { startTime: '19:00', endTime: '19:20', title: 'Grand Entrance Kedua Mempelai', cue: '🎺 Royal Entrance Fanfare & Romantic Symphony', musicTitle: 'A Thousand Years (Grand Piano)', musicArtist: 'Christina Perri / Orchestra', musicGenre: 'Fanfare' },
+                    { startTime: '19:20', endTime: '19:40', title: 'Sambutan Hangat Keluarga & Doa', cue: '🎵 Warm Soft Piano Pad, Volume 20%', musicTitle: 'A Whole New World (Piano Pad)', musicArtist: 'Wedding Strings Ensemble', musicGenre: 'Ambient' },
+                    { startTime: '19:40', endTime: '20:05', title: 'Wedding Cake Cutting & Toast', cue: '🍾 Champagne Pop SFX + Sweet Upbeat Symphony', musicTitle: 'Sugar & Marry You', musicArtist: 'Maroon 5 / Bruno Mars Acoustic', musicGenre: 'Upbeat' },
+                    { startTime: '20:05', endTime: '21:00', title: 'Santap Malam & Live Band', cue: '🎸 Live Band Romantic Medley / Soulful Jazz', musicTitle: 'Can\'t Take My Eyes Off You', musicArtist: 'Ed Sheeran & Frankie Valli', musicGenre: 'Romance' },
+                    { startTime: '21:00', endTime: '21:30', title: 'Lempar Bunga & Interactive Games', cue: '🥁 Drumroll Suspense + Upbeat Party Hit', musicTitle: 'Single Ladies & Happy Celebration', musicArtist: 'Beyonce / Pharrell', musicGenre: 'Upbeat' },
+                    { startTime: '21:30', endTime: '22:00', title: 'Sesi Foto VIP & Closing MC', cue: '🎻 Grand Orchestral Outro & Warm Ambient Music', musicTitle: 'Time to Say Goodbye', musicArtist: 'Andrea Bocelli & Orchestra', musicGenre: 'Orchestra' }
+                ];
+            }
+
+            // Load Music List
+            try {
+                const rawMusic = localStorage.getItem(`ecc_music_${activeEventId}`);
+                if (rawMusic) vendorMusicList = JSON.parse(rawMusic);
+            } catch(e) {
+                vendorMusicList = [];
+            }
+
+            renderVendorRundown();
+
+            // Set initial active segment
+            const firstItem = vendorRundown[0];
+            if (firstItem) {
+                updateLiveBanner(1, firstItem.title, firstItem.cue, firstItem.musicTitle, firstItem.musicArtist);
+                highlightActiveRow(1);
+            }
+        }
+
+        function renderVendorRundown() {
+            const tbody = document.getElementById('vendorRundownTableBody');
+            if (!tbody) return;
+
+            const countLabel = document.getElementById('vendorRundownCountLabel');
+            if (countLabel) countLabel.textContent = `${vendorRundown.length} Segmen Terdaftar`;
+
+            tbody.innerHTML = vendorRundown.map((item, idx) => {
+                const segNum = idx + 1;
+                const isLive = (segNum === activeSegmentIndex);
+                const musicTitle = item.musicTitle || (item.music ? item.music.title : '—');
+                const musicArtist = item.musicArtist || (item.music ? item.music.artist : '—');
+                const genre = item.musicGenre || (item.music ? item.music.genre : 'Romance');
+                const isPlaying = (currentPlayingRowIdx === idx);
+
+                return `
+                    <tr id="row-segment-${segNum}" class="${isLive ? 'active-live' : ''} ${isPlaying ? 'playing' : ''}">
+                        <td style="font-weight:800; font-size:1.1rem; color:var(--gold-primary); text-align:center;">
+                            #${segNum}
+                        </td>
+                        <td style="font-family:var(--font-mono); font-weight:700; white-space:nowrap; color:#FFFFFF;">
+                            ⏰ ${item.startTime || '19:00'} - ${item.endTime || '19:30'}
+                        </td>
+                        <td>
+                            <div style="font-weight:700; font-size:0.98rem; color:#FFFFFF;">
+                                ${escapeHtml(item.title)}
+                            </div>
+                        </td>
+                        <td>
+                            <div style="font-weight:700; font-size:0.9rem; color:#38BDF8;">
+                                🎵 ${escapeHtml(musicTitle)}
+                            </div>
+                            <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:0.15rem;">
+                                🎤 ${escapeHtml(musicArtist)} · <span class="badge-genre badge-genre-${genre.toLowerCase()}">${escapeHtml(genre)}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div style="color:#FBBF24; font-weight:600; font-size:0.88rem; line-height:1.4;">
+                                ${escapeHtml(item.cue || '— Background audio normal —')}
+                            </div>
+                        </td>
+                        <td style="text-align:center;">
+                            <span class="badge ${isLive ? 'badge-available' : 'badge-completed'}" id="badge-seg-${segNum}">
+                                ${isLive ? 'LIVE ON STAGE' : 'Standby'}
+                            </span>
+                        </td>
+                        <td style="text-align:center;">
+                            <div style="display:flex; justify-content:center; gap:0.35rem; align-items:center;">
+                                <button class="vendor-btn-play ${isPlaying ? 'playing' : ''}" onclick="playVendorCue(${idx}, this)" title="Putar Musik / Audio Cue (100% Offline)">
+                                    ${isPlaying ? '⏹ Stop' : '▶ Play'}
+                                </button>
+                                <button class="btn btn-secondary btn-sm" onclick="downloadSingleWav(${idx})" title="Unduh File .wav ke Gadget" style="font-size:0.75rem; padding:0.3rem 0.5rem;">
+                                    ⬇️
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateLiveBanner(segmentIndex, segmentTitle, musicCue, mTitle, mArtist) {
+            const item = vendorRundown[segmentIndex - 1];
+            const title = segmentTitle || (item ? item.title : `Segmen ${segmentIndex}`);
+            const cue = musicCue || (item ? item.cue : '— Background audio normal —');
+            const track = mTitle || (item ? item.musicTitle : (item && item.music ? item.music.title : ''));
+            const artist = mArtist || (item ? item.musicArtist : (item && item.music ? item.music.artist : ''));
+
+            document.getElementById('activeLiveTitle').textContent = `Segmen ${segmentIndex}: ${title}`;
+            document.getElementById('activeLiveCue').textContent = cue || '— Background music normal —';
+
+            const trackNameEl = document.getElementById('activeLiveTrackName');
+            if (trackNameEl) {
+                if (track) {
+                    trackNameEl.innerHTML = `🎵 Trek Terkait: <strong>${escapeHtml(track)}</strong> · Artis: <em>${escapeHtml(artist || 'FOH Live')}</em>`;
+                } else {
+                    trackNameEl.innerHTML = `🎵 Trek Terkait: <em>Standby BGM / Sinyal MC</em>`;
+                }
+            }
+        }
+
+        function highlightActiveRow(segmentIndex) {
+            document.querySelectorAll('.vendor-table tr').forEach(r => r.classList.remove('active-live'));
+            document.querySelectorAll('.vendor-table .badge').forEach(b => {
+                b.className = 'badge badge-completed';
+                b.textContent = 'Standby';
+            });
+
+            const activeRow = document.getElementById(`row-segment-${segmentIndex}`);
+            const activeBadge = document.getElementById(`badge-seg-${segmentIndex}`);
+            if (activeRow) activeRow.classList.add('active-live');
+            if (activeBadge) {
+                activeBadge.className = 'badge badge-available';
+                activeBadge.textContent = 'LIVE ON STAGE';
+            }
+        }
+
+        // =============================================================================
+        // AUDIO SYNTHESIZER & CONTROLS FOR VENDOR OPERATOR
+        // =============================================================================
+
+        function stopAllVendorAudio() {
+            if (vendorActiveOscillators && vendorActiveOscillators.length > 0) {
+                vendorActiveOscillators.forEach(osc => {
+                    try { osc.stop(); osc.disconnect(); } catch(e) {}
+                });
+                vendorActiveOscillators = [];
+            }
+            if (vendorAudioCtx && vendorAudioCtx.state !== 'closed') {
+                try { vendorAudioCtx.close(); } catch(e) {}
+            }
+            vendorAudioCtx = null;
+
+            document.querySelectorAll('.vendor-btn-play').forEach(btn => {
+                btn.classList.remove('playing');
+                btn.innerHTML = '▶ Play';
+            });
+            const livePlayBtn = document.getElementById('btnLivePlay');
+            if (livePlayBtn) {
+                livePlayBtn.classList.remove('playing');
+                livePlayBtn.innerHTML = '▶ Putar Musik Segmen Ini (Live)';
+            }
+
+            document.querySelectorAll('.vendor-table tr').forEach(tr => tr.classList.remove('playing'));
+            currentPlayingRowIdx = null;
+        }
+
+        function playVendorCue(rowIdx, btnEl) {
+            if (currentPlayingRowIdx === rowIdx && vendorAudioCtx) {
+                stopAllVendorAudio();
+                return;
+            }
+
+            stopAllVendorAudio();
+            currentPlayingRowIdx = rowIdx;
+
+            const item = vendorRundown[rowIdx];
+            if (!item) return;
+
+            if (btnEl) {
+                btnEl.classList.add('playing');
+                btnEl.innerHTML = '⏹ Stop';
+            }
+            const row = document.getElementById(`row-segment-${rowIdx + 1}`);
+            if (row) row.classList.add('playing');
+
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            vendorAudioCtx = new AudioContextClass();
+
+            const genre = item.musicGenre || (item.music ? item.music.genre : 'Romance');
+            const preset = genre === 'Fanfare' ? 'royal_fanfare' : (genre === 'Upbeat' ? 'upbeat_beat' : 'romantic_piano');
+
+            synthesizeVendorMelody(vendorAudioCtx, preset, () => {
+                stopAllVendorAudio();
+            });
+        }
+
+        function playActiveLiveCue() {
+            const idx = activeSegmentIndex - 1;
+            const btn = document.querySelector(`#row-segment-${activeSegmentIndex} .vendor-btn-play`);
+            playVendorCue(idx, btn);
+
+            const liveBtn = document.getElementById('btnLivePlay');
+            if (liveBtn) {
+                liveBtn.classList.add('playing');
+                liveBtn.innerHTML = '⏹ Hentikan Musik';
+            }
+        }
+
+        function synthesizeVendorMelody(ctx, preset, onEnded) {
+            const now = ctx.currentTime;
+            const masterGain = ctx.createGain();
+            masterGain.gain.setValueAtTime(0.45, now);
+            masterGain.connect(ctx.destination);
+
+            let notes = [];
+            let waveType = 'sine';
+
+            if (preset === 'royal_fanfare') {
+                waveType = 'triangle';
+                notes = [
+                    { freq: 261.63, time: 0, dur: 0.2 },
+                    { freq: 392.00, time: 0.22, dur: 0.2 },
+                    { freq: 523.25, time: 0.44, dur: 0.2 },
+                    { freq: 659.25, time: 0.66, dur: 0.3 },
+                    { freq: 783.99, time: 1.0, dur: 0.3 },
+                    { freq: 1046.50, time: 1.35, dur: 1.4 }
+                ];
+            } else if (preset === 'upbeat_beat') {
+                waveType = 'sawtooth';
+                notes = [
+                    { freq: 440.00, time: 0, dur: 0.18 },
+                    { freq: 554.37, time: 0.2, dur: 0.18 },
+                    { freq: 659.25, time: 0.4, dur: 0.25 },
+                    { freq: 880.00, time: 0.68, dur: 0.35 },
+                    { freq: 659.25, time: 1.05, dur: 0.2 },
+                    { freq: 880.00, time: 1.3, dur: 1.0 }
+                ];
+            } else {
+                waveType = 'sine';
+                notes = [
+                    { freq: 261.63, time: 0, dur: 0.4 },
+                    { freq: 329.63, time: 0.25, dur: 0.4 },
+                    { freq: 392.00, time: 0.5, dur: 0.4 },
+                    { freq: 493.88, time: 0.75, dur: 0.5 },
+                    { freq: 523.25, time: 1.1, dur: 1.6 }
+                ];
+            }
+
+            let maxTime = 0;
+            notes.forEach(n => {
+                const osc = ctx.createOscillator();
+                const noteGain = ctx.createGain();
+
+                osc.type = waveType;
+                osc.frequency.setValueAtTime(n.freq, now + n.time);
+
+                noteGain.gain.setValueAtTime(0.001, now + n.time);
+                noteGain.gain.linearRampToValueAtTime(0.35, now + n.time + 0.04);
+                noteGain.gain.exponentialRampToValueAtTime(0.001, now + n.time + n.dur);
+
+                osc.connect(noteGain);
+                noteGain.connect(masterGain);
+
+                osc.start(now + n.time);
+                osc.stop(now + n.time + n.dur + 0.05);
+
+                if (vendorActiveOscillators) vendorActiveOscillators.push(osc);
+                if (n.time + n.dur > maxTime) maxTime = n.time + n.dur;
+            });
+
+            if (typeof onEnded === 'function') {
+                setTimeout(onEnded, (maxTime + 0.2) * 1000);
+            }
+        }
+
+        // =============================================================================
+        // OFFLINE WAV EXPORTER FOR VENDOR GADGET
+        // =============================================================================
+
+        function audioBufferToWavBlob(buffer) {
+            const numChannels = buffer.numberOfChannels;
+            const sampleRate = buffer.sampleRate;
+            const format = 1;
+            const bitDepth = 16;
+            const bytesPerSample = bitDepth / 8;
+            const blockAlign = numChannels * bytesPerSample;
+            const numSamples = buffer.length;
+            const dataSize = numSamples * blockAlign;
+            const headerSize = 44;
+            const totalSize = headerSize + dataSize;
+            const arrayBuffer = new ArrayBuffer(totalSize);
+            const view = new DataView(arrayBuffer);
+
+            function writeString(offset, string) {
+                for (let i = 0; i < string.length; i++) view.setUint8(offset + i, string.charCodeAt(i));
+            }
+
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + dataSize, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, format, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * blockAlign, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, bitDepth, true);
+            writeString(36, 'data');
+            view.setUint32(40, dataSize, true);
+
+            let offset = 44;
+            const channels = [];
+            for (let c = 0; c < numChannels; c++) channels.push(buffer.getChannelData(c));
+            for (let i = 0; i < numSamples; i++) {
+                for (let c = 0; c < numChannels; c++) {
+                    let sample = channels[c][i];
+                    sample = Math.max(-1, Math.min(1, sample));
+                    const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+                    view.setInt16(offset, intSample, true);
+                    offset += 2;
+                }
+            }
+            return new Blob([view], { type: 'audio/wav' });
+        }
+
+        function downloadSingleWav(rowIdx) {
+            const item = vendorRundown[rowIdx];
+            if (!item) return;
+
+            const sampleRate = 44100;
+            const durationSec = 3.0;
+            const OfflineCtxClass = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+            if (!OfflineCtxClass) {
+                alert('Browser Anda tidak mendukung rendering offline WAV.');
+                return;
+            }
+
+            const offlineCtx = new OfflineCtxClass(2, sampleRate * durationSec, sampleRate);
+            const genre = item.musicGenre || (item.music ? item.music.genre : 'Romance');
+            const preset = genre === 'Fanfare' ? 'royal_fanfare' : (genre === 'Upbeat' ? 'upbeat_beat' : 'romantic_piano');
+
+            synthesizeVendorMelody(offlineCtx, preset);
+
+            offlineCtx.startRendering().then(renderedBuffer => {
+                const wavBlob = audioBufferToWavBlob(renderedBuffer);
+                const url = URL.createObjectURL(wavBlob);
+                const a = document.createElement('a');
+                const titleStr = (item.musicTitle || item.title || `Segmen_${rowIdx + 1}`).replace(/[^a-zA-Z0-9_-]/g, '_');
+                a.href = url;
+                a.download = `Cue_Segmen_${rowIdx + 1}_${titleStr}.wav`;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 1000);
+            });
+        }
+
+        function downloadAllAudioPackVendor() {
+            if (vendorRundown.length === 0) return;
+            alert(`Memulai unduhan seluruh Cue Musik (${vendorRundown.length} file .wav) ke perangkat Anda untuk pemakaian 100% offline di venue.`);
+            let delay = 0;
+            vendorRundown.forEach((r, idx) => {
+                setTimeout(() => {
+                    downloadSingleWav(idx);
+                }, delay);
+                delay += 700;
+            });
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+    </script>
+</body>
+</html>

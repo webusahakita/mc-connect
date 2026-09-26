@@ -1,0 +1,808 @@
+Created At: 2026-09-24T18:40:16+07:00
+Completed At: 2026-09-24T18:40:16+07:00
+File Path: `file:///c:/Users/Nawakara/.gemini/antigravity-ide/scratch/mc-connect/public/css/landing.css`
+Total Lines: 1009
+Total Bytes: 22182
+Showing lines 1 to 800
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1: /* =========================================================
+2:    DYNAMIC LANDING PAGE & PUBLIC PORTAL STYLES
+3:    ========================================================= */
+4: 
+5: /* Hero Section */
+6: .hero-section {
+7:     position: relative;
+8:     padding: 5rem 0 4rem;
+9:     background: radial-gradient(circle at 75% 30%, rgba(212, 175, 55, 0.12) 0%, transparent 60%),
+10:                 radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
+11:     border-bottom: 1px solid var(--border-subtle);
+12:     overflow: hidden;
+13: }
+14: 
+15: .hero-grid {
+16:     display: grid;
+17:     grid-template-columns: 1.2fr 0.8fr;
+18:     gap: 3.5rem;
+19:     align-items: center;
+20: }
+21: 
+22: .hero-subtitle {
+23:     display: inline-flex;
+24:     align-items: center;
+25:     gap: 0.5rem;
+26:     color: var(--gold-primary);
+27:     font-size: 0.95rem;
+28:     font-weight: 700;
+29:     text-transform: uppercase;
+30:     letter-spacing: 0.1em;
+31:     margin-bottom: 1rem;
+32: }
+33: 
+34: .hero-title {
+35:     font-family: var(--font-heading);
+36:     font-size: 3.4rem;
+37:     line-height: 1.15;
+38:     font-weight: 700;
+39:     margin-bottom: 1.25rem;
+40:     color: var(--text-primary);
+41: }
+42: 
+43: .hero-title span {
+44:     background: linear-gradient(135deg, #FFF, var(--gold-primary));
+45:     -webkit-background-clip: text;
+46:     -webkit-text-fill-color: transparent;
+47: }
+48: 
+49: .hero-bio {
+50:     font-size: 1.1rem;
+51:     color: var(--text-secondary);
+52:     margin-bottom: 2rem;
+53:     max-width: 620px;
+54:     line-height: 1.7;
+55: }
+56: 
+57: .hero-specializations {
+58:     display: flex;
+59:     flex-wrap: wrap;
+60:     gap: 0.6rem;
+61:     margin-bottom: 2.25rem;
+62: }
+63: 
+64: .spec-chip {
+65:     background: rgba(255, 255, 255, 0.04);
+66:     border: 1px solid var(--border-subtle);
+67:     padding: 0.4rem 0.9rem;
+68:     border-radius: var(--radius-full);
+69:     font-size: 0.85rem;
+70:     color: var(--text-secondary);
+71: }
+72: 
+73: .hero-cta {
+74:     display: flex;
+75:     flex-wrap: wrap;
+76:     gap: 1rem;
+77:     align-items: center;
+78: }
+79: 
+80: /* MC Avatar Card & Showreel */
+81: .hero-visual {
+82:     position: relative;
+83: }
+84: 
+85: .hero-card {
+86:     position: relative;
+87:     background: var(--bg-surface);
+88:     border: 1px solid var(--border-accent);
+89:     border-radius: var(--radius-lg);
+90:     overflow: hidden;
+91:     box-shadow: var(--shadow-gold), var(--shadow-lg);
+92: }
+93: 
+94: .hero-img-wrapper {
+95:     position: relative;
+96:     width: 100%;
+97:     height: 440px;
+98:     overflow: hidden;
+99: }
+100: 
+101: .hero-img {
+102:     width: 100%;
+103:     height: 100%;
+104:     object-fit: cover;
+105:     transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+106: }
+107: 
+108: .hero-card:hover .hero-img {
+109:     transform: scale(1.04);
+110: }
+111: 
+112: .hero-img-overlay {
+113:     position: absolute;
+114:     inset: 0;
+115:     background: linear-gradient(to top, var(--bg-surface) 10%, transparent 60%);
+116:     display: flex;
+117:     flex-direction: column;
+118:     justify-content: flex-end;
+119:     padding: 1.5rem;
+120: }
+121: 
+122: .hero-card-meta h3 {
+123:     font-size: 1.3rem;
+124:     font-weight: 700;
+125: }
+126: 
+127: .hero-card-meta p {
+128:     color: var(--gold-primary);
+129:     font-size: 0.9rem;
+130: }
+131: 
+132: /* Floating Showreel Play Button */
+133: .btn-play-showreel {
+134:     position: absolute;
+135:     top: 50%;
+136:     left: 50%;
+137:     transform: translate(-50%, -50%);
+138:     width: 68px;
+139:     height: 68px;
+140:     border-radius: 50%;
+141:     background: rgba(11, 15, 23, 0.85);
+142:     border: 2px solid var(--gold-primary);
+143:     color: var(--gold-primary);
+144:     display: flex;
+145:     align-items: center;
+146:     justify-content: center;
+147:     font-size: 1.6rem;
+148:     box-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
+149:     transition: transform 0.25s ease, background-color 0.25s ease;
+150: }
+151: 
+152: .btn-play-showreel:hover {
+153:     transform: translate(-50%, -50%) scale(1.15);
+154:     background: var(--gold-primary);
+155:     color: #0B0F17;
+156: }
+157: 
+158: /* Stats Bar */
+159: .stats-bar {
+160:     background: var(--bg-surface);
+161:     border-bottom: 1px solid var(--border-subtle);
+162:     padding: 2rem 0;
+163: }
+164: 
+165: .stats-grid {
+166:     display: grid;
+167:     grid-template-columns: repeat(4, 1fr);
+168:     gap: 1.5rem;
+169:     text-align: center;
+170: }
+171: 
+172: .stat-item .stat-num {
+173:     font-size: 2.3rem;
+174:     font-weight: 800;
+175:     color: var(--gold-primary);
+176:     font-family: var(--font-heading);
+177: }
+178: 
+179: .stat-item .stat-label {
+180:     font-size: 0.9rem;
+181:     color: var(--text-secondary);
+182:     text-transform: uppercase;
+183:     letter-spacing: 0.05em;
+184: }
+185: 
+186: /* Catalog Packages */
+187: .section-padding {
+188:     padding: 5rem 0;
+189: }
+190: 
+191: .section-header {
+192:     text-align: center;
+193:     max-width: 680px;
+194:     margin: 0 auto 3.5rem;
+195: }
+196: 
+197: .section-tag {
+198:     color: var(--gold-primary);
+199:     font-size: 0.85rem;
+200:     font-weight: 700;
+201:     text-transform: uppercase;
+202:     letter-spacing: 0.1em;
+203:     margin-bottom: 0.5rem;
+204: }
+205: 
+206: .section-title {
+207:     font-family: var(--font-heading);
+208:     font-size: 2.4rem;
+209:     margin-bottom: 1rem;
+210: }
+211: 
+212: .section-desc {
+213:     color: var(--text-secondary);
+214:     font-size: 1rem;
+215: }
+216: 
+217: .packages-grid {
+218:     display: grid;
+219:     grid-template-columns: repeat(3, 1fr);
+220:     gap: 2rem;
+221: }
+222: 
+223: .package-card {
+224:     background: var(--bg-card);
+225:     border: 1px solid var(--border-subtle);
+226:     border-radius: var(--radius-lg);
+227:     padding: 2.25rem 2rem;
+228:     position: relative;
+229:     display: flex;
+230:     flex-direction: column;
+231:     transition: transform 0.3s ease, border-color 0.3s ease;
+232: }
+233: 
+234: .package-card:hover {
+235:     transform: translateY(-6px);
+236:     border-color: var(--border-accent);
+237: }
+238: 
+239: .package-card.featured {
+240:     border-color: var(--gold-primary);
+241:     box-shadow: 0 0 35px rgba(212, 175, 55, 0.15);
+242:     background: linear-gradient(180deg, rgba(212, 175, 55, 0.06), var(--bg-card));
+243: }
+244: 
+245: .package-badge {
+246:     position: absolute;
+247:     top: -12px;
+248:     right: 24px;
+249: }
+250: 
+251: .package-name {
+252:     font-size: 1.35rem;
+253:     font-weight: 700;
+254:     margin-bottom: 0.75rem;
+255: }
+256: 
+257: .package-price {
+258:     font-size: 1.9rem;
+259:     font-weight: 800;
+260:     color: var(--gold-primary);
+261:     margin-bottom: 0.25rem;
+262: }
+263: 
+264: .package-duration {
+265:     font-size: 0.88rem;
+266:     color: var(--text-muted);
+267:     margin-bottom: 1.5rem;
+268:     padding-bottom: 1.5rem;
+269:     border-bottom: 1px solid var(--border-subtle);
+270: }
+271: 
+272: .package-features {
+273:     list-style: none;
+274:     margin-bottom: 2rem;
+275:     flex-grow: 1;
+276: }
+277: 
+278: .package-features li {
+279:     font-size: 0.92rem;
+280:     color: var(--text-secondary);
+281:     margin-bottom: 0.75rem;
+282:     display: flex;
+283:     align-items: center;
+284:     gap: 0.6rem;
+285: }
+286: 
+287: .package-features li::before {
+288:     content: "✓";
+289:     color: var(--gold-primary);
+290:     font-weight: 800;
+291: }
+292: 
+293: /* Calendar Availability Widget */
+294: .calendar-section {
+295:     background: var(--bg-surface);
+296:     border-top: 1px solid var(--border-subtle);
+297:     border-bottom: 1px solid var(--border-subtle);
+298: }
+299: 
+300: .calendar-widget-wrapper {
+301:     background: var(--bg-card);
+302:     border: 1px solid var(--border-subtle);
+303:     border-radius: var(--radius-lg);
+304:     padding: 2rem;
+305:     box-shadow: var(--shadow-lg);
+306: }
+307: 
+308: .calendar-header-bar {
+309:     display: flex;
+310:     align-items: center;
+311:     justify-content: space-between;
+312:     margin-bottom: 1.5rem;
+313:     flex-wrap: wrap;
+314:     gap: 1rem;
+315: }
+316: 
+317: .calendar-legend {
+318:     display: flex;
+319:     align-items: center;
+320:     gap: 1.25rem;
+321:     font-size: 0.85rem;
+322:     flex-wrap: wrap;
+323: }
+324: 
+325: .legend-item {
+326:     display: flex;
+327:     align-items: center;
+328:     gap: 0.4rem;
+329: }
+330: 
+331: .legend-dot {
+332:     width: 10px;
+333:     height: 10px;
+334:     border-radius: 50%;
+335: }
+336: 
+337: .legend-dot.avail { background: var(--color-available); }
+338: .legend-dot.tentative { background: var(--color-tentative); }
+339: .legend-dot.locked { background: var(--color-locked); }
+340: 
+341: .calendar-grid {
+342:     display: grid;
+343:     grid-template-columns: repeat(7, 1fr);
+344:     gap: 0.5rem;
+345: }
+346: 
+347: .calendar-day-header {
+348:     text-align: center;
+349:     font-weight: 700;
+350:     font-size: 0.8rem;
+351:     color: var(--text-muted);
+352:     padding: 0.5rem 0;
+353:     text-transform: uppercase;
+354: }
+355: 
+356: .calendar-cell {
+357:     min-height: 85px;
+358:     background: var(--bg-surface);
+359:     border: 1px solid var(--border-subtle);
+360:     border-radius: var(--radius-sm);
+361:     padding: 0.6rem;
+362:     display: flex;
+363:     flex-direction: column;
+364:     justify-content: space-between;
+365:     cursor: pointer;
+366:     transition: all 0.2s ease;
+367:     position: relative;
+368: }
+369: 
+370: .calendar-cell:hover {
+371:     border-color: var(--gold-primary);
+372:     transform: translateY(-2px);
+373: }
+374: 
+375: .calendar-cell.inactive {
+376:     opacity: 0.3;
+377:     pointer-events: none;
+378: }
+379: 
+380: .calendar-cell.past-date {
+381:     opacity: 0.4;
+382:     cursor: not-allowed;
+383:     background: rgba(255, 255, 255, 0.03) !important;
+384: }
+385: .calendar-cell.past-date:hover {
+386:     border-color: rgba(255, 255, 255, 0.05);
+387: }
+388: 
+389: .calendar-cell.has-event.locked {
+390:     border-color: rgba(239, 68, 68, 0.4);
+391:     background: rgba(239, 68, 68, 0.05);
+392: }
+393: 
+394: .calendar-cell.has-event.tentative {
+395:     border-color: rgba(245, 158, 11, 0.4);
+396:     background: rgba(245, 158, 11, 0.05);
+397: }
+398: 
+399: .calendar-cell-date {
+400:     font-weight: 700;
+401:     font-size: 0.9rem;
+402: }
+403: 
+404: .calendar-cell-pill {
+405:     font-size: 0.7rem;
+406:     padding: 0.15rem 0.4rem;
+407:     border-radius: 4px;
+408:     font-weight: 600;
+409:     white-space: nowrap;
+410:     overflow: hidden;
+411:     text-overflow: ellipsis;
+412: }
+413: 
+414: /* CMS Articles & Policies Accordion */
+415: .cms-accordion {
+416:     max-width: 850px;
+417:     margin: 0 auto;
+418: }
+419: 
+420: .accordion-item {
+421:     background: var(--bg-card);
+422:     border: 1px solid var(--border-subtle);
+423:     border-radius: var(--radius-md);
+424:     margin-bottom: 1rem;
+425:     overflow: hidden;
+426:     transition: border-color 0.2s ease;
+427: }
+428: 
+429: .accordion-item:hover {
+430:     border-color: var(--border-accent);
+431: }
+432: 
+433: .accordion-header {
+434:     padding: 1.25rem 1.5rem;
+435:     display: flex;
+436:     align-items: center;
+437:     justify-content: space-between;
+438:     cursor: pointer;
+439:     font-weight: 600;
+440:     font-size: 1.05rem;
+441: }
+442: 
+443: .accordion-icon {
+444:     transition: transform 0.3s ease;
+445: }
+446: 
+447: .accordion-item.active .accordion-icon {
+448:     transform: rotate(180deg);
+449: }
+450: 
+451: .accordion-content {
+452:     display: none;
+453:     padding: 0 1.5rem 1.5rem;
+454:     color: var(--text-secondary);
+455:     font-size: 0.95rem;
+456:     line-height: 1.7;
+457:     white-space: pre-line;
+458:     border-top: 1px solid var(--border-subtle);
+459:     padding-top: 1rem;
+460: }
+461: 
+462: .accordion-item.active .accordion-content {
+463:     display: block;
+464: }
+465: 
+466: /* Responsive */
+467: @media (max-width: 992px) {
+468:     .hero-grid {
+469:         grid-template-columns: 1fr;
+470:         gap: 2.5rem;
+471:     }
+472:     .packages-grid {
+473:         grid-template-columns: 1fr;
+474:     }
+475:     .stats-grid {
+476:         grid-template-columns: repeat(2, 1fr);
+477:     }
+478: }
+479: 
+480: /* =========================================================
+481:    LUXURY AMBIENT BACKGROUND MUSIC (BGM) WIDGET & NAVBAR
+482:    ========================================================= */
+483: 
+484: /* Navbar Music Button */
+485: .nav-bgm-btn {
+486:     display: inline-flex;
+487:     align-items: center;
+488:     gap: 0.45rem;
+489:     background: rgba(255, 255, 255, 0.05);
+490:     border: 1px solid rgba(212, 175, 55, 0.25);
+491:     color: var(--text-secondary);
+492:     padding: 0.42rem 0.85rem;
+493:     border-radius: var(--radius-full);
+494:     font-size: 0.8rem;
+495:     font-weight: 600;
+496:     cursor: pointer;
+497:     transition: all 0.25s ease;
+498:     text-decoration: none;
+499: }
+500: 
+501: .nav-bgm-btn:hover {
+502:     background: rgba(212, 175, 55, 0.12);
+503:     border-color: var(--gold-primary);
+504:     color: #FFFFFF;
+505:     transform: translateY(-1px);
+506: }
+507: 
+508: .nav-bgm-btn.active {
+509:     background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(16, 185, 129, 0.15));
+510:     border-color: var(--gold-primary);
+511:     color: var(--gold-primary);
+512:     box-shadow: 0 0 12px rgba(212, 175, 55, 0.25);
+513: }
+514: 
+515: .nav-bgm-wave {
+516:     font-family: var(--font-mono);
+517:     letter-spacing: -1px;
+518:     font-size: 0.85rem;
+519:     color: var(--color-available);
+520:     animation: navPulse 1.2s infinite ease-in-out;
+521: }
+522: 
+523: @keyframes navPulse {
+524:     0%, 100% { opacity: 0.4; }
+525:     50% { opacity: 1; transform: scaleY(1.2); }
+526: }
+527: 
+528: /* Floating BGM Widget */
+529: .bgm-floating-widget {
+530:     position: fixed;
+531:     bottom: 24px;
+532:     right: 24px;
+533:     z-index: 1000;
+534:     background: rgba(11, 16, 30, 0.94);
+535:     backdrop-filter: blur(18px);
+536:     -webkit-backdrop-filter: blur(18px);
+537:     border: 1px solid rgba(212, 175, 55, 0.32);
+538:     border-radius: 20px;
+539:     box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.75), 0 0 25px rgba(212, 175, 55, 0.18);
+540:     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+541:     width: 320px;
+542:     max-width: calc(100vw - 32px);
+543:     overflow: hidden;
+544:     font-family: var(--font-main);
+545: }
+546: 
+547: /* Collapsed state */
+548: .bgm-floating-widget.collapsed {
+549:     width: auto;
+550:     border-radius: 999px;
+551:     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 15px rgba(212, 175, 55, 0.2);
+552: }
+553: 
+554: .bgm-floating-widget.collapsed .bgm-card-body {
+555:     display: none;
+556: }
+557: 
+558: .bgm-floating-widget.collapsed .bgm-card-header {
+559:     padding: 0.55rem 1rem;
+560:     border-bottom: none;
+561:     cursor: pointer;
+562:     background: transparent;
+563: }
+564: 
+565: /* Header */
+566: .bgm-card-header {
+567:     padding: 0.85rem 1.15rem;
+568:     display: flex;
+569:     align-items: center;
+570:     justify-content: space-between;
+571:     gap: 0.6rem;
+572:     border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+573:     background: rgba(255, 255, 255, 0.02);
+574: }
+575: 
+576: .bgm-header-left {
+577:     display: flex;
+578:     align-items: center;
+579:     gap: 0.6rem;
+580:     min-width: 0;
+581: }
+582: 
+583: .bgm-title-text {
+584:     font-size: 0.85rem;
+585:     font-weight: 700;
+586:     color: #FFFFFF;
+587:     white-space: nowrap;
+588:     overflow: hidden;
+589:     text-overflow: ellipsis;
+590: }
+591: 
+592: .bgm-header-actions {
+593:     display: flex;
+594:     align-items: center;
+595:     gap: 0.4rem;
+596: }
+597: 
+598: .bgm-btn-mini {
+599:     background: transparent;
+600:     border: none;
+601:     color: var(--text-muted);
+602:     width: 26px;
+603:     height: 26px;
+604:     border-radius: 6px;
+605:     display: inline-flex;
+606:     align-items: center;
+607:     justify-content: center;
+608:     cursor: pointer;
+609:     transition: all 0.2s ease;
+610:     font-size: 0.85rem;
+611: }
+612: 
+613: .bgm-btn-mini:hover {
+614:     background: rgba(255, 255, 255, 0.1);
+615:     color: #FFFFFF;
+616: }
+617: 
+618: /* Equalizer Bars */
+619: .bgm-equalizer {
+620:     display: flex;
+621:     align-items: flex-end;
+622:     gap: 2.5px;
+623:     height: 16px;
+624: }
+625: 
+626: .bgm-eq-bar {
+627:     width: 3px;
+628:     background: var(--gold-primary);
+629:     border-radius: 2px;
+630:     height: 4px;
+631:     transition: height 0.2s ease;
+632: }
+633: 
+634: .bgm-equalizer.animating .bgm-eq-bar:nth-child(1) { animation: bgmDance 0.8s infinite alternate ease-in-out; }
+635: .bgm-equalizer.animating .bgm-eq-bar:nth-child(2) { animation: bgmDance 0.6s infinite alternate ease-in-out 0.15s; }
+636: .bgm-equalizer.animating .bgm-eq-bar:nth-child(3) { animation: bgmDance 0.9s infinite alternate ease-in-out 0.3s; }
+637: .bgm-equalizer.animating .bgm-eq-bar:nth-child(4) { animation: bgmDance 0.7s infinite alternate ease-in-out 0.1s; }
+638: .bgm-equalizer.animating .bgm-eq-bar:nth-child(5) { animation: bgmDance 0.85s infinite alternate ease-in-out 0.25s; }
+639: 
+640: @keyframes bgmDance {
+641:     0% { height: 4px; }
+642:     50% { height: 16px; }
+643:     100% { height: 7px; }
+644: }
+645: 
+646: /* Card Body */
+647: .bgm-card-body {
+648:     padding: 1.15rem;
+649:     display: flex;
+650:     flex-direction: column;
+651:     gap: 0.95rem;
+652: }
+653: 
+654: /* Track Selector Pills & Dropdown */
+655: .bgm-track-group {
+656:     display: flex;
+657:     flex-direction: column;
+658:     gap: 0.35rem;
+659: }
+660: 
+661: .bgm-track-label {
+662:     font-size: 0.72rem;
+663:     font-weight: 700;
+664:     text-transform: uppercase;
+665:     letter-spacing: 0.05em;
+666:     color: var(--text-muted);
+667: }
+668: 
+669: .bgm-track-pills {
+670:     display: flex;
+671:     gap: 0.35rem;
+672: }
+673: 
+674: .bgm-track-pill {
+675:     flex: 1;
+676:     background: rgba(255, 255, 255, 0.05);
+677:     border: 1px solid rgba(255, 255, 255, 0.12);
+678:     color: var(--text-secondary);
+679:     padding: 0.35rem 0.45rem;
+680:     border-radius: var(--radius-sm);
+681:     font-size: 0.72rem;
+682:     font-weight: 600;
+683:     cursor: pointer;
+684:     transition: all 0.2s ease;
+685:     text-align: center;
+686:     white-space: nowrap;
+687:     overflow: hidden;
+688:     text-overflow: ellipsis;
+689: }
+690: 
+691: .bgm-track-pill:hover {
+692:     background: rgba(212, 175, 55, 0.12);
+693:     border-color: var(--gold-primary);
+694:     color: #FFFFFF;
+695: }
+696: 
+697: .bgm-track-pill.active {
+698:     background: linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(212, 175, 55, 0.08));
+699:     border-color: var(--gold-primary);
+700:     color: var(--gold-primary);
+701:     font-weight: 700;
+702:     box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+703: }
+704: 
+705: .bgm-track-select {
+706:     width: 100%;
+707:     background: #0F172A;
+708:     border: 1px solid rgba(212, 175, 55, 0.3);
+709:     color: #FFFFFF;
+710:     font-size: 0.8rem;
+711:     padding: 0.45rem 0.65rem;
+712:     border-radius: var(--radius-sm);
+713:     outline: none;
+714:     cursor: pointer;
+715:     transition: border-color 0.2s ease;
+716: }
+717: 
+718: .bgm-track-select:focus {
+719:     border-color: var(--gold-primary);
+720: }
+721: 
+722: /* Main Play, Stop & Mute Controls */
+723: .bgm-controls-row {
+724:     display: flex;
+725:     gap: 0.5rem;
+726:     align-items: center;
+727: }
+728: 
+729: .bgm-btn-action {
+730:     display: inline-flex;
+731:     align-items: center;
+732:     justify-content: center;
+733:     gap: 0.35rem;
+734:     padding: 0.55rem 0.75rem;
+735:     border-radius: var(--radius-sm);
+736:     font-size: 0.8rem;
+737:     font-weight: 700;
+738:     cursor: pointer;
+739:     transition: all 0.2s ease;
+740:     flex: 1;
+741: }
+742: 
+743: .bgm-btn-play-act {
+744:     background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.05));
+745:     border: 1px solid var(--color-available);
+746:     color: #FFFFFF;
+747: }
+748: 
+749: .bgm-btn-play-act:hover {
+750:     background: var(--color-available);
+751:     color: #000000;
+752:     transform: translateY(-1px);
+753:     box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+754: }
+755: 
+756: .bgm-btn-stop-act {
+757:     background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.05));
+758:     border: 1px solid #EF4444;
+759:     color: #FCA5A5;
+760: }
+761: 
+762: .bgm-btn-stop-act:hover {
+763:     background: #EF4444;
+764:     color: #FFFFFF;
+765:     transform: translateY(-1px);
+766:     box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+767: }
+768: 
+769: .bgm-btn-mute {
+770:     width: 38px;
+771:     height: 38px;
+772:     border-radius: var(--radius-sm);
+773:     border: 1px solid rgba(255, 255, 255, 0.12);
+774:     background: rgba(255, 255, 255, 0.05);
+775:     color: #FFFFFF;
+776:     font-size: 1.1rem;
+777:     display: inline-flex;
+778:     align-items: center;
+779:     justify-content: center;
+780:     cursor: pointer;
+781:     transition: all 0.2s ease;
+782:     flex-shrink: 0;
+783: }
+784: 
+785: .bgm-btn-mute:hover {
+786:     background: rgba(255, 255, 255, 0.12);
+787:     border-color: var(--gold-primary);
+788: }
+789: 
+790: .bgm-btn-mute.muted {
+791:     background: rgba(239, 68, 68, 0.2);
+792:     border-color: rgba(239, 68, 68, 0.5);
+793:     color: #F87171;
+794: }
+795: 
+796: /* Volume Slider Section */
+797: .bgm-volume-group {
+798:     display: flex;
+799:     flex-direction: column;
+800:     gap: 0.35rem;
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

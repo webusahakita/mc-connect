@@ -1,0 +1,5 @@
+2026/09/04-13:43:40.879 5434 Creating DB C:\Users\Nawakara\.gemini\antigravity-ide\scratch\mc-connect\scratch\edge_test_profile\Default\EdgeCoupons/coupons_data.db since it was missing.
+2026/09/04-13:43:40.909 5434 Reusing MANIFEST C:\Users\Nawakara\.gemini\antigravity-ide\scratch\mc-connect\scratch\edge_test_profile\Default\EdgeCoupons/coupons_data.db/MANIFEST-000001
+2026/09/04-13:43:41.151 5568 Level-0 table #5: started
+2026/09/04-13:43:41.158 5568 Level-0 table #5: 683273 bytes OK
+2026/09/04-13:43:41.160 5568 Delete type=0 #3

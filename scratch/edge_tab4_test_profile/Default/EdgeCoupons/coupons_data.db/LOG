@@ -1,0 +1,5 @@
+2026/09/07-09:14:16.855 1f10 Creating DB C:\Users\Nawakara\.gemini\antigravity-ide\scratch\mc-connect\scratch\edge_tab4_test_profile\Default\EdgeCoupons/coupons_data.db since it was missing.
+2026/09/07-09:14:16.864 1f10 Reusing MANIFEST C:\Users\Nawakara\.gemini\antigravity-ide\scratch\mc-connect\scratch\edge_tab4_test_profile\Default\EdgeCoupons/coupons_data.db/MANIFEST-000001
+2026/09/07-09:14:17.883 1aac Level-0 table #5: started
+2026/09/07-09:14:17.888 1aac Level-0 table #5: 683273 bytes OK
+2026/09/07-09:14:17.891 1aac Delete type=0 #3

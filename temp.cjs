@@ -1,0 +1,10 @@
+const fs=require('fs'); 
+let c=fs.readFileSync('public/admin.html','utf8'); 
+c = c.replace('<strong style="color:var(--adm-gold);" id="viewCustWa">-</strong>', '<strong style="color:var(--adm-gold); word-break: break-all; display: inline-block; max-width: 100%;" id="viewCustWa">-</strong>'); 
+c = c.replace('<span id="viewCustEmail">-</span>', '<span id="viewCustEmail" style="word-break: break-all; display: inline-block; max-width: 100%;"> -</span>'); 
+c = c.replace('<strong id="viewCustEvent">-</strong>', '<strong id="viewCustEvent" style="word-break: break-word; display: inline-block; max-width: 100%;"> -</strong>'); 
+c = c.replace('<span id="viewCustDate">-</span>', '<span id="viewCustDate" style="word-break: break-word; display: inline-block; max-width: 100%;"> -</span>'); 
+c = c.replace('<strong style="color:#34D399; font-size:1rem;" id="viewCustPrice">-</strong>', '<strong style="color:#34D399; font-size:1rem; word-break: break-word; display: inline-block; max-width: 100%;" id="viewCustPrice">-</strong>'); 
+c = c.replace('<strong style="color:var(--adm-gold); font-size:0.92rem;" id="viewCustTime">-</strong>', '<strong style="color:var(--adm-gold); font-size:0.92rem; word-break: break-word; display: inline-block; max-width: 100%;" id="viewCustTime">-</strong>'); 
+c = c.replace('<script src="js/app.js?v=8.3"></script>', '<script src="js/app.js?v=8.4"></script>');
+fs.writeFileSync('public/admin.html', c);

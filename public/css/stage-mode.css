@@ -1,0 +1,325 @@
+/* =========================================================
+   STAGE MODE (TABLET / HP) & VENDOR OPERATOR SCREEN STYLES
+   ========================================================= */
+
+.stage-body {
+    background: #000000 !important;
+    color: #FFFFFF !important;
+    overflow: hidden;
+    height: 100vh;
+    user-select: none;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.stage-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
+
+/* 70% Prompter Section */
+.stage-prompter-pane {
+    width: 70%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border-right: 2px solid #1E293B;
+    position: relative;
+    background: #050811;
+}
+
+.prompter-top-bar {
+    padding: 1rem 1.5rem;
+    background: #0B0F19;
+    border-bottom: 1px solid #1E293B;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.prompter-segment-badge {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--gold-primary);
+    background: rgba(212, 175, 55, 0.15);
+    padding: 0.4rem 1rem;
+    border-radius: var(--radius-full);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.prompter-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.prompter-ctrl-btn {
+    background: #1E293B;
+    color: #FFFFFF;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.45rem 0.9rem;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.prompter-ctrl-btn:hover {
+    background: #334155;
+}
+
+.prompter-ctrl-btn.active {
+    background: var(--gold-primary);
+    color: #000000;
+}
+
+/* Prompter Viewport & Scrolling Text */
+.prompter-viewport {
+    flex: 1;
+    overflow-y: auto;
+    padding: 3rem 4rem;
+    scroll-behavior: smooth;
+    position: relative;
+}
+
+.prompter-viewport.mirror {
+    transform: scaleX(-1);
+}
+
+.prompter-text {
+    font-size: 2.2rem;
+    line-height: 1.65;
+    font-weight: 600;
+    color: #F8FAFC;
+    max-width: 900px;
+    margin: 0 auto;
+    transition: font-size 0.2s ease;
+}
+
+.prompter-text p {
+    margin-bottom: 2rem;
+}
+
+.prompter-music-hint {
+    background: rgba(56, 189, 248, 0.15);
+    border-left: 4px solid #38BDF8;
+    padding: 1rem 1.5rem;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    color: #7DD3FC;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 2.5rem;
+}
+
+.speech-active-indicator {
+    position: absolute;
+    bottom: 1.5rem;
+    left: 2rem;
+    background: rgba(16, 185, 129, 0.2);
+    border: 1px solid #10B981;
+    color: #34D399;
+    padding: 0.4rem 1rem;
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.speech-active-indicator.active {
+    display: inline-flex;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* 30% Soundboard & Timer Section */
+.stage-sidebar-pane {
+    width: 30%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #090D16;
+    padding: 1.5rem;
+    gap: 1.25rem;
+    overflow-y: auto;
+}
+
+/* Digital Clock & Stage Stopwatch */
+.stage-timer-card {
+    background: #111827;
+    border: 1px solid #1F293D;
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    text-align: center;
+}
+
+.stage-clock {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #F8FAFC;
+    letter-spacing: 0.05em;
+}
+
+.stage-stopwatch-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-top: 0.25rem;
+}
+
+.stage-stopwatch {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--color-available);
+    margin-top: 0.2rem;
+}
+
+.stage-timer-controls {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+/* Soundboard Module */
+.soundboard-card {
+    background: #111827;
+    border: 1px solid #1F293D;
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.soundboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.soundboard-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--gold-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.soundboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.sound-pad {
+    background: #1E293B;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
+    color: #FFFFFF;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 1.25rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.sound-pad:hover {
+    background: #334155;
+    border-color: var(--gold-primary);
+}
+
+.sound-pad:active, .sound-pad.triggered {
+    background: var(--gold-primary);
+    color: #000000;
+    transform: scale(0.96);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+}
+
+.sound-pad-icon {
+    font-size: 1.6rem;
+}
+
+/* Stage Navigation Buttons */
+.stage-nav-bar {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.stage-nav-btn {
+    flex: 1;
+    padding: 0.9rem;
+    font-weight: 800;
+    font-size: 0.95rem;
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+
+/* Vendor Operator Screen (Dedicated View) */
+.vendor-screen {
+    min-height: 100vh;
+    background: #0B0F17;
+    color: #F8FAFC;
+    padding: 2rem;
+}
+
+.vendor-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+    background: var(--bg-surface);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.vendor-table th {
+    background: #111827;
+    padding: 1rem 1.25rem;
+    text-align: left;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.vendor-table td {
+    padding: 1.25rem;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.vendor-table tr.active-live {
+    background: rgba(212, 175, 55, 0.12);
+    border-left: 6px solid var(--gold-primary);
+}
+
+@media (max-width: 900px) {
+    .stage-container {
+        flex-direction: column;
+    }
+    .stage-prompter-pane {
+        width: 100%;
+        height: 60vh;
+    }
+    .stage-sidebar-pane {
+        width: 100%;
+        height: 40vh;
+    }
+    .prompter-text {
+        font-size: 1.6rem;
+    }
+}

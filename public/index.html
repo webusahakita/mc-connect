@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official MC & Host Booking Portal</title>
+    <link rel="icon" type="image/jpeg" href="favicon.jpg">
+    <meta name="description" content="Portal resmi booking Master of Ceremony profesional untuk Luxury Wedding, Corporate Gala, Awarding Night, dan Hybrid Festival.">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/landing.css?v=1.0.1">
+    <link rel="stylesheet" href="css/custom-modal.css">
+    <style>
+        /* Public Navbar Badge */
+        .public-badge {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border: 1px solid var(--border-subtle);
+            padding: 0.2rem 0.5rem;
+            border-radius: var(--radius-sm);
+        }
+    </style>
+</head>
+<body>
+    <!-- Public Site Navigation -->
+    <nav class="site-nav">
+        <div class="container nav-wrapper">
+            <a href="index.html" class="brand-logo">
+                <div class="brand-icon">MC</div>
+                <div class="brand-text">MC-<span>Connect</span></div>
+            </a>
+            
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+            <ul class="nav-links">
+                <li><a href="#biodata">Profil</a></li>
+                <li><a href="#katalog">Paket Layanan</a></li>
+                <li><a href="#kalender">Kalender Jadwal</a></li>
+                <li><a href="#kebijakan">T&C & Riders</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <!-- Theme Toggle Button -->
+                <button type="button" class="nav-bgm-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Ganti Mode Terang/Gelap" style="margin-right: 10px;">
+                    <span id="themeToggleIcon">🌞</span>
+                </button>
+                <!-- Tombol Cepat Pengaturan Musik Latar BGM -->
+                <button type="button" class="nav-bgm-btn" id="navBgmToggleBtn" onclick="window.luxuryBgm.togglePlay()" title="Putar / Matikan Musik Latar (BGM)">
+                    <span>🎵</span> <span>Musik: OFF</span>
+                </button>
+                <a href="#kalender" class="btn btn-primary btn-sm">Request to Book</a>
+                <!-- Link Akses Khusus Admin MC -->
+                <a href="login.html" class="btn btn-secondary btn-sm" title="Khusus Manajemen MC">
+                    🔐 Login Admin MC
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section" id="biodata">
+        <div class="container hero-grid">
+            <div class="hero-content">
+                <div class="hero-subtitle">
+                    <span>★</span> Official Booking Portal  Terbuka Untuk Umum
+                </div>
+                <h1 class="hero-title" id="pubHeroName">
+                    Bring Extraordinary Energy to Your Stage with <span id="heroTitleName">...</span>
+                </h1>
+                <p class="hero-bio" id="pubHeroBio">
+                    Master of Ceremony profesional berbasis di Jakarta & Surabaya dengan jam terbang lebih dari 8 tahun membawakan 500+ pernikahan mewah, gala dinner korporat, dan awarding night kenegaraan. Pembawaan elegan, bilingual (ID/EN), adaptif, dan berkarisma.
+                </p>
+
+                <div class="hero-specializations" id="pubHeroSpec">
+                    <span class="spec-chip">✨ Luxury Wedding</span>
+                    <span class="spec-chip">✨ Corporate Gala Dinner</span>
+                    <span class="spec-chip">✨ Awarding Night</span>
+                    <span class="spec-chip">✨ Hybrid Tech Summit</span>
+                    <span class="spec-chip">✨ Festival Musik</span>
+                </div>
+                
+                <div class="hero-sosmed" id="pubHeroSosmed" style="display:flex; gap:1rem; margin-top:1.5rem; margin-bottom:2rem;">
+                    <!-- Sosmed links will be injected here -->
+                </div>
+
+                <div class="hero-cta">
+                    <a href="#kalender" class="btn btn-primary">
+                        📅 Cek Jadwal & Request to Book
+                    </a>
+                    <button class="btn btn-secondary" onclick="exportPressKitPDF()">
+                        📥 Download Press Kit & Riders
+                    </button>
+                </div>
+            </div>
+
+            <div class="hero-visual">
+                <div class="hero-card">
+                    <div class="hero-img-wrapper">
+                        <img src="" alt="MC Profile" class="hero-img" id="pubHeroImg" style="opacity:0; transition: opacity 0.5s;">
+                        <div class="hero-img-overlay">
+                            <div class="hero-card-meta">
+                                <h3 id="pubHeroMetaName">Loading...</h3>
+                                <p>Bilingual Indonesian & English Host</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Bar -->
+    <section class="stats-bar">
+        <div class="container stats-grid">
+            <div class="stat-item">
+                <div class="stat-num" id="pubStatEventsNum">500+</div>
+                <div class="stat-label" id="pubStatEventsLabel">Acara Sukses</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num" id="pubStatYearsNum">8+</div>
+                <div class="stat-label" id="pubStatYearsLabel">Tahun Pengalaman</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num">99.8%</div>
+                <div class="stat-label">Kepuasan Klien</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num">100%</div>
+                <div class="stat-label">Jadwal Terkunci Presisi</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Service Catalog Packages -->
+    <section class="section-padding" id="katalog">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-tag">Katalog Layanan & Investasi</div>
+                <h2 class="section-title">Pilihan Paket Panggung Eksklusif</h2>
+                <p class="section-desc">
+                    Setiap paket dirancang khusus untuk memastikan ritme, kemewahan, dan kenyamanan tamu pada hari istimewa Anda.
+                </p>
+            </div>
+
+            <div class="packages-grid" id="pubPackagesContainer">
+                <!-- Packages will be injected dynamically here via public-cms.js -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section class="section-padding" id="galeri" style="background-color: var(--bg-surface);">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-tag">Portofolio Panggung</div>
+                <h2 class="section-title">Galeri Momen Terbaik</h2>
+                <p class="section-desc">
+                    Momen-momen magis yang tak terlupakan dari berbagai panggung eksklusif.
+                </p>
+            </div>
+            
+            <div id="pubGalleryContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:1.5rem;">
+                <!-- Ditenagai oleh CMS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Availability Calendar Widget -->
+    <section class="section-padding calendar-section" id="kalender">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-tag">Cek Ketersediaan Real-Time</div>
+                <h2 class="section-title">Kalender Jadwal Panggung</h2>
+                <p class="section-desc">
+                    Hindari risiko bentrok jadwal. Klik tanggal berwarna hijau atau tentative untuk mengajukan formulir Request to Book secara instan.
+                </p>
+            </div>
+
+            <div class="calendar-widget-wrapper" id="publicCalendarContainer"></div>
+        </div>
+    </section>
+
+    <!-- CMS Blog, FAQ & Policies -->
+    <section class="section-padding" id="kebijakan">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-tag">CMS Mini & Kebijakan</div>
+                <h2 class="section-title">Syarat, Kebijakan Refund & Riders</h2>
+            </div>
+
+            <div class="cms-accordion">
+                <div class="accordion-item active">
+                    <div class="accordion-header">
+                        <span>📜 Syarat & Ketentuan Booking MC</span>
+                        <span class="accordion-icon">▼</span>
+                    </div>
+                    <div class="accordion-content" id="publicTermsContent">
+1. Booking tanggal dianggap sah (Terkunci) setelah klien membayar Down Payment (DP) 50% dari total nilai kontrak.
+2. Pelunasan sisa tagihan 50% wajib diselesaikan selambat-lambatnya H-2 sebelum hari acara.
+3. Durasi performa MC maksimal 4 jam per sesi acara. Kelebihan durasi dihitung overtime.
+4. Klien wajib menyediakan waktu Soundcheck / Gladi Bersih minimal 45 menit sebelum acara dimulai.
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <span>🛡️ Kebijakan Pembatalan & Refund (Refund Policy)</span>
+                        <span class="accordion-icon">▼</span>
+                    </div>
+                    <div class="accordion-content" id="publicRefundContent">
+1. Pembatalan >30 hari sebelum hari H: DP dapat dialihkan ke jadwal lain (reschedule) dalam waktu 6 bulan kalender.
+2. Pembatalan H-30 s/d H-14: DP dapat dipindahtangankan ke event lain dengan persetujuan manajemen MC.
+3. Pembatalan <14 hari: DP tidak dapat dikembalikan sebagai biaya kompensasi penolakan penawaran klien lain.
+4. Force Majeure: Tanggal acara dijadwalkan ulang tanpa penalti biaya.
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <span>🎤 Hospitality & Technical Riders Panggung</span>
+                        <span class="accordion-icon">▼</span>
+                    </div>
+                    <div class="accordion-content" id="publicRidersContent">
+Kebutuhan Teknis:
+- 2 unit Wireless Microphone berkualitas tinggi (Shure Axient / Sennheiser EW-D) dengan baterai baru.
+- 1 unit Stage Monitor speaker khusus menghadap posisi MC dengan mixing vokal jernih.
+
+Kebutuhan Hospitality:
+- Ruang transit ber-AC (Green Room) dengan cermin rias dan colokan listrik.
+- Air mineral suhu ruang, lemon segar, dan madu.
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <span>❓ Pertanyaan Umum Seputar Layanan MC (FAQ)</span>
+                        <span class="accordion-icon">▼</span>
+                    </div>
+                    <div class="accordion-content" id="publicFaqContent" style="padding: 0.25rem 0.5rem;">
+                        <!-- FAQ injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Client Testimonials -->
+    <section class="section-padding" style="background:var(--bg-surface); border-top:1px solid var(--border-subtle);">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-tag">Ulasan Klien Terverifikasi</div>
+                <h2 class="section-title">Apa Kata Klien & Penyelenggara?</h2>
+            </div>
+
+            <div id="pubTestimonialsContainer" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:1.75rem;">
+                <!-- Testimonials will be injected here via JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="background:var(--bg-surface); border-top:1px solid var(--border-subtle); padding:3.5rem 0 2.5rem; text-align:center;">
+        <div class="container">
+            <div class="brand-logo" style="justify-content:center; margin-bottom:1rem;">
+                <div class="brand-icon">MC</div>
+                <div class="brand-text">MC-<span>Connect</span></div>
+            </div>
+            <p style="color:var(--text-secondary); font-size:0.9rem; max-width:550px; margin:0 auto 1.5rem;">
+                Portal resmi pemesanan jadwal Master of Ceremony terpadu. Presisi panggung, sistem anti-bentrok jadwal, dan transparansi invoice.
+            </p>
+            <div style="display:flex; justify-content:center; gap:1.5rem; margin-bottom:1.5rem; font-size:0.85rem; color:var(--text-muted);">
+                <a href="#biodata">Profil</a>
+                <a href="#katalog">Paket Layanan</a>
+                <a href="#kalender">Jadwal Kalender</a>
+                <a href="#kebijakan">Syarat & Ketentuan</a>
+                <a href="admin.html" style="color:var(--gold-primary);">Area Khusus Admin MC 🔐</a>
+            </div>
+            <p style="color:var(--text-muted); font-size:0.8rem;">
+                &copy; <span id="footerYear">2026</span> <span id="footerName">MC Management</span>. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <!-- MODAL 1: Request to Book (Klien) -->
+    <div class="modal-overlay" id="bookingModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">✨ Request to Book MC <span id="modalMcName"></span></h3>
+                <button class="btn-close" onclick="closeModals()">&times;</button>
+            </div>
+            <form onsubmit="handlePublicBookingSubmit(event)">
+                <div class="form-group">
+                    <label class="form-label">Pilihan Paket Layanan *</label>
+                    <select class="form-select" id="selectedPackageName" required>
+                        <option value="Gold Luxury Wedding Package">Gold Luxury Wedding Package</option>
+                        <!-- Options will be populated via JS -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Kategori Acara *</label>
+                    <select class="form-select" id="bookEventType" required>
+                        <option value="" disabled selected>Memuat kategori...</option>
+                    </select>
+                </div>
+
+                <div class="grid-2col" style="gap:1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Nama Client *</label>
+                        <input type="text" class="form-input" id="bookPicName" placeholder="Farhan & Natasha" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Alamat Email *</label>
+                        <input type="email" class="form-input" id="bookEmail" placeholder="client@email.com" required>
+                    </div>
+                </div>
+
+                <div class="grid-2col" style="gap:1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Nomor WhatsApp Aktif *</label>
+                        <input type="tel" class="form-input" id="bookWa" placeholder="081298765432" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nama Acara *</label>
+                        <input type="text" class="form-input" id="bookEventName" placeholder="The Wedding of Farhan & Natasha" required>
+                    </div>
+                </div>
+
+
+
+                <div class="grid-2col" style="gap:1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Tanggal Acara *</label>
+                        <input type="date" class="form-input" id="bookEventDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Lokasi / Venue Acara *</label>
+                        <input type="text" class="form-input" id="bookVenue" placeholder="Grand Ballroom Hotel Mulia Senayan" required>
+                    </div>
+                </div>
+
+                <div class="grid-2col" style="gap:1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Waktu Mulai *</label>
+                        <input type="time" class="form-input" id="bookStartTime" value="19:00" required onchange="calculateDuration()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Waktu Selesai *</label>
+                        <input type="time" class="form-input" id="bookEndTime" value="22:00" required onchange="calculateDuration()">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Durasi Acara (Otomatis)</label>
+                    <input type="text" class="form-input" id="bookDuration" value="3 Jam 0 Menit" readonly style="background-color: var(--bg-body); cursor: not-allowed; opacity: 0.8; width: 100%;">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Catatan Khusus / Permintaan Khusus</label>
+                    <textarea class="form-textarea" id="bookNotes" placeholder="Konsep intimate wedding, ada sesi bouquet toss..."></textarea>
+                </div>
+
+                <div class="form-group" style="margin-top:1rem;">
+                    <label style="display:flex; align-items:center; gap:0.6rem; font-size:0.85rem; color:var(--text-secondary); cursor:pointer;" onclick="openPolicyModal(event)">
+                        <input type="checkbox" id="bookingPolicyCheckbox" required style="accent-color:var(--gold-primary); width:18px; height:18px; pointer-events:none;">
+                        Saya menyetujui Syarat & Ketentuan Booking serta Kebijakan DP/Refund.
+                    </label>
+                    <small style="color:var(--gold-primary); font-size:0.75rem; display:block; margin-top:0.4rem; cursor:pointer;" onclick="openPolicyModal(event)">
+                        Baca selengkapnya ➔
+                    </small>
+                </div>
+
+                <div style="margin-top:1.5rem; display:flex; justify-content:flex-end; gap:0.75rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModals()">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="btnSubmitBooking">Kirim Permintaan Booking</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Admin Login Modal -->
+    <div class="modal-overlay" id="adminLoginModal">
+        <div class="modal-content" style="max-width:440px;">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <span style="font-size:1.4rem;">🔐</span>
+                    <h3 class="modal-title">Portal Khusus Admin MC</h3>
+                </div>
+                <button class="btn-close" onclick="closeModals()">&times;</button>
+            </div>
+            <p style="color:var(--text-secondary); font-size:0.88rem; margin-bottom:1.25rem;">
+                Masuk ke ruang kerja operasional (Dashboard, Event Command Center, Stage Mode, dan Layar Vendor).
+            </p>
+            <form onsubmit="handleAdminLogin(event)">
+                <div class="form-group">
+                    <label class="form-label">Email MC / Username</label>
+                    <input type="email" class="form-input" value="vanya@mcconnect.id" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Kata Sandi</label>
+                    <input type="password" class="form-input" value="password123" id="loginPass" required>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModals()">Batal</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1;">Masuk ke Admin Portal ➔</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: Policy Agreement Modal -->
+    <div class="modal-overlay" id="policyAgreementModal">
+        <div class="modal-content" style="max-width:600px;">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <span style="font-size:1.4rem;">📜</span>
+                    <h3 class="modal-title">Syarat & Kebijakan Booking</h3>
+                </div>
+                <button class="btn-close" onclick="closePolicyModal()">&times;</button>
+            </div>
+            
+            <div style="max-height:60vh; overflow-y:auto; padding:0.5rem; margin-bottom:1rem; border:1px solid var(--border-subtle); border-radius:var(--radius-sm); background:rgba(0,0,0,0.2);">
+                <div style="margin-bottom:1.5rem;">
+                    <h4 style="color:var(--gold-primary); font-size:1.05rem; margin-bottom:0.5rem;">Syarat & Ketentuan Booking</h4>
+                    <div id="modalTermsContent" style="font-size:0.85rem; color:var(--text-secondary); white-space:pre-wrap;">Memuat...</div>
+                </div>
+                <div style="margin-bottom:1.5rem;">
+                    <h4 style="color:var(--gold-primary); font-size:1.05rem; margin-bottom:0.5rem;">Kebijakan Refund</h4>
+                    <div id="modalRefundContent" style="font-size:0.85rem; color:var(--text-secondary); white-space:pre-wrap;">Memuat...</div>
+                </div>
+                <div>
+                    <h4 style="color:var(--gold-primary); font-size:1.05rem; margin-bottom:0.5rem;">Technical Riders</h4>
+                    <div id="modalRidersContent" style="font-size:0.85rem; color:var(--text-secondary); white-space:pre-wrap;">Memuat...</div>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
+                <button type="button" class="btn btn-secondary" onclick="closePolicyModal()">Batal</button>
+                <button type="button" class="btn btn-primary" onclick="acceptPoliciesAndCheck()">Saya Setuju & Mengerti</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- MODAL 4: Press Kit Modal -->
+    <div class="modal-overlay" id="pressKitModal">
+        <div class="modal-content" style="max-width:520px; text-align:center;">
+            <div class="modal-header">
+                <h3 class="modal-title">📄 Download Press Kit & Riders</h3>
+                <button class="btn-close" onclick="closeModals()">&times;</button>
+            </div>
+            <div style="font-size:3.5rem; margin:1.5rem 0 0.5rem;">📁</div>
+            <h4 style="font-size:1.2rem; margin-bottom:0.5rem;">Media Kit & Technical Riders 2026</h4>
+            <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1.5rem;">
+                Termasuk portofolio foto panggung hi-res, floorplan mic wireless Shure, dan riders hospitality green room.
+            </p>
+            <button id="pressKitDownloadBtn" class="btn btn-primary" style="width:100%;" onclick="generateAndDownloadPressKit()">
+                📥 Download Press Kit & Riders (PDF)
+            </button>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         PENGATURAN MUSIK LATAR (BGM), KONTROL VOLUME & MATIKAN MUSIK
+         ========================================================= -->
+    <div class="bgm-floating-widget" id="bgmFloatingWidget" role="region" aria-label="Pengaturan Musik Latar BGM">
+        <!-- Header Panel -->
+        <div class="bgm-card-header" onclick="if(this.parentElement.classList.contains('collapsed')) toggleBgmWidgetExpand()" title="Klik untuk membuka/menutup panel musik">
+            <div class="bgm-header-left">
+                <div class="bgm-equalizer" id="bgmVisualizer">
+                    <span class="bgm-eq-bar"></span>
+                    <span class="bgm-eq-bar"></span>
+                    <span class="bgm-eq-bar"></span>
+                    <span class="bgm-eq-bar"></span>
+                    <span class="bgm-eq-bar"></span>
+                </div>
+                <div class="bgm-title-text" id="bgmTitleHeader">🎵 Musik Latar Panggung</div>
+                <span class="badge badge-tentative" id="bgmMiniVolumeBadge" style="font-size:0.68rem; padding:0.1rem 0.4rem; display:none;">50%</span>
+            </div>
+            <div class="bgm-header-actions">
+                <button type="button" class="bgm-btn-mini" onclick="event.stopPropagation(); toggleBgmWidgetExpand()" id="bgmCollapseBtn" title="Perkecil / Perbesar Panel Musik">
+                    —
+                </button>
+            </div>
+        </div>
+
+        <!-- Body Panel Controls -->
+        <div class="bgm-card-body">
+            <!-- Pilihan Nuansa Musik (Pills & Dropdown) -->
+            <div class="bgm-track-group">
+                <div class="bgm-track-label">Pilihan Nuansa Musik (Klik):</div>
+                <div class="bgm-track-pills">
+                    <button type="button" class="bgm-track-pill active" data-track="wedding" onclick="window.luxuryBgm.setTrack('wedding')" title="Nuansa Romantis Wedding">
+                        💍 Wedding
+                    </button>
+                    <button type="button" class="bgm-track-pill" data-track="gala" onclick="window.luxuryBgm.setTrack('gala')" title="Nuansa Gala Lounge Modern">
+                        🍸 Gala Lounge
+                    </button>
+                    <button type="button" class="bgm-track-pill" data-track="acoustic" onclick="window.luxuryBgm.setTrack('acoustic')" title="Nuansa Akustik Selebrasi">
+                        ✨ Sunset Vibe
+                    </button>
+                </div>
+                <select class="bgm-track-select" id="bgmTrackSelect" onchange="window.luxuryBgm.setTrack(this.value)" style="margin-top:0.4rem;">
+                    <option value="wedding">💍 Wedding Romance (Piano & Strings)</option>
+                    <option value="gala">🍸 Corporate Gala Lounge & Wine</option>
+                    <option value="acoustic">✨ Sunset Celebration Vibe</option>
+                </select>
+            </div>
+
+            <!-- Tombol Utama: Putar, Matikan Musik & Mute Cepat -->
+            <div class="bgm-controls-row">
+                <button type="button" class="bgm-btn-action bgm-btn-play-act" id="bgmDedicatedPlayBtn" onclick="window.luxuryBgm.start()" title="Nyalakan Musik Latar">
+                    ▶ Putar Musik
+                </button>
+                <button type="button" class="bgm-btn-action bgm-btn-stop-act" id="bgmDedicatedStopBtn" onclick="window.luxuryBgm.stop()" title="Matikan Musik Seketika (Hening)">
+                    ⏹ Matikan Musik
+                </button>
+                <button type="button" class="bgm-btn-mute" id="bgmMuteBtn" onclick="window.luxuryBgm.toggleMute()" title="Bisu / Matikan Suara (Mute)">
+                    <span id="bgmMuteIcon">🔊</span>
+                </button>
+            </div>
+
+            <!-- Pengaturan Volume: Slider Presisi & Tombol Langkah (-) (+) -->
+            <div class="bgm-volume-group">
+                <div class="bgm-volume-top">
+                    <span>Pengaturan Volume Suara:</span>
+                    <span class="bgm-volume-val" id="bgmVolumeLabel">50%</span>
+                </div>
+                <div class="bgm-volume-slider-row">
+                    <button type="button" class="bgm-btn-step" onclick="window.luxuryBgm.stepVolume(-0.1)" title="Turunkan Volume (-10%)">
+                        🔉 -
+                    </button>
+                    <input type="range" class="bgm-vol-slider" id="bgmVolumeSlider" min="0" max="100" value="50" step="1" aria-label="Pengatur Volume Musik">
+                    <button type="button" class="bgm-btn-step" onclick="window.luxuryBgm.stepVolume(0.1)" title="Naikkan Volume (+10%)">
+                        + 🔊
+                    </button>
+                </div>
+                <!-- Tombol Preset Volume Cepat (0%, 25%, 50%, 75%, 100%) -->
+                <div class="bgm-presets-row">
+                    <button type="button" class="bgm-preset-btn" data-pct="0" onclick="window.luxuryBgm.setVolumePercent(0)">0% (Mute)</button>
+                    <button type="button" class="bgm-preset-btn" data-pct="25" onclick="window.luxuryBgm.setVolumePercent(25)">25%</button>
+                    <button type="button" class="bgm-preset-btn active" data-pct="50" onclick="window.luxuryBgm.setVolumePercent(50)">50%</button>
+                    <button type="button" class="bgm-preset-btn" data-pct="75" onclick="window.luxuryBgm.setVolumePercent(75)">75%</button>
+                    <button type="button" class="bgm-preset-btn" data-pct="100" onclick="window.luxuryBgm.setVolumePercent(100)">100%</button>
+                </div>
+            </div>
+
+            <!-- Status Mengalun / Matikan Musik -->
+            <div class="bgm-status-foot">
+                <span id="bgmStatusText">○ Musik latar dalam kondisi mati</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/calendar.js?v=8.16"></script>
+    <script src="js/custom-modal.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/bgm-player.js?v=9.2"></script>
+    <script src="js/public-cms.js?v=1.4.4"></script>
+
+    <script>
+        // =========================================================================
+        // 1. ENGINE KALENDER TERINTEGRASI PENUH DENGAN PORTAL ADMIN MC
+        // =========================================================================
+
+        // Cache dari server
+        window._serverCalendarEvents = [];
+
+        // Fetch events dari server (primary source = database)
+        async function fetchServerCalendarEvents() {
+            try {
+                const res = await fetch('/api/calendar/availability', {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                window._serverCalendarEvents = Array.isArray(data) ? data : [];
+            } catch(e) {
+                console.warn('[Calendar] Gagal fetch dari server:', e.message);
+                window._serverCalendarEvents = [];
+            }
+        }
+
+        function getIntegratedPublicEvents() {
+            return window._serverCalendarEvents || [];
+        }
+
+        // Muat ulang kalender: fetch ulang dari server lalu render
+        async function reloadPublicCalendar() {
+            await fetchServerCalendarEvents();
+            if (window.calendarApp) {
+                window.calendarApp.setEvents(getIntegratedPublicEvents());
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Fetch data awal dari server
+            await fetchServerCalendarEvents();
+
+            // Inisialisasi Kalender Interaktif Publik
+            window.calendarApp = new AvailabilityCalendar('publicCalendarContainer', getIntegratedPublicEvents(), (dateStr, status, eventObj, eventsOnDate) => {
+                if (status === 'Terkunci') {
+                    const evTitle = eventObj ? (eventObj.nama_acara || eventObj.title) : 'Acara Resmi';
+                    const timeInfo = eventObj && eventObj.time ? `  ${eventObj.time}` : '';
+                    showToast(`⚠️ Tanggal ${dateStr} telah TERKUNCI untuk "${evTitle}"${timeInfo}. Silakan pilih tanggal lain.`, 'error');
+                    return;
+                }
+                const dateInput = document.getElementById('bookEventDate');
+                if (dateInput) dateInput.value = dateStr;
+                const modal = document.getElementById('bookingModal');
+                if (modal) modal.classList.add('active');
+                if (status === 'Tentative' || status === 'Review') {
+                    const evTitle = eventObj ? (eventObj.nama_acara || eventObj.title) : 'Acara Tentative';
+                    const timeInfo = eventObj && eventObj.time ? ` (${eventObj.time})` : '';
+                    showToast(`ℹ️ Tanggal ${dateStr} berstatus ${status.toUpperCase()} — "${evTitle}"${timeInfo}. Anda dapat masuk daftar tunggu.`, 'gold');
+                } else {
+                    showToast(`📅 Tanggal ${dateStr} dipilih. Jadwal TERSEDIA! Silakan lengkapi formulir booking.`, 'gold');
+                }
+            });
+            window.calendarApp.init();
+
+            // Prefill tanggal hari ini + 14 hari ke formulir booking
+            const defaultDate = new Date();
+            defaultDate.setDate(defaultDate.getDate() + 14);
+            const strDate = defaultDate.toISOString().split('T')[0];
+            const dateInput = document.getElementById('bookEventDate');
+            if (dateInput) {
+                dateInput.value = strDate;
+                
+                // BUGFIX: Set minimal tanggal ke hari ini agar tidak bisa input backdate manual
+                const localToday = new Date(defaultDate.getTime() - (defaultDate.getTimezoneOffset() * 60000) - (14 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0];
+                dateInput.min = localToday;
+            }
+
+            // Muat ulang kalender tidak perlu localStorage listener lagi di sisi publik
+        });
+
+        // Sinkronisasi dinamis sekarang sepenuhnya ditangani oleh public-cms.js melalui API (Database Server)
+
+        function selectPackage(pkgName) {
+            document.getElementById('selectedPackageName').value = pkgName;
+            document.getElementById('bookingModal').classList.add('active');
+            showToast(`Paket "${pkgName}" dipilih. Lengkapi formulir booking Anda.`, 'gold');
+        }
+
+
+        function openAdminLoginModal() {
+            document.getElementById('adminLoginModal').classList.add('active');
+        }
+
+        function closeModals() {
+            document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+        }
+
+        // Handler Submit Booking Publik dengan Integrasi Penuh ke Admin
+        async function handlePublicBookingSubmit(e) {
+            e.preventDefault();
+            const date = document.getElementById('bookEventDate').value;
+            const pic = document.getElementById('bookPicName').value.trim();
+            const email = document.getElementById('bookEmail') ? document.getElementById('bookEmail').value.trim() : '';
+            const wa = document.getElementById('bookWa').value.trim();
+            const eventName = document.getElementById('bookEventName').value.trim();
+            const venue = document.getElementById('bookVenue').value.trim();
+            const startTime = document.getElementById('bookStartTime') ? document.getElementById('bookStartTime').value : '19:00';
+            const endTime = document.getElementById('bookEndTime') ? document.getElementById('bookEndTime').value : '22:00';
+            const notes = document.getElementById('bookNotes') ? document.getElementById('bookNotes').value.trim() : '';
+            const packageName = document.getElementById('selectedPackageName').value || 'Gold Luxury Wedding Package';
+
+            // 1. Cek Anti-Bentrok Jadwal terhadap database terintegrasi
+            const currentEvents = getIntegratedPublicEvents();
+            const lockedConflict = currentEvents.find(ev => ev.date === date && ev.status === 'Terkunci');
+            if (lockedConflict) {
+                showToast(`❌ Jadwal bentrok! Tanggal ${date} sudah TERKUNCI untuk "${lockedConflict.title}". Silakan pilih tanggal lain yang masih bebas.`, 'error');
+                return;
+            }
+
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn ? submitBtn.innerHTML : 'Submit Request';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = 'Mengirim...';
+            }
+
+            try {
+                // 2. Kirim via API POST ke MySQL Database Backend
+                const response = await fetch('/api/book/request', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        nama_pic: pic,
+                        no_wa: wa,
+                        email: email,
+                        tipe_klien: 'Personal',
+                        tipe_acara: document.getElementById('bookEventType').value,
+                        nama_acara: eventName,
+                        lokasi: venue,
+                        tanggal_acara: date,
+                        waktu_mulai: startTime,
+                        waktu_selesai: endTime,
+                        catatan_khusus: notes,
+                        paket_layanan: packageName
+                    })
+                });
+
+                const json = await response.json();
+                
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+
+                if (response.ok && json.success) {
+                    e.target.reset(); // Kosongkan formulir setelah sukses
+                    closeModals();
+                    showToast(`Permintaan Booking "${eventName}" berhasil diajukan! Status jadwal di kalender kini TENTATIVE (Kuning) dan tersimpan permanen di database.`, 'gold');
+                    
+                    // 3. Muat ulang kalender dari database
+                    if (typeof reloadPublicCalendar === 'function') {
+                        await reloadPublicCalendar();
+                    }
+                    
+                    // 4. Notifikasi broadcast untuk tab admin (opsional jika admin buka bersamaan)
+                    try {
+                        if (typeof window.syncChannel !== 'undefined') {
+                            window.syncChannel.postMessage('RELOAD_CALENDAR');
+                        }
+                    } catch(e) {}
+                } else {
+                    showToast(`❌ Gagal mengirim: ${json.message || 'Terjadi kesalahan pada server'}`, 'error');
+                }
+            } catch (err) {
+                console.error("Booking error:", err);
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+                showToast('❌ Gagal terhubung ke server database. Silakan periksa koneksi Anda.', 'error');
+            }
+        }
+
+        function closePolicyModal() {
+            document.getElementById('policyAgreementModal').classList.remove('active');
+        }
+
+        function acceptPoliciesAndCheck() {
+            document.getElementById('bookingPolicyCheckbox').checked = true;
+            closePolicyModal();
+        }
+
+        async function openPolicyModal(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            document.getElementById('modalTermsContent').innerHTML = 'Memuat...';
+            document.getElementById('modalRefundContent').innerHTML = 'Memuat...';
+            document.getElementById('modalRidersContent').innerHTML = 'Memuat...';
+            
+            document.getElementById('policyAgreementModal').classList.add('active');
+
+            try {
+                const response = await fetch('/api/cms/policies');
+                const res = await response.json();
+                if (res.success && res.data) {
+                    document.getElementById('modalTermsContent').innerHTML = res.data.terms.replace(/\n/g, '<br>') || 'Belum ada data';
+                    document.getElementById('modalRefundContent').innerHTML = res.data.refund.replace(/\n/g, '<br>') || 'Belum ada data';
+                    document.getElementById('modalRidersContent').innerHTML = res.data.riders.replace(/\n/g, '<br>') || 'Belum ada data';
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('modalTermsContent').innerHTML = 'Gagal memuat data dari server.';
+            }
+        }
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            showToast('Autentikasi berhasil! Mengarahkan ke Portal Admin MC...', 'gold');
+            setTimeout(() => {
+                window.location.href = 'admin.html';
+            }, 800);
+        }
+
+        // Theme Toggle Logic
+        function initTheme() {
+            const savedTheme = localStorage.getItem('mc_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.getElementById('themeToggleIcon').textContent = savedTheme === 'light' ? '🌙' : '🌞';
+        }
+        
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('mc_theme', newTheme);
+            document.getElementById('themeToggleIcon').textContent = newTheme === 'light' ? '🌙' : '🌞';
+            
+            showToast('Tema diubah ke ' + (newTheme === 'light' ? 'Mode Terang' : 'Mode Gelap'), 'gold');
+        }
+        
+        initTheme();
+
+        function calculateDuration() {
+            const start = document.getElementById('bookStartTime').value;
+            const end = document.getElementById('bookEndTime').value;
+            const durationInput = document.getElementById('bookDuration');
+            if (start && end && durationInput) {
+                const [startH, startM] = start.split(':').map(Number);
+                const [endH, endM] = end.split(':').map(Number);
+                
+                let diffM = (endH * 60 + endM) - (startH * 60 + startM);
+                if (diffM < 0) {
+                    diffM += 24 * 60;
+                }
+                const h = Math.floor(diffM / 60);
+                const m = diffM % 60;
+                durationInput.value = `${h} Jam ${m} Menit`;
+            } else if (durationInput) {
+                durationInput.value = '-';
+            }
+        }
+    </script>
+</body>
+</html>

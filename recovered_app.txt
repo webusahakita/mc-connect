@@ -1,0 +1,79 @@
+Created At: 2026-09-24T19:07:46+07:00
+Completed At: 2026-09-24T19:07:46+07:00
+File Path: `file:///c:/Users/Nawakara/.gemini/antigravity-ide/scratch/mc-connect/public/css/app.css`
+Total Lines: 856
+Total Bytes: 18820
+Showing lines 760 to 830
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+760: .lightbox-next { right: 20px; }
+761: 
+762: .lightbox-img {
+763:     max-width: 90%;
+764:     max-height: 80vh;
+765:     object-fit: contain;
+766: }
+767: .lightbox-caption {
+768:     color: white;
+769:     margin-top: 15px;
+770:     font-size: 1.1rem;
+771:     text-align: center;
+772: }
+773: 
+774: .mobile-menu-btn {
+775:     display: none;
+776:     background: transparent;
+777:     border: 1px solid rgba(255,255,255,0.1);
+778:     border-radius: var(--radius-sm);
+779:     cursor: pointer;
+780:     padding: 0.5rem;
+781:     flex-direction: column;
+782:     gap: 4px;
+783:     align-items: center;
+784:     justify-content: center;
+785: }
+786: .mobile-menu-btn span {
+787:     display: block;
+788:     width: 22px;
+789:     height: 2px;
+790:     background-color: var(--text-primary);
+791:     border-radius: 2px;
+792:     transition: 0.3s;
+793: }
+794: .mobile-menu-btn.active span:nth-child(1) {
+795:     transform: translateY(6px) rotate(45deg);
+796: }
+797: .mobile-menu-btn.active span:nth-child(2) {
+798:     opacity: 0;
+799: }
+800: .mobile-menu-btn.active span:nth-child(3) {
+801:     transform: translateY(-6px) rotate(-45deg);
+802: }
+803: 
+804: /* Responsive Styles */
+805: @media (max-width: 992px) {
+806:     .nav-wrapper {
+807:         flex-wrap: wrap;
+808:         justify-content: space-between;
+809:         padding: 0.5rem 1rem;
+810:     }
+811:     .brand-logo {
+812:         margin-bottom: 0;
+813:     }
+814:     .mobile-menu-btn {
+815:         display: flex;
+816:     }
+817:     .nav-links, .nav-actions {
+818:         display: none;
+819:         width: 100%;
+820:         flex-direction: column;
+821:         align-items: stretch;
+822:         padding: 0.5rem 0;
+823:     }
+824:     .nav-links.show, .nav-actions.show {
+825:         display: flex;
+826:     }
+827:     .nav-links {
+828:         gap: 0.5rem;
+829:     }
+830:     .nav-links a {
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
