@@ -858,7 +858,7 @@ window.addCategoryInput = function(val = '', icon = '✨') {
     div.style.gap = '10px';
     div.innerHTML = `
         <input type="text" class="form-input" style="flex:1;" placeholder="Nama Kategori (misal: Wedding)" value="${val}">
-        <input type="text" class="form-input" style="width:60px;" placeholder="Icon" value="${icon}">
+        <select class="form-select" style="width:80px; padding:0.4rem;" title="Pilih Icon">${['✨','⭐','🎉','🥂','🎙️','💍','💼','🎓','🎵','🏆','🔥','👑','💎'].map(e => `<option value="${e}" ${e === icon ? 'selected' : ''}>${e}</option>`).join('')}</select>
         <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">Hapus</button>
     `;
     list.appendChild(div);
@@ -869,8 +869,9 @@ window.handleSaveEventCategories = async function() {
     if (!list) return;
     const items = list.querySelectorAll('div');
     const categories = Array.from(items).map(div => {
-        const inputs = div.querySelectorAll('input');
-        return { name: inputs[0].value.trim(), icon: inputs[1]?.value.trim() || '✨' };
+        const name = div.querySelector('input[type="text"]')?.value.trim();
+        const icon = div.querySelector('select')?.value || '✨';
+        return { name, icon };
     }).filter(c => c.name);
     
     try {
@@ -964,7 +965,7 @@ window.addClientCategoryInput = function(val = '', icon = '⭐') {
     div.style.gap = '10px';
     div.innerHTML = `
         <input type="text" class="form-input" style="flex:1;" placeholder="VIP / Reguler" value="${val}">
-        <input type="text" class="form-input" style="width:60px;" placeholder="Icon" value="${icon}">
+        <select class="form-select" style="width:80px; padding:0.4rem;" title="Pilih Icon">${['✨','⭐','🎉','🥂','🎙️','💍','💼','🎓','🎵','🏆','🔥','👑','💎'].map(e => `<option value="${e}" ${e === icon ? 'selected' : ''}>${e}</option>`).join('')}</select>
         <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">Hapus</button>
     `;
     list.appendChild(div);
@@ -1149,6 +1150,7 @@ window.loadCmsWebSettings = async function() {
         if (resPay.ok) {
             const json = await resPay.json();
             const paySet = json.data || {};
+            window.mcGlobalPaymentSettings = paySet;
             
             if (paySet.accounts && paySet.accounts.length) {
                 paySet.accounts.forEach(a => window.addBankAccount(a.bank, a.number, a.name));
