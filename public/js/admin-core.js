@@ -1570,7 +1570,7 @@ window.renderCalendarAgendaList = function(filter = 'all', btn = null) {
         if (ev.status === 'Terkunci') stColor = '#10B981';
         if (ev.status === 'Tentative') stColor = '#F59E0B';
         
-        return '<div class="ecc-card" style="padding:1rem; border-left:3px solid ' + stColor + '; cursor:pointer; background:rgba(255,255,255,0.02);" onclick="showAgendaInspector(\\''+escapeHtml(ev.date)+'\\', \\''+escapeHtml(ev.status)+'\\', window.adminEventsDb.find(x => x.id == \\''+escapeHtml(ev.id)+'\\'), [window.adminEventsDb.find(x => x.id == \\''+escapeHtml(ev.id)+'\\')])">' +
+        return '<div class="ecc-card" style="padding:1rem; border-left:3px solid ' + stColor + '; cursor:pointer; background:rgba(255,255,255,0.02);" onclick="showAgendaInspector(\''+escapeHtml(ev.date)+'\', \''+escapeHtml(ev.status)+'\', window.adminEventsDb.find(x => x.id == \''+escapeHtml(ev.id)+'\'), [window.adminEventsDb.find(x => x.id == \''+escapeHtml(ev.id)+'\')])">' +
             '<div style="display:flex; justify-content:space-between; align-items:flex-start;">' +
                 '<div>' +
                     '<div style="font-weight:800; font-size:1.05rem; margin-bottom:0.25rem;">' + escapeHtml(ev.title || 'Acara') + '</div>' +
