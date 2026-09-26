@@ -685,7 +685,7 @@ class CmsApiController extends Controller
             'instansi_atau_organisasi' => $request->input('org', $request->input('instansi', '')) ?: '',
             'kategori'                 => $request->input('category', 'Wedding') ?: 'Wedding',
             'client_category'          => $request->input('client_category', '') ?: '',
-            'nilai_kontrak'            => $request->input('price', 0) ?: 0,
+            'nilai_kontrak'            => $request->input('price') !== null ? $request->input('price') : 0,
             'status_pembayaran'        => $request->input('paymentStatus', 'Belum Bayar') ?: 'Belum Bayar',
             'nama_acara'               => $request->input('event', '') ?: '',
             'tanggal_acara'            => $request->input('date') ?: null,
@@ -708,6 +708,7 @@ class CmsApiController extends Controller
             'status'            => $calendarStatus,
             'status_pembayaran' => $data['status_pembayaran'],
             'nilai_kontrak'     => $data['nilai_kontrak'],
+            'total_budget'      => $data['nilai_kontrak'],
             'tipe_acara'        => $data['kategori'] ?: 'Wedding',
         ];
 

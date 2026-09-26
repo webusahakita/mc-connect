@@ -1285,7 +1285,7 @@ function navigateToSection(sectionId, menuElement) {
     }
     
     // Close sidebar on mobile
-    if (window.innerWidth <= 1024) {
+    if (typeof closeSidebar === 'function') {
         closeSidebar();
     }
     
@@ -2385,36 +2385,7 @@ window.renderCashflowTable = function() {
         
         let transactions = [...(window.cashflowTransactions || [])];
         
-        // Auto-sync INFLOW from Calendar Events
-        if (typeof adminEventsDb !== 'undefined' && Array.isArray(adminEventsDb)) {
-            adminEventsDb.forEach(ev => {
-                const isPaid = ev.status === 'Terkunci' || (ev.paymentStatus && (ev.paymentStatus.includes('Lunas') || ev.paymentStatus.includes('DP') || ev.paymentStatus.includes('100%')));
-                if (isPaid && ev.rawPrice > 0) {
-                    transactions.push({
-                        id: 'ev_' + ev.id,
-                        date: ev.date,
-                        desc: 'Booking: ' + ev.title,
-                        category: 'Kontrak Acara',
-                        type: 'in',
-                        amount: ev.rawPrice,
-                        status: ev.paymentStatus || 'Lunas'
-                    });
-                }
-                if (ev.expenses && Array.isArray(ev.expenses)) {
-                    ev.expenses.forEach((exp, i) => {
-                        transactions.push({
-                            id: 'exp_' + ev.id + '_' + i,
-                            date: ev.date,
-                            desc: 'Biaya: ' + exp.desc + ' (' + ev.title + ')',
-                            category: 'Operasional',
-                            type: 'out',
-                            amount: exp.amount,
-                            status: 'Paid'
-                        });
-                    });
-                }
-            });
-        }
+        // Hapus data lokal (semua data hanya dari database server)
         
         // Sort by date descending
         transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -2473,6 +2444,83 @@ window.renderCashflowTable = function() {
     }
 };
 
+window.openAddCashModal = async function() {
+    let incomeCats = ['DP', 'Pelunasan', 'Sponsorship'];
+    let expenseCats = ['Operasional', 'Transport', 'Konsumsi', 'Gaji Kru'];
+    try {
+        const res = await fetch('/api/cms/cashflow-categories');
+        if (res.ok) {
+            const json = await res.json();
+            const cats = json.data || [];
+            if (cats.length > 0) {
+                const inC = cats.filter(c => c.tipe === 'in' || c.tipe === 'income').map(c => c.nama);
+                const outC = cats.filter(c => c.tipe === 'out' || c.tipe === 'expense').map(c => c.nama);
+                if (inC.length > 0) incomeCats = inC;
+                if (outC.length > 0) expenseCats = outC;
+            }
+        }
+    } catch(e) { console.warn('Gagal memuat kategori dari DB, menggunakan fallback'); }
+
+    const dataPromise = window.uiCustomForm([
+        { id: 'type', label: 'Tipe Kas', type: 'select', options: [{value: 'in', label: 'Kas Masuk (+)'}, {value: 'out', label: 'Kas Keluar (-)'}] },
+        { id: 'category', label: 'Kategori', type: 'select', options: incomeCats.map(c => ({value: c, label: c})) },
+        { id: 'amount', label: 'Nominal (Rp)', type: 'number' },
+        { id: 'date', label: 'Tanggal', type: 'date', value: new Date().toISOString().split('T')[0] },
+        { id: 'desc', label: 'Deskripsi', type: 'text' }
+    ], 'Catat Transaksi Kas');
+
+    // Attach listener dynamically
+    setTimeout(() => {
+        const typeSelect = document.getElementById('cm_field_type');
+        const catSelect = document.getElementById('cm_field_category');
+        if (typeSelect && catSelect) {
+            typeSelect.addEventListener('change', (e) => {
+                const val = e.target.value;
+                const opts = val === 'in' ? incomeCats : expenseCats;
+                catSelect.innerHTML = '';
+                opts.forEach(opt => {
+                    const optionEl = document.createElement('option');
+                    optionEl.value = opt;
+                    optionEl.textContent = opt;
+                    catSelect.appendChild(optionEl);
+                });
+            });
+        }
+    }, 50);
+
+    const data = await dataPromise;
+    if (!data) return; // User cancelled
+    if (!data.amount || !data.desc) {
+        uiAlert('Nominal dan Deskripsi wajib diisi!');
+        return;
+    }
+
+    const payload = {
+        type: data.type,
+        category: data.category,
+        amount: data.amount,
+        date: data.date,
+        desc: data.desc
+    };
+
+    fetch('/api/cms/cashflow-transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    }).then(res => res.json())
+      .then(resData => {
+          if (resData.success) {
+              uiAlert('Transaksi kas berhasil dicatat!');
+              loadCashflowTransactions();
+          } else {
+              uiAlert('Gagal mencatat transaksi: ' + (resData.message || 'Error'));
+          }
+      }).catch(err => {
+          console.error(err);
+          uiAlert('Terjadi kesalahan jaringan.');
+      });
+};
+
 window.handleSaveCashEntry = function(e) {
     e.preventDefault();
     const type = document.getElementById('newCfType')?.value;
@@ -2514,6 +2562,10 @@ window.handleSaveCashEntry = function(e) {
 };
 
 window.deleteCashflowTransaction = async function(id) {
+    if (String(id).startsWith('ev_') || String(id).startsWith('exp_')) {
+        uiAlert('Data auto-sync dari kalender tidak dapat dihapus dari sini.');
+        return;
+    }
     if (!(await window.uiConfirm('Hapus transaksi kas ini?'))) return;
     
     fetch('/api/cms/cashflow-transactions/' + id, {

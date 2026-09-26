@@ -391,9 +391,14 @@
                     </div>
                 </td>
                 <td><span class="badge ${badgeClass}" style="${badgeStyle}">${c.categoryIcon || '✨'} ${c.categoryLabel || c.category}</span></td>
-                <td>${c.event || '-'}</td>
+                <td>${c.client_category || 'Reguler'}</td>
+                <td>
+                    <div style="font-weight:600; color:var(--adm-text-primary);">${c.event || '-'}</div>
+                    <div style="font-size:0.75rem; color:var(--adm-text-muted);">${c.formattedDate || c.date || '-'}</div>
+                </td>
                 <td style="font-weight:700; color:var(--adm-text-primary);">Rp ${Number(c.price || 0).toLocaleString('id-ID')}</td>
                 <td><span class="badge badge-tentative">${c.paymentStatus || 'Pending'}</span></td>
+                <td><span class="badge badge-review">${c.calendarStatus || 'Review'}</span></td>
                 <td style="text-align:right;">
                     <button class="btn btn-secondary btn-sm" style="padding:0.3rem 0.55rem; font-size:0.75rem;" onclick="window.viewCustomerDetail(${c.id})" title="Lihat Detail">👁️ Detail</button>
                 </td>
@@ -842,7 +847,7 @@
     window.openEditCustomerModal = function(cust) {
         if (!cust) return;
         
-        if (typeof window.closeModals === 'async function') window.closeModals();
+        if (typeof window.closeModals === 'function') window.closeModals();
 
         const titleEl = document.getElementById('customerModalTitle');
         if (titleEl) titleEl.textContent = '✏️ Edit Data Pelanggan';
@@ -934,7 +939,8 @@
         const startTime = document.getElementById('newCustStartTime')?.value || '18:00';
         const endTime = document.getElementById('newCustEndTime')?.value || '22:00';
         const duration = document.getElementById('newCustDuration')?.value || calculateEventDuration(startTime, endTime) || '4 Jam';
-        const price = Number(document.getElementById('newCustPrice')?.value) || 0;
+        const priceStr = document.getElementById('newCustPrice')?.value || '';
+        const price = Number(priceStr.replace(/[^0-9]/g, '')) || 0;
         const payment = document.getElementById('newCustPayment')?.value || 'DP 50% Paid';
         const calendarStatus = document.getElementById('newCustCalendarStatus')?.value || 'Review';
         const notes = (document.getElementById('newCustNotes')?.value || '').trim();
@@ -1077,7 +1083,8 @@
 
         const timeEl = document.getElementById('viewCustTime');
         if (timeEl) {
-            const timeDisplay = cust.time || (cust.startTime && cust.endTime ? `${cust.startTime} - ${cust.endTime} WIB (${cust.duration || ''})` : '18:00 - 22:00 WIB (4 Jam)');
+            const dur = cust.duration ? ` (${cust.duration})` : '';
+            const timeDisplay = cust.time || (cust.startTime && cust.endTime ? `${cust.startTime} - ${cust.endTime} WIB${dur}` : '18:00 - 22:00 WIB (4 Jam)');
             timeEl.textContent = timeDisplay;
         }
 

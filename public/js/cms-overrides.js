@@ -893,11 +893,26 @@ window.addCashflowIncomeCategoryInput = function(val = '', warna = '#10B981') {
     if (!list) return;
     const div = document.createElement('div');
     div.style.display = 'flex';
-    div.style.gap = '10px';
+    div.style.gap = '0.5rem';
+    div.style.alignItems = 'center';
+    div.style.background = 'rgba(255,255,255,0.02)';
+    div.style.padding = '0.5rem';
+    div.style.border = '1px solid rgba(255,255,255,0.05)';
+    div.style.borderRadius = '8px';
+    div.style.transition = 'all 0.2s ease';
+    
+    // Add hover effect via mouse events
+    div.onmouseenter = () => { div.style.background = 'rgba(255,255,255,0.04)'; div.style.borderColor = 'rgba(16,185,129,0.3)'; };
+    div.onmouseleave = () => { div.style.background = 'rgba(255,255,255,0.02)'; div.style.borderColor = 'rgba(255,255,255,0.05)'; };
+
     div.innerHTML = `
-        <input type="text" class="form-input name-input" style="flex:1;" placeholder="Kategori Pemasukan" value="${val}">
-        <input type="color" class="form-input color-input" style="width:50px; padding:0;" value="${warna}">
-        <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">X</button>
+        <input type="text" class="form-input name-input" style="flex:1; border:none; background:transparent; font-weight:600; font-size:0.9rem;" placeholder="Nama Kategori" value="${val}">
+        <div style="width:36px; height:36px; border-radius:6px; overflow:hidden; border:2px solid rgba(255,255,255,0.1); flex-shrink:0; position:relative;">
+            <input type="color" class="form-input color-input" style="position:absolute; top:-10px; left:-10px; width:60px; height:60px; cursor:pointer; padding:0; border:none;" value="${warna}">
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" style="color:#EF4444; border-color:transparent; background:transparent; padding:0.4rem; flex-shrink:0;" onclick="this.parentElement.remove()" title="Hapus">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
     `;
     list.appendChild(div);
 };
@@ -911,11 +926,25 @@ window.addCashflowExpenseCategoryInput = function(val = '', warna = '#EF4444') {
     if (!list) return;
     const div = document.createElement('div');
     div.style.display = 'flex';
-    div.style.gap = '10px';
+    div.style.gap = '0.5rem';
+    div.style.alignItems = 'center';
+    div.style.background = 'rgba(255,255,255,0.02)';
+    div.style.padding = '0.5rem';
+    div.style.border = '1px solid rgba(255,255,255,0.05)';
+    div.style.borderRadius = '8px';
+    div.style.transition = 'all 0.2s ease';
+    
+    div.onmouseenter = () => { div.style.background = 'rgba(255,255,255,0.04)'; div.style.borderColor = 'rgba(239,68,68,0.3)'; };
+    div.onmouseleave = () => { div.style.background = 'rgba(255,255,255,0.02)'; div.style.borderColor = 'rgba(255,255,255,0.05)'; };
+
     div.innerHTML = `
-        <input type="text" class="form-input name-input" style="flex:1;" placeholder="Kategori Pengeluaran" value="${val}">
-        <input type="color" class="form-input color-input" style="width:50px; padding:0;" value="${warna}">
-        <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">X</button>
+        <input type="text" class="form-input name-input" style="flex:1; border:none; background:transparent; font-weight:600; font-size:0.9rem;" placeholder="Nama Kategori" value="${val}">
+        <div style="width:36px; height:36px; border-radius:6px; overflow:hidden; border:2px solid rgba(255,255,255,0.1); flex-shrink:0; position:relative;">
+            <input type="color" class="form-input color-input" style="position:absolute; top:-10px; left:-10px; width:60px; height:60px; cursor:pointer; padding:0; border:none;" value="${warna}">
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" style="color:#EF4444; border-color:transparent; background:transparent; padding:0.4rem; flex-shrink:0;" onclick="this.parentElement.remove()" title="Hapus">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
     `;
     list.appendChild(div);
 };
