@@ -2922,3 +2922,95 @@ window.editWardrobe = async function(id) {
         }
     }
 };
+
+window.updateDashboardMetrics = async function() {
+    try {
+        const [evRes, cfRes] = await Promise.all([
+            fetch('/api/cms/events').catch(() => null),
+            fetch('/api/cms/cashflow').catch(() => null)
+        ]);
+        
+        let events = [];
+        if (evRes && evRes.ok) {
+            const evJson = await evRes.json();
+            if (evJson.success && evJson.data) events = evJson.data;
+        } else {
+            events = window.adminEventsDb || [];
+        }
+
+        let cashflows = [];
+        if (cfRes && cfRes.ok) {
+            const cfJson = await cfRes.json();
+            if (cfJson.success && cfJson.data) cashflows = cfJson.data;
+        }
+
+        // Metrics for events
+        const totalEvents = events.length;
+        const terkunci = events.filter(e => e.status === 'Terkunci').length;
+        const tentative = events.filter(e => e.status === 'Tentative').length;
+        const review = events.filter(e => e.status === 'Review' || !e.status).length;
+
+        const revTerkunci = events.filter(e => e.status === 'Terkunci').reduce((sum, e) => sum + (Number(e.rawPrice) || 0), 0);
+        
+        const convRate = totalEvents > 0 ? Math.round((terkunci / totalEvents) * 100) : 0;
+        const avgDeal = terkunci > 0 ? Math.round(revTerkunci / terkunci) : 0;
+        
+        const annualTarget = 100000000; // 100 Juta as example target
+        const targetPercent = Math.round((revTerkunci / annualTarget) * 100);
+
+        // Calculate expenses
+        const expenses = cashflows.filter(c => c.type === 'expense');
+        const totalExpense = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+        const avgExpense = expenses.length > 0 ? Math.round(totalExpense / expenses.length) : 0;
+
+        let topExpense = 'Belum Ada';
+        if (expenses.length > 0) {
+            const maxExp = expenses.reduce((max, e) => (Number(e.amount) > Number(max.amount)) ? e : max, expenses[0]);
+            topExpense = maxExp.desc || 'Pengeluaran';
+        }
+
+        const formatRp = (num) => 'Rp ' + num.toLocaleString('id-ID');
+
+        // Update DOM
+        const elRev = document.getElementById('dashTotalRev');
+        if(elRev) elRev.textContent = formatRp(revTerkunci);
+
+        const elEvents = document.getElementById('dashTotalEvents');
+        if(elEvents) elEvents.innerHTML = totalEvents + ' Acara';
+        
+        const elEventsFoot = document.getElementById('dashTotalEvents')?.nextElementSibling;
+        if(elEventsFoot) elEventsFoot.innerHTML = '<span style="color:var(--adm-info); font-weight:700;">' + terkunci + ' Terkunci</span><span> ' + tentative + ' Tentative ' + review + ' Review</span>';
+
+        const elConv = document.getElementById('dashConvRate');
+        if(elConv) elConv.textContent = convRate + '%';
+
+        const elAvgDeal = document.getElementById('dashAvgDeal');
+        if(elAvgDeal) elAvgDeal.textContent = formatRp(avgDeal);
+
+        const elTarget = document.getElementById('dashAnnualTarget');
+        if(elTarget) elTarget.textContent = targetPercent + '% Tercapai';
+
+        const elLeadTime = document.getElementById('dashLeadTime');
+        if(elLeadTime) elLeadTime.textContent = 'H-30 Hari'; // static avg
+
+        const elAvgExp = document.getElementById('dashAvgExpense');
+        if(elAvgExp) elAvgExp.textContent = formatRp(avgExpense);
+
+        const elTopExp = document.getElementById('dashTopExpense');
+        if(elTopExp) elTopExp.textContent = topExpense;
+
+    } catch(e) {
+        console.error('Failed to update dashboard metrics', e);
+    }
+};
+
+// Hook it into window.loadUnifiedEventsDatabase
+const _origLoadUnified2 = window.loadUnifiedEventsDatabase;
+if(_origLoadUnified2) {
+    window.loadUnifiedEventsDatabase = async function() {
+        await _origLoadUnified2();
+        if(typeof updateDashboardMetrics === 'function' && document.getElementById('sec-dashboard')) {
+            updateDashboardMetrics();
+        }
+    }
+}
