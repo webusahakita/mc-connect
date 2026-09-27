@@ -1714,7 +1714,7 @@ async function renderWardrobe() {
         const tbody = document.getElementById('globalWardrobeTableBody');
         if (tbody) {
             if (!Array.isArray(items) || items.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--adm-text-muted);">Belum ada item wardrobe. Klik Tambah Gaun Baru.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:2rem; color:var(--adm-text-muted);">Belum ada item wardrobe. Klik Tambah Gaun Baru.</td></tr>';
             } else {
                 let html = '';
                 items.forEach(item => {
@@ -1730,7 +1730,8 @@ async function renderWardrobe() {
                         '<td style="padding:1rem 0.5rem;">' + (item.imgUrl ? '<img src="'+escapeHtml(item.imgUrl)+'" style="width:48px; height:48px; border-radius:8px; object-fit:cover; border:1px solid rgba(255,255,255,0.1);">' : '<div style="width:48px; height:48px; border-radius:8px; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; font-size:1.5rem;">👔</div>') + '</td>' +
                         '<td style="padding:1rem 0.5rem;"><div style="font-weight:700; font-size:1.05rem; color:var(--adm-gold, #D4AF37);">' + escapeHtml(item.name || '-') + '</div><div style="font-size:0.75rem; color:var(--adm-text-muted); margin-top:4px;">ID: '+escapeHtml(item.db_id||item.id)+'</div></td>' +
                         '<td style="padding:1rem 0.5rem; max-width:250px; line-height:1.4; color:rgba(255,255,255,0.8);">' + escapeHtml(item.desc || '-') + '</td>' +
-                        '<td style="padding:1rem 0.5rem;"><span style="display:inline-block; padding:0.4rem 0.8rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:20px; font-size:0.8rem; font-weight:600;">' + (item.colorName ? escapeHtml(item.colorName) : (item.colorHex ? escapeHtml(item.colorHex) : '-')) + '</span></td>' +
+                        '<td style="padding:1rem 0.5rem;"><span style="display:inline-block; padding:0.4rem 0.8rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:20px; font-size:0.8rem; font-weight:600;">' + escapeHtml(item.colorName || '-') + '</span></td>' +
+                        '<td style="padding:1rem 0.5rem;"><span style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; font-weight:600;">' + (item.colorHex && item.colorHex.startsWith('#') ? '<span style="display:inline-block; width:16px; height:16px; border-radius:50%; background:'+escapeHtml(item.colorHex)+'; border:1px solid rgba(255,255,255,0.2);"></span>' : '') + escapeHtml(item.colorHex || '-') + '</span></td>' +
                         '<td style="padding:1rem 0.5rem;"><span class="badge" style="background:'+ (item.status === 'Siap Pakai' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)') + '; color:' + (item.status === 'Siap Pakai' ? '#34d399' : '#f87171') + '; border:1px solid '+ (item.status === 'Siap Pakai' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)') +'; padding:0.4rem 0.8rem; border-radius:6px; font-weight:700; letter-spacing:0.5px;">' + escapeHtml(item.status || 'Tersedia') + '</span></td>' +
                         '<td style="padding:1rem 0.5rem; text-align:center;"><div style="font-size:1.2rem; font-weight:800; color:#fff;">' + freq + 'x</div><div style="font-size:0.7rem; color:var(--adm-text-muted); text-transform:uppercase;">Dipakai</div></td>' +
                         '<td style="padding:1rem 0.5rem; text-align:right;">' +
@@ -3176,9 +3177,10 @@ window.promptAddGlobalWardrobe = async function(existingWardrobeStr) {
     if(typeof uiCustomForm === 'function') {
         const data = await uiCustomForm([
             { id: 'imgUrl', label: 'Foto Pakaian (Opsional, file gambar)', type: 'file' },
-            { id: 'name', label: 'Kode / Nama Gaun', type: 'text', value: existingItem ? (existingItem.colorName || existingItem.name) : '' },
-            { id: 'desc', label: 'Deskripsi Singkat', type: 'text', value: existingItem ? existingItem.desc : '' },
-            { id: 'colorName', label: 'Kategori / Warna', type: 'text', value: existingItem ? existingItem.colorName : '' },
+            { id: 'name', label: 'Kode / Nama Gaun', type: 'text', value: existingItem ? existingItem.name : '' },
+            { id: 'desc', label: 'Deskripsi Singkat', type: 'textarea', value: existingItem ? existingItem.desc : '' },
+            { id: 'colorName', label: 'Kategori', type: 'text', value: existingItem ? existingItem.colorName : '' },
+            { id: 'colorHex', label: 'Warna (Contoh: Hitam, Biru, #FF0000)', type: 'text', value: existingItem ? existingItem.colorHex : '' },
             { id: 'status', label: 'Status Gaun', type: 'select', value: existingItem ? existingItem.status : 'Siap Pakai', options: [{value: 'Siap Pakai', label: 'Siap Pakai'}, {value: 'Sedang Dipakai', label: 'Sedang Dipakai'}, {value: 'Sedang Dicuci/Diperbaiki', label: 'Laundry / Rusak'}] }
         ], existingItem ? 'Edit Wardrobe' : 'Tambah Wardrobe Baru');
         
@@ -3215,6 +3217,7 @@ window.promptAddGlobalWardrobe = async function(existingWardrobeStr) {
                         items[idx].name = data.name;
                         items[idx].desc = data.desc;
                         items[idx].colorName = data.colorName;
+                        items[idx].colorHex = data.colorHex;
                         items[idx].status = data.status;
                         items[idx].imgUrl = base64Image;
                     }
@@ -3223,6 +3226,7 @@ window.promptAddGlobalWardrobe = async function(existingWardrobeStr) {
                         name: data.name,
                         desc: data.desc,
                         colorName: data.colorName,
+                        colorHex: data.colorHex,
                         status: data.status,
                         imgUrl: base64Image,
                         frequency: 0
