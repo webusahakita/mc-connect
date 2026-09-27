@@ -500,6 +500,21 @@ class CmsApiController extends Controller
     {
         $mc = $this->getMC();
         $items = CmsWardrobeCatalog::where('mc_id', $mc->id)->get();
+        
+        // AUTO-SEED DUMMY DATA JIKA KOSONG (SESUAI PERMINTAAN USER)
+        if($items->count() === 0) {
+            $dummyData = [
+                ['mc_id' => $mc->id, 'nama' => 'Classic Black Tuxedo', 'deskripsi' => 'Jas formal hitam dengan kerah satin elegan.', 'warna' => '#000000', 'kategori' => 'Formal', 'is_active' => true, 'foto_url' => 'https://images.unsplash.com/photo-1594938291221-94f18cbb5660?q=80&w=200&auto=format&fit=crop'],
+                ['mc_id' => $mc->id, 'nama' => 'Midnight Blue Suit', 'deskripsi' => 'Setelan jas warna biru dongker, cocok untuk acara malam.', 'warna' => '#191970', 'kategori' => 'Formal', 'is_active' => true, 'foto_url' => 'https://images.unsplash.com/photo-1594938328870-9623159c8c99?q=80&w=200&auto=format&fit=crop'],
+                ['mc_id' => $mc->id, 'nama' => 'Maroon Velvet Blazer', 'deskripsi' => 'Blazer bahan velvet maroon untuk gaya semi-formal dan eksentrik.', 'warna' => '#800000', 'kategori' => 'Semi-Formal', 'is_active' => true, 'foto_url' => 'https://images.unsplash.com/photo-1593032465175-481ac7f401a0?q=80&w=200&auto=format&fit=crop'],
+                ['mc_id' => $mc->id, 'nama' => 'White Floral Batik', 'deskripsi' => 'Kemeja batik motif floral putih, untuk acara resepsi siang.', 'warna' => '#FFFFFF', 'kategori' => 'Batik/Tradisional', 'is_active' => false, 'foto_url' => 'https://images.unsplash.com/photo-1620012253295-c15bc3e658e3?q=80&w=200&auto=format&fit=crop']
+            ];
+            foreach($dummyData as $d) {
+                CmsWardrobeCatalog::create($d);
+            }
+            $items = CmsWardrobeCatalog::where('mc_id', $mc->id)->get();
+        }
+        
         return response()->json(['success' => true, 'data' => $items->map(fn($w) => [
             'id'       => 'w_' . $w->id,
             'db_id'    => $w->id,
