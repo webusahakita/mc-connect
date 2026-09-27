@@ -954,6 +954,13 @@ function loadActiveEventInCommandCenter(eventId) {
         clientBadge.textContent = ev.paymentStatus || ev.status;
     }
 
+    const eccClientStatusSelect = document.getElementById('eccClientStatusSelect');
+    if (eccClientStatusSelect) {
+        let normalizedStatus = ev.status || 'Tentative';
+        if(normalizedStatus === 'Terkunci') normalizedStatus = 'Terkunci';
+        eccClientStatusSelect.value = normalizedStatus;
+    }
+
     const clientNameEl = document.getElementById('eccClientName');
     if (clientNameEl) clientNameEl.textContent = clientName;
 
@@ -1011,12 +1018,35 @@ function loadActiveEventInCommandCenter(eventId) {
         stickySubtitle.textContent = `* Tersimpan ke Event_ID #${ev.id}`;
     }
 
+    // WA Automation Gateway
+    const waListContainer = document.getElementById('ccWaAutomationList');
+    if (waListContainer) {
+        const templates = window.currentWaTemplates && window.currentWaTemplates.length > 0 
+            ? window.currentWaTemplates 
+            : [
+                { id: 't1', title: 'Reminder Pembayaran DP', body: 'Halo [NAMA], mohon segera melakukan pembayaran DP untuk acara [ACARA]. Terima kasih.' },
+                { id: 't2', title: 'Update Jadwal Meeting', body: 'Halo [NAMA], mari jadwalkan meeting persiapan acara [ACARA]. Kapan ada waktu?' }
+            ];
+        
+        let waHtml = '';
+        templates.forEach(t => {
+            waHtml += `
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:6px; padding:12px; margin-bottom:10px;">
+                    <div style="font-weight:700; color:var(--adm-gold); margin-bottom:6px;">${t.title}</div>
+                    <div style="font-size:0.8rem; color:#94A3B8; margin-bottom:8px;">${t.body.substring(0, 50)}...</div>
+                    <button class="btn btn-secondary btn-sm" onclick="sendWaTemplate('${encodeURIComponent(t.body)}')">Kirim Pesan Ini</button>
+                </div>
+            `;
+        });
+        waListContainer.innerHTML = waHtml || '<div style="text-align:center; padding:1.5rem; color:var(--adm-text-muted); font-size:0.85rem;">Belum ada template.</div>';
+    }
+
     // 5. Tab 1 - VIP Protocol
     const vipContainer = document.getElementById('eccVipProtocolList');
     if (vipContainer) {
         const protocols = ev.vipProtocol && ev.vipProtocol.length > 0 ? ev.vipProtocol : [];
         if (protocols.length === 0) {
-            vipContainer.innerHTML = '<div style="color:var(--adm-text-muted); font-size:0.85rem; font-style:italic;">Belum addatprotokol VIP.</div>';
+            vipContainer.innerHTML = '<div style="color:var(--adm-text-muted); font-size:0.85rem; font-style:italic;">Belum ada protokol VIP.</div>';
         } else {
             vipContainer.innerHTML = protocols.map(p => `
                 <div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.04); padding-bottom:0.3rem;">
@@ -2826,6 +2856,35 @@ window.updateAdminFinance = async function(val) {
     }
 };
 
+window.updateCcStatus = async function(statusVal) {
+    if(!activeCommandCenterEventId) return;
+    const ev = adminEventsDb.find(e => String(e.id) === String(activeCommandCenterEventId));
+    if(!ev) return;
+    
+    ev.status = statusVal;
+    
+    // Attempt saving to DB
+    try {
+        const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (csrfToken) headers['X-CSRF-TOKEN'] = csrfToken;
+
+        const res = await fetch('/api/cms/events/' + ev.id, {
+            method: 'PUT',
+            headers: headers,
+            body: JSON.stringify(ev)
+        });
+        if(res.ok) {
+            if(typeof uiAlert === 'function') uiAlert('Status acara berhasil diperbarui!');
+            switchCommandCenterEvent(ev.id); // reload the UI
+        } else {
+            if(typeof uiAlert === 'function') uiAlert('Gagal menyimpan status ke server.');
+        }
+    } catch(err) {
+        console.error('Failed to update event status', err);
+    }
+};
+
 window.openEditInvoiceModal = function() {
     if(!activeCommandCenterEventId) {
         if(typeof uiAlert === 'function') uiAlert('Pilih acara terlebih dahulu!');
@@ -2854,6 +2913,21 @@ window.openEditInvoiceModal = function() {
 
     const m = document.getElementById('editInvoiceModal');
     if(m) m.classList.add('active');
+};
+
+window.sendWaTemplate = function(encodedBody) {
+    if(!activeCommandCenterEventId) return;
+    const ev = adminEventsDb.find(e => String(e.id) === String(activeCommandCenterEventId));
+    if(!ev) return;
+
+    let body = decodeURIComponent(encodedBody);
+    body = body.replace(/\[NAMA\]/g, ev.pic || 'Klien');
+    body = body.replace(/\[ACARA\]/g, ev.title || 'Acara');
+    
+    let phone = ev.metadata?.pic_wa || '';
+    if(phone.startsWith('0')) phone = '62' + phone.substring(1);
+    
+    window.openWhatsAppChat(phone, ev.pic || '', ev.title || '', body);
 };
 
 window.addInvoiceItemRow = function() {
