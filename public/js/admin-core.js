@@ -1687,15 +1687,23 @@ async function renderWardrobe() {
         // 1. Render in Command Center (adminWardrobeGrid)
         const grid = document.getElementById('adminWardrobeGrid');
         if (grid) {
-            if (!Array.isArray(items) || items.length === 0) {
-                grid.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--adm-text-muted);">Belum ada item wardrobe.</div>';
+            let eventItems = [];
+            if (typeof activeCommandCenterEventId !== 'undefined' && activeCommandCenterEventId && window.adminEventsDb) {
+                const ev = window.adminEventsDb.find(e => String(e.id) === String(activeCommandCenterEventId));
+                if (ev && ev.wardrobeIds && Array.isArray(ev.wardrobeIds)) {
+                    eventItems = items.filter(item => ev.wardrobeIds.includes(item.id) || ev.wardrobeIds.includes(item.db_id));
+                }
+            }
+            
+            if (eventItems.length === 0) {
+                grid.innerHTML = '<div style="text-align:center; padding:1.5rem; color:var(--adm-text-muted); font-size:0.85rem;">Belum ada item wardrobe di-assign. Klik Pilih Gaun dari Koleksi.</div>';
             } else {
-                grid.innerHTML = items.map(item => {
+                grid.innerHTML = eventItems.map(item => {
                     return '<div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:1px solid rgba(255,255,255,0.06); display:flex; gap:1rem; align-items:center;">' +
                         (item.imgUrl ? '<img src="'+escapeHtml(item.imgUrl)+'" style="width:50px; height:50px; border-radius:8px; object-fit:cover;">' : '<div style="width:50px; height:50px; border-radius:8px; background:#444; display:flex; align-items:center; justify-content:center; font-size:1.5rem;">👔</div>') +
                         '<div>' +
-                            '<div style="font-weight:700;">' + escapeHtml(item.name || 'Item') + '</div>' +
-                            '<div style="font-size:0.8rem; color:var(--adm-text-muted); margin-top:0.25rem;">' + escapeHtml(item.colorName || item.colorHex || '') + '</div>' +
+                            '<div style="font-weight:700; font-size:0.9rem;">' + escapeHtml(item.name || 'Item') + '</div>' +
+                            '<div style="font-size:0.8rem; color:var(--adm-text-muted); margin-top:0.25rem;">' + escapeHtml(item.colorName || item.colorHex || '') + ' - ' + escapeHtml(item.status || 'Tersedia') + '</div>' +
                         '</div>' +
                     '</div>';
                 }).join('');
@@ -1708,19 +1716,30 @@ async function renderWardrobe() {
             if (!Array.isArray(items) || items.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--adm-text-muted);">Belum ada item wardrobe. Klik Tambah Gaun Baru.</td></tr>';
             } else {
-                tbody.innerHTML = items.map(item => {
-                    return '<tr>' +
+                let html = '';
+                items.forEach(item => {
+                    let freq = 0;
+                    if(window.adminEventsDb) {
+                        window.adminEventsDb.forEach(ev => {
+                            if(ev.wardrobeIds && (ev.wardrobeIds.includes(item.id) || ev.wardrobeIds.includes(item.db_id))) {
+                                freq++;
+                            }
+                        });
+                    }
+                    html += '<tr>' +
                         '<td>' + (item.imgUrl ? '<img src="'+escapeHtml(item.imgUrl)+'" style="width:40px; height:40px; border-radius:6px; object-fit:cover;">' : '<div style="width:40px; height:40px; border-radius:6px; background:#444; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">👔</div>') + '</td>' +
                         '<td style="font-weight:600;">' + escapeHtml(item.name || '-') + '</td>' +
                         '<td>' + escapeHtml(item.desc || '-') + '</td>' +
                         '<td>' + (item.colorName ? escapeHtml(item.colorName) : (item.colorHex ? escapeHtml(item.colorHex) : '-')) + '</td>' +
                         '<td><span class="badge" style="background:rgba(59,130,246,0.1); color:#60A5FA;">' + escapeHtml(item.status || 'Tersedia') + '</span></td>' +
-                        '<td style="text-align:center;">' + (item.frequency || 0) + 'x</td>' +
+                        '<td style="text-align:center;">' + freq + 'x</td>' +
                         '<td style="text-align:right;">' +
-                            '<button class="btn btn-secondary btn-sm" onclick="editWardrobe('+escapeHtml(JSON.stringify(item.id||item.name))+')">Hapus</button>' +
+                            `<button class="btn btn-secondary btn-sm" onclick="promptAddGlobalWardrobe('${encodeURIComponent(JSON.stringify(item))}')">Edit</button> ` +
+                            `<button class="btn btn-secondary btn-sm" style="color:var(--adm-danger); border-color:transparent;" onclick="deleteWardrobeItem('${item.db_id || item.id}')">Hapus</button>` +
                         '</td>' +
                     '</tr>';
-                }).join('');
+                });
+                tbody.innerHTML = html;
             }
         }
     } catch(e) {
@@ -3034,13 +3053,44 @@ window.openInvoicePrintModal = function() {
     if(m) m.classList.add('active');
 };
 
+window.deleteWardrobeItem = async function(id) {
+    if(typeof uiConfirm === 'function') {
+        const sure = confirm('Yakin ingin menghapus item wardrobe ini?');
+        if(!sure) return;
+    } else if(!confirm('Yakin ingin menghapus item wardrobe ini?')) return;
+    
+    try {
+        const res = await fetch('/api/cms/wardrobe-catalog/' + id, { method: 'DELETE' });
+        if(res.ok) {
+            if(typeof uiAlert === 'function') uiAlert('Item wardrobe dihapus!');
+            renderWardrobe();
+        } else {
+            if(typeof uiAlert === 'function') uiAlert('Gagal menghapus dari server.');
+        }
+    } catch(e) {
+        console.error(e);
+    }
+};
+
 window.promptAssignWardrobe = async function() {
     if(!activeCommandCenterEventId) {
         if(typeof uiAlert === 'function') uiAlert('Pilih acara terlebih dahulu!');
         return;
     }
+    const ev = adminEventsDb.find(e => String(e.id) === String(activeCommandCenterEventId));
+    if(!ev) return;
     
     let wardrobeOptions = [{value: '', label: 'Belum ada data gaun. Buka menu Wardrobe.'}];
+    try {
+        const res = await fetch('/api/cms/wardrobe-catalog');
+        const json = await res.json();
+        if(json.success && json.data && json.data.length > 0) {
+            wardrobeOptions = [{value: '', label: '-- Pilih Wardrobe --'}].concat(json.data.map(w => ({
+                value: w.db_id || w.id,
+                label: w.name || w.colorName
+            })));
+        }
+    } catch(e) {}
     
     if(typeof uiCustomForm === 'function') {
         const data = await uiCustomForm([
@@ -3048,8 +3098,17 @@ window.promptAssignWardrobe = async function() {
             { id: 'note', label: 'Catatan (Opsional)', type: 'text' }
         ], 'Assign Wardrobe ke Acara');
         
-        if(data) {
-            uiAlert('Fitur integrasi Wardrobe masih dalam pengembangan. Data yang dimasukkan: ' + JSON.stringify(data));
+        if (data && data.wardrobe_id) {
+            ev.wardrobeIds = ev.wardrobeIds || [];
+            if(!ev.wardrobeIds.includes(data.wardrobe_id)) {
+                ev.wardrobeIds.push(data.wardrobe_id);
+                saveUnifiedEventsDatabase();
+                if(typeof renderWardrobe === 'function') renderWardrobe();
+                if(typeof switchCommandCenterEvent === 'function') switchCommandCenterEvent(ev.id);
+                if(typeof uiAlert === 'function') uiAlert('Wardrobe berhasil di-assign ke acara ini!');
+            } else {
+                if(typeof uiAlert === 'function') uiAlert('Wardrobe ini sudah di-assign sebelumnya.');
+            }
         }
     } else {
         alert('Fitur ini memerlukan custom-modal.js.');
@@ -3106,14 +3165,22 @@ window.promptAddExpense = async function() {
     }
 };
 
-window.promptAddGlobalWardrobe = async function() {
+window.promptAddGlobalWardrobe = async function(existingWardrobeStr) {
+    let existingItem = null;
+    if(existingWardrobeStr) {
+        try {
+            existingItem = JSON.parse(decodeURIComponent(existingWardrobeStr));
+        } catch(e) {}
+    }
+
     if(typeof uiCustomForm === 'function') {
         const data = await uiCustomForm([
-            { id: 'name', label: 'Kode / Nama Gaun', type: 'text' },
-            { id: 'desc', label: 'Deskripsi Singkat', type: 'text' },
-            { id: 'colorName', label: 'Kategori / Warna', type: 'text' },
-            { id: 'status', label: 'Status Gaun', type: 'select', options: [{value: 'Tersedia', label: 'Tersedia'}, {value: 'Sedang Dipakai', label: 'Sedang Dipakai'}, {value: 'Laundry / Rusak', label: 'Laundry / Rusak'}] }
-        ], 'Tambah Wardrobe Baru');
+            { id: 'imgUrl', label: 'Foto Pakaian (Opsional)', type: 'image' },
+            { id: 'name', label: 'Kode / Nama Gaun', type: 'text', value: existingItem ? (existingItem.colorName || existingItem.name) : '' },
+            { id: 'desc', label: 'Deskripsi Singkat', type: 'text', value: existingItem ? existingItem.desc : '' },
+            { id: 'colorName', label: 'Kategori / Warna', type: 'text', value: existingItem ? existingItem.colorName : '' },
+            { id: 'status', label: 'Status Gaun', type: 'select', value: existingItem ? existingItem.status : 'Siap Pakai', options: [{value: 'Siap Pakai', label: 'Siap Pakai'}, {value: 'Sedang Dipakai', label: 'Sedang Dipakai'}, {value: 'Sedang Dicuci/Diperbaiki', label: 'Laundry / Rusak'}] }
+        ], existingItem ? 'Edit Wardrobe' : 'Tambah Wardrobe Baru');
         
         if(data) {
             if(!data.name) {
@@ -3127,13 +3194,25 @@ window.promptAddGlobalWardrobe = async function() {
                 let items = [];
                 if(json.success && json.data) items = json.data;
                 
-                items.push({
-                    name: data.name,
-                    desc: data.desc,
-                    colorName: data.colorName,
-                    status: data.status,
-                    frequency: 0
-                });
+                if (existingItem) {
+                    const idx = items.findIndex(i => String(i.db_id) === String(existingItem.db_id) || String(i.id) === String(existingItem.id));
+                    if(idx !== -1) {
+                        items[idx].name = data.name;
+                        items[idx].desc = data.desc;
+                        items[idx].colorName = data.colorName;
+                        items[idx].status = data.status;
+                        if(data.imgUrl && data.imgUrl.startsWith('data:image')) items[idx].imgUrl = data.imgUrl;
+                    }
+                } else {
+                    items.push({
+                        name: data.name,
+                        desc: data.desc,
+                        colorName: data.colorName,
+                        status: data.status,
+                        imgUrl: data.imgUrl || '',
+                        frequency: 0
+                    });
+                }
                 
                 const saveRes = await fetch('/api/cms/wardrobe-catalog', {
                     method: 'POST',
