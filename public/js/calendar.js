@@ -129,7 +129,7 @@ class AvailabilityCalendar {
             let todayIndicator = '';
             if (cellDate.getTime() === today.getTime()) {
                 styleCursor += ' border: 1px solid #D4AF37; position:relative;';
-                todayIndicator = '<div style="position:absolute; top:-8px; right:-8px; background:#EF4444; color:#FFF; font-size:0.65rem; padding:3px 8px; border-radius:4px; font-weight:800; box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index:10; border: 1px solid rgba(255,255,255,0.2);">HARI INI</div>';
+                todayIndicator = '<div style="position:absolute; top:4px; right:4px; background:#EF4444; color:#FFF; font-size:0.65rem; padding:3px 8px; border-radius:4px; font-weight:800; box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index:10; border: 1px solid rgba(255,255,255,0.2);">HARI INI</div>';
             }
 
             html += `
@@ -169,11 +169,11 @@ class AvailabilityCalendar {
             const eventObj = eventsOnDate.length > 0 ? eventsOnDate[0] : null;
             
             // Validasi Admin: Jangan izinkan tambah acara di tanggal lewat/hari ini (jika tidak ada event sebelumnya)
-            if (!isPublic && isBlocked && !eventObj) {
-                if (window.showToast) window.showToast('Tidak bisa input acara baru di tanggal yang sudah terlewat atau hari ini.', 'red');
-                else window.uiAlert('Tidak bisa input acara baru di tanggal ini.');
-                return;
-            }
+            // if (!isPublic && isBlocked && !eventObj) {
+            //     if (window.showToast) window.showToast('Tidak bisa input acara baru di tanggal yang sudah terlewat atau hari ini.', 'red');
+            //     else window.uiAlert('Tidak bisa input acara baru di tanggal ini.');
+            //     return;
+            // }
             
             this.onDateClickCallback(dateStr, status, eventObj, eventsOnDate);
             return;

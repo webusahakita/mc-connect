@@ -38,27 +38,86 @@ function buildFormFields(formContainer, fields) {
         label.style.fontSize = '0.9rem';
         
         let input;
-        if (field.type === 'textarea') {
-            input = document.createElement('textarea');
-            input.rows = 4;
-        } else if (field.type === 'select') {
-            input = document.createElement('select');
-            if (field.options) {
+        if (field.type === 'gallery') {
+            input = document.createElement('div');
+            input.style.display = 'grid';
+            input.style.gridTemplateColumns = 'repeat(auto-fill, minmax(100px, 1fr))';
+            input.style.gap = '10px';
+            input.style.maxHeight = '40vh';
+            input.style.overflowY = 'auto';
+            input.style.padding = '5px';
+            input.style.marginBottom = '0';
+            
+            const hiddenValue = document.createElement('input');
+            hiddenValue.type = 'hidden';
+            hiddenValue.id = 'cm_field_' + field.id;
+            wrapper.appendChild(hiddenValue);
+            
+            let selectedItem = null;
+            if (field.options && field.options.length > 0) {
                 field.options.forEach(opt => {
-                    const o = document.createElement('option');
-                    o.value = opt.value !== undefined ? opt.value : opt;
-                    o.textContent = opt.label !== undefined ? opt.label : opt;
-                    input.appendChild(o);
+                    if (opt.value === '') return;
+                    const card = document.createElement('div');
+                    card.style.border = '2px solid transparent';
+                    card.style.borderRadius = '8px';
+                    card.style.padding = '8px';
+                    card.style.cursor = 'pointer';
+                    card.style.textAlign = 'center';
+                    card.style.background = 'rgba(255,255,255,0.05)';
+                    card.style.transition = 'all 0.2s';
+                    
+                    const val = opt.value !== undefined ? opt.value : opt;
+                    const lbl = opt.label !== undefined ? opt.label : opt;
+                    const imgUrl = opt.imgUrl;
+                    
+                    let mediaHtml = '';
+                    if (imgUrl) {
+                        mediaHtml = `<img src="${imgUrl}" style="width:100%; height:80px; object-fit:cover; border-radius:6px; margin-bottom:5px;">`;
+                    } else {
+                        mediaHtml = `<div style="width:100%; height:80px; display:flex; align-items:center; justify-content:center; background:#444; border-radius:6px; font-size:2rem; margin-bottom:5px;">👔</div>`;
+                    }
+                    
+                    card.innerHTML = `${mediaHtml}<div style="font-size:0.75rem; font-weight:600; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${lbl}">${lbl}</div>`;
+                    
+                    card.onclick = () => {
+                        if (selectedItem) selectedItem.style.border = '2px solid transparent';
+                        selectedItem = card;
+                        card.style.border = '2px solid var(--gold-primary, #D4AF37)';
+                        hiddenValue.value = val;
+                    };
+                    
+                    if (field.value !== undefined && String(val) === String(field.value)) {
+                        setTimeout(() => card.onclick(), 0);
+                    }
+                    
+                    input.appendChild(card);
                 });
+            } else {
+                input.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:1rem; color:#888;">Belum ada data gaun. Buka menu Wardrobe Tracker untuk menambah data.</div>';
             }
         } else {
-            input = document.createElement('input');
-            input.type = field.type || 'text';
+            if (field.type === 'textarea') {
+                input = document.createElement('textarea');
+                input.rows = 4;
+            } else if (field.type === 'select') {
+                input = document.createElement('select');
+                if (field.options) {
+                    field.options.forEach(opt => {
+                        const o = document.createElement('option');
+                        o.value = opt.value !== undefined ? opt.value : opt;
+                        o.textContent = opt.label !== undefined ? opt.label : opt;
+                        input.appendChild(o);
+                    });
+                }
+            } else {
+                input = document.createElement('input');
+                input.type = field.type || 'text';
+            }
+            input.id = 'cm_field_' + field.id;
+            input.className = 'custom-modal-input';
+            input.style.marginBottom = '0';
+            input.value = field.value !== undefined ? field.value : '';
         }
-        input.id = 'cm_field_' + field.id;
-        input.className = 'custom-modal-input';
-        input.style.marginBottom = '0';
-        input.value = field.value !== undefined ? field.value : '';
         
         wrapper.appendChild(label);
         wrapper.appendChild(input);

@@ -452,8 +452,12 @@ function autoSyncEventsToCustomers(events) {
 }
 
 let _saveEventsTimer = null;
-function saveUnifiedEventsDatabase() {
+function saveUnifiedEventsDatabase(evToSync = null) {
     try {
+        if (evToSync && typeof syncEventMetadata === 'function') {
+            syncEventMetadata(evToSync);
+        }
+        
         // Hanymemanggil sync ke Data Pelanggan
         // Selalu pastikan sync ke Data Pelanggan setiap kali Events disimpan
         if (typeof autoSyncEventsToCustomers === 'function') {
@@ -485,6 +489,30 @@ async function pushEventsToServer() {
     // Disabled per user request: data lokal tidak boleh menimpa server secara massal
     console.log('[Sync] pushEventsToServer disabled.');
 }
+
+window.syncEventMetadata = async function(ev) {
+    if (!ev) return;
+    try {
+        const payload = {
+            metadata: {
+                checklist: ev.checklist || [],
+                expenses: ev.expenses || [],
+                vipNotes: ev.vipNotes || '',
+                vipProtocol: ev.vipProtocol || [],
+                invoice_items: ev.invoiceItems || null,
+                wardrobeIds: ev.wardrobeIds || []
+            }
+        };
+        await fetch('/api/cms/events/' + ev.id, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        console.log('[Sync] Event metadata synced to server for event ID:', ev.id);
+    } catch (err) {
+        console.error("Gagal sync event metadata:", err);
+    }
+};
 
 function populateCommandCenterSelector() {
     const selector = document.getElementById('eccEventSelector');
@@ -532,7 +560,15 @@ function populateCommandCenterSelector() {
     }
 }
 
-function switchCommandCenterEvent(eventId) {
+async function switchCommandCenterEvent(eventId) {
+    if (document.getElementById('globalAppLoader')) {
+        document.getElementById('globalAppLoader').classList.remove('hidden');
+    }
+    
+    if (typeof loadUnifiedEventsDatabase === 'function') {
+        await loadUnifiedEventsDatabase();
+    }
+    
     loadActiveEventInCommandCenter(eventId);
     const ev = adminEventsDb.find(e => String(e.id) === String(eventId));
     if (ev) {
@@ -543,10 +579,17 @@ function switchCommandCenterEvent(eventId) {
             populateCommandCenterSelector();
         }
     }
+    
+    if (document.getElementById('globalAppLoader')) {
+        document.getElementById('globalAppLoader').classList.add('hidden');
+    }
 }
 window.switchCommandCenterEvent = switchCommandCenterEvent;
 
-function openEventInCommandCenter(eventId) {
+async function openEventInCommandCenter(eventId) {
+    if (typeof loadUnifiedEventsDatabase === 'function') {
+        await loadUnifiedEventsDatabase();
+    }
     loadActiveEventInCommandCenter(eventId);
     if (typeof navigateToSection === 'function') {
         navigateToSection('sec-command-center', document.getElementById('menu-command-center'));
@@ -554,7 +597,11 @@ function openEventInCommandCenter(eventId) {
 }
 window.openEventInCommandCenter = openEventInCommandCenter;
 
-function openCustomerInCommandCenter(custId) {
+async function openCustomerInCommandCenter(custId) {
+    if (typeof loadUnifiedEventsDatabase === 'function') {
+        await loadUnifiedEventsDatabase();
+    }
+    
     let ev = adminEventsDb.find(e => String(e.customerId) === String(custId) || String(e.id) === String(custId));
     if (!ev) {
         let cust = null;
@@ -565,12 +612,22 @@ function openCustomerInCommandCenter(custId) {
         } catch(e) {}
 
         if (cust) {
-            syncCustomerToCalendar(cust);
+            await syncCustomerToCalendar(cust);
             ev = adminEventsDb.find(e => String(e.customerId) === String(custId) || String(e.id) === String(custId));
         }
     }
-    const targetId = ev ? ev.id : (adminEventsDb[0] ? adminEventsDb[0].id : 1);
-    openEventInCommandCenter(targetId);
+    
+    const targetId = ev ? ev.id : (adminEventsDb[0] ? adminEventsDb[0].id : null);
+    
+    if (targetId) {
+        // Since we already fetched, we can just call loadActiveEventInCommandCenter
+        loadActiveEventInCommandCenter(targetId);
+        if (typeof navigateToSection === 'function') {
+            navigateToSection('sec-command-center', document.getElementById('menu-command-center'));
+        }
+    } else {
+        if(typeof uiAlert === 'function') uiAlert('Data acara tidak ditemukan untuk klien ini.');
+    }
 }
 window.openCustomerInCommandCenter = openCustomerInCommandCenter;
 
@@ -628,7 +685,7 @@ async function syncCustomerToCalendar(cust) {
     };
 
     if (existingIndex >= 0) {
-        adminEventsDb[existingIndex] = { ...adminEventsDb[existingIndex], ...eventDat};
+        adminEventsDb[existingIndex] = { ...adminEventsDb[existingIndex], ...eventData };
     } else {
         adminEventsDb.push(eventData);
     }
@@ -1549,6 +1606,9 @@ window.renderCalendarAgendaList = function(filter = 'all', btn = null) {
         btn.classList.add('active');
     }
     
+    window.currentAgendaFilter = (filter === 'all' ? null : filter);
+    if(typeof window.renderAdminCalendar === 'function') window.renderAdminCalendar();
+    
     const container = document.getElementById('agendaListContainer');
     if (!container) return;
     
@@ -1691,7 +1751,12 @@ async function renderWardrobe() {
             if (typeof activeCommandCenterEventId !== 'undefined' && activeCommandCenterEventId && window.adminEventsDb) {
                 const ev = window.adminEventsDb.find(e => String(e.id) === String(activeCommandCenterEventId));
                 if (ev && ev.wardrobeIds && Array.isArray(ev.wardrobeIds)) {
-                    eventItems = items.filter(item => ev.wardrobeIds.includes(item.id) || ev.wardrobeIds.includes(item.db_id));
+                    eventItems = items.filter(item => 
+                        ev.wardrobeIds.some(wItem => {
+                            const wId = (typeof wItem === 'object' && wItem !== null) ? wItem.id : wItem;
+                            return String(wId) === String(item.id) || String(wId) === String(item.db_id);
+                        })
+                    );
                 }
             }
             
@@ -1699,11 +1764,25 @@ async function renderWardrobe() {
                 grid.innerHTML = '<div style="text-align:center; padding:1.5rem; color:var(--adm-text-muted); font-size:0.85rem;">Belum ada item wardrobe di-assign. Klik Pilih Gaun dari Koleksi.</div>';
             } else {
                 grid.innerHTML = eventItems.map(item => {
-                    return '<div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:1px solid rgba(255,255,255,0.06); display:flex; gap:1rem; align-items:center;">' +
-                        (item.imgUrl ? '<img src="'+escapeHtml(item.imgUrl)+'" style="width:50px; height:50px; border-radius:8px; object-fit:cover;">' : '<div style="width:50px; height:50px; border-radius:8px; background:#444; display:flex; align-items:center; justify-content:center; font-size:1.5rem;">👔</div>') +
-                        '<div>' +
-                            '<div style="font-weight:700; font-size:0.9rem;">' + escapeHtml(item.name || 'Item') + '</div>' +
-                            '<div style="font-size:0.8rem; color:var(--adm-text-muted); margin-top:0.25rem;">' + escapeHtml(item.colorName || item.colorHex || '') + ' - ' + escapeHtml(item.status || 'Tersedia') + '</div>' +
+                    const ev = window.adminEventsDb.find(e => String(e.id) === String(activeCommandCenterEventId));
+                    const assignment = ev.wardrobeIds.find(wItem => {
+                        const wId = (typeof wItem === 'object' && wItem !== null) ? wItem.id : wItem;
+                        return String(wId) === String(item.id) || String(wId) === String(item.db_id);
+                    });
+                    const noteStr = (typeof assignment === 'object' && assignment !== null && assignment.note) ? assignment.note : '';
+
+                    return '<div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:1px solid rgba(255,255,255,0.06); display:flex; flex-direction:column; gap:0.75rem;">' +
+                        '<div style="display:flex; gap:0.75rem; align-items:center;">' +
+                            (item.imgUrl ? '<img src="'+escapeHtml(item.imgUrl)+'" style="width:40px; height:40px; border-radius:6px; object-fit:cover;">' : '<div style="width:40px; height:40px; border-radius:6px; background:#444; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">👔</div>') +
+                            '<div style="flex:1;">' +
+                                '<div style="font-weight:700; font-size:0.85rem; line-height:1.2;">' + escapeHtml(item.name || 'Item') + '</div>' +
+                                '<div style="font-size:0.75rem; color:var(--adm-text-muted); margin-top:0.25rem;">' + escapeHtml(item.colorName || item.colorHex || '') + ' - ' + escapeHtml(item.status || 'Tersedia') + '</div>' +
+                            '</div>' +
+                        '</div>' +
+                        (noteStr ? '<div style="font-size:0.75rem; color:var(--adm-gold, #D4AF37); background:rgba(212,175,55,0.05); padding:0.5rem; border-radius:6px; border-left:2px solid var(--adm-gold, #D4AF37); line-height:1.4;"><i class="fas fa-sticky-note" style="margin-right:4px;"></i> ' + escapeHtml(noteStr) + '</div>' : '') +
+                        '<div style="display:flex; gap:0.4rem; margin-top:auto;">' +
+                            `<button class="btn btn-secondary btn-sm" style="flex:1; font-size:0.7rem; padding:0.3rem 0; background:rgba(255,255,255,0.1); border:none;" onclick="promptAssignWardrobe('${item.db_id || item.id}')">Edit / Tambah</button>` +
+                            `<button class="btn btn-secondary btn-sm" style="flex:1; font-size:0.7rem; padding:0.3rem 0; background:rgba(239, 68, 68, 0.15); color:#f87171; border:none;" onclick="unassignWardrobe('${item.db_id || item.id}')">Hapus</button>` +
                         '</div>' +
                     '</div>';
                 }).join('');
@@ -1760,7 +1839,7 @@ function updateCalMetrics() {
         const tentative = events.filter(e => e.status && e.status.toLowerCase() === 'tentative').length;
         const review = events.filter(e => e.status && e.status.toLowerCase() === 'review').length;
         
-        const el1 = document.getElementById('calMetricTerkunci');
+        const el1 = document.getElementById('calMetricLocked');
         const el2 = document.getElementById('calMetricTentative');
         const el3 = document.getElementById('calMetricReview');
         const el4 = document.getElementById('calMetricTotal');
@@ -3073,7 +3152,7 @@ window.deleteWardrobeItem = async function(id) {
     }
 };
 
-window.promptAssignWardrobe = async function() {
+window.promptAssignWardrobe = async function(existingWardrobeId = null) {
     if(!activeCommandCenterEventId) {
         if(typeof uiAlert === 'function') uiAlert('Pilih acara terlebih dahulu!');
         return;
@@ -3081,38 +3160,120 @@ window.promptAssignWardrobe = async function() {
     const ev = adminEventsDb.find(e => String(e.id) === String(activeCommandCenterEventId));
     if(!ev) return;
     
-    let wardrobeOptions = [{value: '', label: 'Belum ada data gaun. Buka menu Wardrobe.'}];
+    let existingNote = '';
+    if (existingWardrobeId && ev.wardrobeIds) {
+        const assignment = ev.wardrobeIds.find(wItem => {
+            const wId = (typeof wItem === 'object' && wItem !== null) ? wItem.id : wItem;
+            return String(wId) === String(existingWardrobeId);
+        });
+        if (typeof assignment === 'object' && assignment !== null) {
+            existingNote = assignment.note || '';
+        }
+    }
+    
+    let wardrobeOptions = [];
     try {
         const res = await fetch('/api/cms/wardrobe-catalog');
         const json = await res.json();
         if(json.success && json.data && json.data.length > 0) {
-            wardrobeOptions = [{value: '', label: '-- Pilih Wardrobe --'}].concat(json.data.map(w => ({
+            wardrobeOptions = json.data.map(w => ({
                 value: w.db_id || w.id,
-                label: w.name || w.colorName
-            })));
+                label: w.name || w.colorName,
+                imgUrl: w.imgUrl
+            }));
         }
     } catch(e) {}
     
     if(typeof uiCustomForm === 'function') {
         const data = await uiCustomForm([
-            { id: 'wardrobe_id', label: 'Pilih Gaun / Koleksi', type: 'select', options: wardrobeOptions },
-            { id: 'note', label: 'Catatan (Opsional)', type: 'text' }
-        ], 'Assign Wardrobe ke Acara');
+            { id: 'wardrobe_id', label: 'Pilih Gaun / Koleksi', type: 'gallery', options: wardrobeOptions, value: existingWardrobeId || '' },
+            { id: 'note', label: 'Catatan (Opsional)', type: 'text', value: existingNote }
+        ], existingWardrobeId ? 'Edit Assign Wardrobe' : 'Assign Wardrobe ke Acara');
         
         if (data && data.wardrobe_id) {
             ev.wardrobeIds = ev.wardrobeIds || [];
-            if(!ev.wardrobeIds.includes(data.wardrobe_id)) {
-                ev.wardrobeIds.push(data.wardrobe_id);
-                saveUnifiedEventsDatabase();
+            const finalId = isNaN(Number(data.wardrobe_id)) ? data.wardrobe_id : Number(data.wardrobe_id);
+            const assignmentObj = data.note ? { id: finalId, note: data.note } : finalId;
+            
+            const existingIndex = ev.wardrobeIds.findIndex(wItem => {
+                const wId = (typeof wItem === 'object' && wItem !== null) ? wItem.id : wItem;
+                return String(wId) === String(finalId);
+            });
+            
+            if (existingIndex === -1) {
+                ev.wardrobeIds.push(assignmentObj);
+            } else {
+                ev.wardrobeIds[existingIndex] = assignmentObj;
+            }
+            
+            // Sync to Server Database
+                try {
+                    await fetch('/api/cms/events/' + ev.id, {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            metadata: {
+                                checklist: ev.checklist || [],
+                                expenses: ev.expenses || [],
+                                vipNotes: ev.vipNotes || '',
+                                vipProtocol: ev.vipProtocol || [],
+                                invoice_items: ev.invoiceItems || null,
+                                wardrobeIds: ev.wardrobeIds
+                            }
+                        })
+                    });
+                } catch(err) {
+                    console.error("Gagal sync wardrobe:", err);
+                }
+
+                saveUnifiedEventsDatabase(ev);
                 if(typeof renderWardrobe === 'function') renderWardrobe();
                 if(typeof switchCommandCenterEvent === 'function') switchCommandCenterEvent(ev.id);
-                if(typeof uiAlert === 'function') uiAlert('Wardrobe berhasil di-assign ke acara ini!');
-            } else {
-                if(typeof uiAlert === 'function') uiAlert('Wardrobe ini sudah di-assign sebelumnya.');
-            }
+                if(typeof uiAlert === 'function') uiAlert('Wardrobe berhasil diperbarui!');
         }
     } else {
         alert('Fitur ini memerlukan custom-modal.js.');
+    }
+};
+
+window.unassignWardrobe = async function(itemId) {
+    if(!activeCommandCenterEventId) return;
+    
+    const confirm = await uiConfirm('Apakah Anda yakin ingin menghapus wardrobe ini dari acara?');
+    if (!confirm) return;
+
+    const ev = adminEventsDb.find(e => String(e.id) === String(activeCommandCenterEventId));
+    if(!ev || !ev.wardrobeIds) return;
+    
+    // Filter out the wardrobe item
+    ev.wardrobeIds = ev.wardrobeIds.filter(wItem => {
+        const wId = (typeof wItem === 'object' && wItem !== null) ? wItem.id : wItem;
+        return String(wId) !== String(itemId);
+    });
+    
+    // Sync to Server Database
+    try {
+        await fetch('/api/cms/events/' + ev.id, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                metadata: {
+                    checklist: ev.checklist || [],
+                    expenses: ev.expenses || [],
+                    vipNotes: ev.vipNotes || '',
+                    vipProtocol: ev.vipProtocol || [],
+                    invoice_items: ev.invoiceItems || null,
+                    wardrobeIds: ev.wardrobeIds
+                }
+            })
+        });
+        
+        saveUnifiedEventsDatabase(ev);
+        if(typeof renderWardrobe === 'function') renderWardrobe();
+        if(typeof uiAlert === 'function') uiAlert('Wardrobe berhasil dihapus dari acara.');
+    } catch(err) {
+        console.error("Gagal sync penghapusan wardrobe:", err);
+        if(typeof uiAlert === 'function') uiAlert('Terjadi kesalahan saat menghapus.');
     }
 };
 
@@ -3383,3 +3544,113 @@ if(_origLoadUnified2) {
         }
     }
 }
+window.deleteWardrobeItem = async function(id) {
+    if(!await window.uiConfirm('Yakin ingin menghapus item wardrobe ini?')) return;
+    try {
+        const res = await fetch('/api/cms/wardrobe-catalog/' + id, { method: 'DELETE' });
+        if(res.ok) {
+            uiAlert('Wardrobe berhasil dihapus!');
+            renderWardrobe();
+        } else {
+            uiAlert('Gagal menghapus wardrobe.');
+        }
+    } catch(e) {
+        console.error(e);
+        uiAlert('Kesalahan jaringan.');
+    }
+};
+
+window.updateCcStatus = async function(status) {
+    if(!activeCommandCenterEventId) return;
+    try {
+        const payload = { metadata: { status: status } };
+        const res = await fetch('/api/cms/events/' + activeCommandCenterEventId, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        if(res.ok) {
+            uiAlert('Status kalender berhasil diupdate menjadi ' + status);
+            if (window.adminEventsDb) {
+                const ev = adminEventsDb.find(e => String(e.id) === String(activeCommandCenterEventId));
+                if (ev) {
+                    ev.status = status;
+                    if(typeof saveUnifiedEventsDatabase === 'function') saveUnifiedEventsDatabase(ev);
+                    if(typeof window.renderCalendarAgendaList === 'function') renderCalendarAgendaList(window.currentAgendaFilter || 'all');
+                    if(typeof updateCalMetrics === 'function') updateCalMetrics();
+                }
+            }
+        } else {
+            uiAlert('Gagal update status kalender');
+        }
+    } catch(e) {
+        console.error(e);
+        uiAlert('Terjadi kesalahan jaringan');
+    }
+};
+
+window.openInvoicePrintModal = function() {
+    if(!activeCommandCenterEventId) return;
+    const ev = window.activeCommandCenterEvent;
+    if(!ev) return;
+    const url = '/api/cms/events/' + ev.id + '/invoice';
+    const newWindow = window.open('', '_blank');
+    newWindow.document.write(`
+        <html><head><title>Invoice #${ev.id}</title>
+        <style>body{font-family:sans-serif; padding:40px; color:#333;}</style></head>
+        <body>
+        <h1 style="color:#D4AF37;">INVOICE</h1>
+        <p><strong>Kepada:</strong> ${ev.clientName || 'Klien'}</p>
+        <p><strong>Acara:</strong> ${ev.title}</p>
+        <p><strong>Tanggal:</strong> ${ev.date}</p>
+        <hr>
+        <h3>Rincian Pembayaran</h3>
+        <p>Paket: ${ev.metadata?.pkg || '-'}</p>
+        <p>Total: Rp ${parseInt(ev.price||0).toLocaleString('id-ID')}</p>
+        <p>Status: ${ev.status}</p>
+        <br>
+        <button onclick="window.print()">Cetak PDF</button>
+        </body></html>
+    `);
+    newWindow.document.close();
+};
+
+window.fetchWaTemplates = async function() {
+    try {
+        const res = await fetch('/api/cms/wa-templates');
+        if (res.ok) {
+            const json = await res.json();
+            if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+                window.currentWaTemplates = json.data.map((t, i) => ({
+                    id: 't' + i,
+                    title: t.title || 'Sapaan',
+                    body: t.message || t
+                }));
+                // Repopulate if Command Center is active
+                if (window.activeCommandCenterEvent) {
+                    const waListContainer = document.getElementById('ccWaAutomationList');
+                    if (waListContainer) {
+                        let waHtml = '';
+                        window.currentWaTemplates.forEach(t => {
+                            waHtml += `
+                                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:6px; padding:12px; margin-bottom:10px;">
+                                    <div style="font-weight:700; color:var(--adm-gold); margin-bottom:6px;">${t.title}</div>
+                                    <div style="font-size:0.8rem; color:#94A3B8; margin-bottom:8px;">${t.body.substring(0, 50)}...</div>
+                                    <button class="btn btn-secondary btn-sm" onclick="sendWaTemplate('${encodeURIComponent(t.body)}')">Kirim Pesan Ini</button>
+                                </div>
+                            `;
+                        });
+                        waListContainer.innerHTML = waHtml;
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Failed to fetch WA templates', e);
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchWaTemplates();
+});
+
