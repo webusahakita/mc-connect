@@ -309,10 +309,14 @@ async function loadUnifiedEventsDatabase() {
             vipProtocol: Array.isArray(ev.vipProtocol) ? ev.vipProtocol : [],
             checklist: Array.isArray(ev.checklist) ? ev.checklist : [],
             expenses: Array.isArray(ev.expenses) ? ev.expenses : [],
+            wardrobeIds: Array.isArray(ev.wardrobeIds) ? ev.wardrobeIds : [],
+            invoiceItems: ev.invoiceItems || null,
             musicList: Array.isArray(ev.musicList) ? ev.musicList : [],
             rundown: Array.isArray(ev.rundown) ? ev.rundown : [],
             created_at: ev.created_at || null
         }));
+        
+        window.adminEventsDb = adminEventsDb;
 
         // Data murni dari database, tidak menyimpan cache lokal lagi
         
@@ -323,6 +327,7 @@ async function loadUnifiedEventsDatabase() {
         
         updateCalendarMenuBadge();
         if (typeof updateCalMetrics === 'function') updateCalMetrics();
+        if (typeof autoSyncEventsToCustomers === 'function') autoSyncEventsToCustomers(adminEventsDb);
         
     } catch (e) {
         console.error('[Sync] Gagal memuat event:', e);
@@ -503,7 +508,8 @@ window.syncEventMetadata = async function(ev) {
                 wardrobeIds: ev.wardrobeIds || []
             }
         };
-        await fetch('/api/cms/events/' + ev.id, {
+        const actualId = ev.db_id || String(ev.id).replace('e_', '');
+        await fetch('/api/cms/events/' + actualId, {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
@@ -1574,10 +1580,22 @@ function showAgendaInspector(dateStr, status, eventObj, eventsOnDate) {
                     msg.innerHTML = '<span style="font-size:1.2rem;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg></span>' +
                         '<div><strong>Proteksi Anti-Bentrok Aktif:</strong> Jadwal ini telah terkunci secara resmi (DP Paid). Sistem otomatis memblokir pemesanan ganda di tanggal & jam yang sama.</div>';
                     msg.style.display = 'flex';
+                } else if (status === 'Selesai') {
+                    badge.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M20 6L9 17l-5-5"/></svg> Selesai';
+                    badge.className = 'badge badge-completed';
+                    msg.innerHTML = '<span style="font-size:1.2rem;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span>' +
+                        '<div><strong>Acara Selesai:</strong> Acara ini telah selesai dilaksanakan dan pembayaran telah lunas (100%).</div>';
+                    msg.style.display = 'flex';
+                    msg.style.background = 'rgba(16,185,129,0.1)';
+                    msg.style.color = '#10B981';
+                    msg.style.borderColor = 'rgba(16,185,129,0.2)';
                 } else {
                     badge.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>';
                     badge.className = 'badge badge-tentative';
                     msg.style.display = 'none';
+                    msg.style.background = '';
+                    msg.style.color = '';
+                    msg.style.borderColor = '';
                 }
             } else {
                 document.getElementById('inspectorTitle').textContent = 'Hari Bebas / Tersedia';
@@ -1948,7 +1966,9 @@ function autoSyncCustomersToEvents(customers) {
         let existingIndex = adminEventsDb.findIndex(e => String(e.id) === String(cust.id) || String(e.customerId) === String(cust.id) || `${e.date}::${(e.title || '').trim().toLowerCase()}` === key);
 
         let status = 'Review';
-        if (cust.paymentStatus && (cust.paymentStatus.includes('Lunas') || cust.paymentStatus.includes('100%') || cust.paymentStatus.includes('DP'))) {
+        if (cust.paymentStatus && (cust.paymentStatus.includes('Lunas') || cust.paymentStatus.includes('100%'))) {
+            status = 'Selesai';
+        } else if (cust.paymentStatus && cust.paymentStatus.includes('DP')) {
             status = 'Terkunci';
         } else if (cust.paymentStatus && (cust.paymentStatus.includes('Hold') || cust.paymentStatus.includes('Tentative'))) {
             status = 'Tentative';
@@ -2968,7 +2988,8 @@ window.updateCcStatus = async function(statusVal) {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         if (csrfToken) headers['X-CSRF-TOKEN'] = csrfToken;
 
-        const res = await fetch('/api/cms/events/' + ev.id, {
+        const actualId = ev.db_id || String(ev.id).replace('e_', '');
+        const res = await fetch('/api/cms/events/' + actualId, {
             method: 'PUT',
             headers: headers,
             body: JSON.stringify(ev)
@@ -3014,7 +3035,7 @@ window.openEditInvoiceModal = function() {
     if(m) m.classList.add('active');
 };
 
-window.sendWaTemplate = function(encodedBody) {
+window.sendWaTemplate = async function(encodedBody) {
     if(!activeCommandCenterEventId) return;
     const ev = adminEventsDb.find(e => String(e.id) === String(activeCommandCenterEventId));
     if(!ev) return;
@@ -3026,7 +3047,21 @@ window.sendWaTemplate = function(encodedBody) {
     let phone = ev.metadata?.pic_wa || '';
     if(phone.startsWith('0')) phone = '62' + phone.substring(1);
     
-    window.openWhatsAppChat(phone, ev.pic || '', ev.title || '', body);
+    if (typeof uiCustomForm === 'function') {
+        const data = await uiCustomForm([
+            { id: 'phone', label: 'Nomor WhatsApp', type: 'text', value: phone },
+            { id: 'message', label: 'Isi Pesan (Edit bila perlu)', type: 'textarea', value: body }
+        ], 'Konfirmasi Pesan WhatsApp');
+        
+        if (data) {
+            window.openWhatsAppChat(data.phone, ev.pic || '', ev.title || '', data.message);
+        }
+    } else {
+        const editedBody = prompt("Edit pesan sebelum dikirim:", body);
+        if (editedBody !== null) {
+            window.openWhatsAppChat(phone, ev.pic || '', ev.title || '', editedBody);
+        }
+    }
 };
 
 window.addInvoiceItemRow = function() {
@@ -3207,24 +3242,13 @@ window.promptAssignWardrobe = async function(existingWardrobeId = null) {
             }
             
             // Sync to Server Database
-                try {
-                    await fetch('/api/cms/events/' + ev.id, {
-                        method: 'PUT',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            metadata: {
-                                checklist: ev.checklist || [],
-                                expenses: ev.expenses || [],
-                                vipNotes: ev.vipNotes || '',
-                                vipProtocol: ev.vipProtocol || [],
-                                invoice_items: ev.invoiceItems || null,
-                                wardrobeIds: ev.wardrobeIds
-                            }
-                        })
-                    });
-                } catch(err) {
-                    console.error("Gagal sync wardrobe:", err);
+            try {
+                if (typeof syncEventMetadata === 'function') {
+                    await syncEventMetadata(ev);
                 }
+            } catch(err) {
+                console.error("Gagal sync wardrobe:", err);
+            }
 
                 saveUnifiedEventsDatabase(ev);
                 if(typeof renderWardrobe === 'function') renderWardrobe();
@@ -3253,20 +3277,9 @@ window.unassignWardrobe = async function(itemId) {
     
     // Sync to Server Database
     try {
-        await fetch('/api/cms/events/' + ev.id, {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                metadata: {
-                    checklist: ev.checklist || [],
-                    expenses: ev.expenses || [],
-                    vipNotes: ev.vipNotes || '',
-                    vipProtocol: ev.vipProtocol || [],
-                    invoice_items: ev.invoiceItems || null,
-                    wardrobeIds: ev.wardrobeIds
-                }
-            })
-        });
+        if (typeof syncEventMetadata === 'function') {
+            await syncEventMetadata(ev);
+        }
         
         saveUnifiedEventsDatabase(ev);
         if(typeof renderWardrobe === 'function') renderWardrobe();
@@ -3560,34 +3573,7 @@ window.deleteWardrobeItem = async function(id) {
     }
 };
 
-window.updateCcStatus = async function(status) {
-    if(!activeCommandCenterEventId) return;
-    try {
-        const payload = { metadata: { status: status } };
-        const res = await fetch('/api/cms/events/' + activeCommandCenterEventId, {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
-        });
-        if(res.ok) {
-            uiAlert('Status kalender berhasil diupdate menjadi ' + status);
-            if (window.adminEventsDb) {
-                const ev = adminEventsDb.find(e => String(e.id) === String(activeCommandCenterEventId));
-                if (ev) {
-                    ev.status = status;
-                    if(typeof saveUnifiedEventsDatabase === 'function') saveUnifiedEventsDatabase(ev);
-                    if(typeof window.renderCalendarAgendaList === 'function') renderCalendarAgendaList(window.currentAgendaFilter || 'all');
-                    if(typeof updateCalMetrics === 'function') updateCalMetrics();
-                }
-            }
-        } else {
-            uiAlert('Gagal update status kalender');
-        }
-    } catch(e) {
-        console.error(e);
-        uiAlert('Terjadi kesalahan jaringan');
-    }
-};
+
 
 window.openInvoicePrintModal = function() {
     if(!activeCommandCenterEventId) return;

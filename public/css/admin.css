@@ -727,6 +727,14 @@ body {
     min-height: 100px;
 }
 
+.form-select option {
+    background: #1E1E2D; /* var(--adm-bg-surface) fallback */
+    background: var(--adm-bg-surface);
+    color: #F8FAFC; /* var(--adm-text-primary) fallback */
+    color: var(--adm-text-primary);
+    padding: 10px;
+}
+
 /* =========================================================
    CLEAN TABLES (CASHFLOW & AGENDA)
    ========================================================= */

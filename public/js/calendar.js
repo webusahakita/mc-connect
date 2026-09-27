@@ -102,6 +102,9 @@ class AvailabilityCalendar {
                 } else if (eventOnDate.status === 'Tentative') {
                     cellClass += ' has-event tentative';
                     pillHtml = `<div class="calendar-cell-pill" style="background:#F59E0B; color:#000;">Tentative</div>`;
+                } else if (eventOnDate.status === 'Selesai') {
+                    cellClass += ' has-event done';
+                    pillHtml = `<div class="calendar-cell-pill" style="background:#10B981; color:#fff;">Selesai</div>`;
                 } else {
                     cellClass += ' has-event';
                     pillHtml = `<div class="calendar-cell-pill" style="background:#3B82F6; color:#fff;">Review</div>`;
