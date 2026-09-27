@@ -18,7 +18,7 @@
             window.currentEventCategories = resCats[0]?.data || [];
             window.currentClientCategories = resCats[1]?.data || [];
 
-            const res = await fetch('/api/cms/customers');
+            const res = await fetch('/api/cms/customers', { cache: 'no-store' });
             const json = await res.json();
             if (json.success && json.data) {
                 mcCustomers = json.data;
@@ -64,47 +64,8 @@
     }
     
     async function pushCustomersToServer() {
-        try {
-            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || window.CSRF_TOKEN || '';
-            for (const cust of mcCustomers) {
-                const payload = {
-                    id: cust._dbId || null,
-                    name: cust.name,
-                    wa: cust.wa,
-                    email: cust.email || '',
-                    org: cust.org || '',
-                    category: cust.category || 'Wedding',
-                    price: cust.price || 0,
-                    paymentStatus: cust.paymentStatus || 'Belum Bayar',
-                    event: cust.event || '',
-                    date: cust.date || null,
-                    isVip: cust.isVip || false,
-                    notes: cust.notes || '',
-                    client_category: cust.client_category || ''
-                };
-                
-                const res = await fetch('/api/cms/customers', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': token
-                    },
-                    body: JSON.stringify(payload)
-                }).catch(err => console.warn('[Sync] Customer push error:', err));
-                
-                // Store server ID for future updates
-                if (res && res.ok) {
-                    const json = await res.json();
-                    if (json.success && json.dat&& json.data.id) {
-                        cust._dbId = json.data.id;
-                    }
-                }
-            }
-            console.log('[Sync] Customers pushed to database.');
-        } catch(e) {
-            console.warn('[Sync] pushCustomersToServer error:', e);
-        }
+        // Disabled per user request: data lokal tidak boleh menimpa server
+        console.log('[Sync] pushCustomersToServer disabled.');
     }
 
     function formatRupiahNum(val) {
@@ -832,7 +793,7 @@
         const priceEl = document.getElementById('newCustPrice');
         if (priceEl) priceEl.value = '';
         const payEl = document.getElementById('newCustPayment');
-        if (payEl) payEl.value = 'DP 50% Paid';
+        if (payEl) payEl.value = 'Belum Bayar';
         const notesEl = document.getElementById('newCustNotes');
         if (notesEl) notesEl.value = '';
 
@@ -911,7 +872,7 @@
         const priceEl = document.getElementById('newCustPrice');
         if (priceEl) priceEl.value = cust.price || '';
         const payEl = document.getElementById('newCustPayment');
-        if (payEl) payEl.value = cust.paymentStatus || 'DP 50% Paid';
+        if (payEl) payEl.value = cust.paymentStatus || 'Belum Bayar';
         const calStatusEl = document.getElementById('newCustCalendarStatus');
         if (calStatusEl) calStatusEl.value = cust.calendarStatus || 'Review';
         const notesEl = document.getElementById('newCustNotes');
@@ -941,7 +902,7 @@
         const duration = document.getElementById('newCustDuration')?.value || calculateEventDuration(startTime, endTime) || '4 Jam';
         const priceStr = document.getElementById('newCustPrice')?.value || '';
         const price = Number(priceStr.replace(/[^0-9]/g, '')) || 0;
-        const payment = document.getElementById('newCustPayment')?.value || 'DP 50% Paid';
+        const payment = document.getElementById('newCustPayment')?.value || 'Belum Bayar';
         const calendarStatus = document.getElementById('newCustCalendarStatus')?.value || 'Review';
         const notes = (document.getElementById('newCustNotes')?.value || '').trim();
         const packageName = document.getElementById('newCustPackage')?.value || 'Custom';

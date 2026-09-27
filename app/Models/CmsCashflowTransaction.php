@@ -19,7 +19,8 @@ class CmsCashflowTransaction extends Model
         'tanggal',
         'deskripsi',
         'is_verified',
-        'event_id'
+        'event_id',
+        'bukti_file'
     ];
 
     protected $casts = [

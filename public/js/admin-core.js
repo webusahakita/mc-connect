@@ -272,7 +272,7 @@ function normalizeAndDeduplicateEvents(existingEvents, customers, seedEvents) {
 
 async function loadUnifiedEventsDatabase() {
     try {
-        const res = await fetch('/api/cms/events');
+        const res = await fetch('/api/cms/events', { cache: 'no-store' });
         const json = await res.json();
         
         let events = [];
@@ -381,15 +381,24 @@ function autoSyncEventsToCustomers(events) {
 
         if (exists) {
             // Update customer details based on event
-            if (ev.tanggal_acar|| ev.date) exists.date = ev.tanggal_acar|| ev.date;
-            if (ev.time) exists.time = ev.time;
-            if (ev.nama_acar|| ev.title) exists.event = ev.nama_acar|| ev.title;
+            let changed = false;
+            let evDate = ev.tanggal_acar|| ev.date;
+            if (evDate && exists.date !== evDate) { exists.date = evDate; changed = true; }
+            
+            if (ev.time && exists.time !== ev.time) { exists.time = ev.time; changed = true; }
+            
+            let evTitle = ev.nama_acar|| ev.title;
+            if (evTitle && exists.event !== evTitle) { exists.event = evTitle; changed = true; }
+            
             let priceNum = 0;
             if (ev.nilai_kontrak) priceNum = parseInt(String(ev.nilai_kontrak).replace(/[^0-9]/g, '')) || 0;
             else if (ev.price) priceNum = parseInt(String(ev.price).replace(/[^0-9]/g, '')) || 0;
-            if (priceNum > 0) exists.price = priceNum;
-            if (ev.status_pembayaran || ev.paymentStatus) exists.paymentStatus = ev.status_pembayaran || ev.paymentStatus;
-            isModified = true;
+            if (priceNum > 0 && exists.price !== priceNum) { exists.price = priceNum; changed = true; }
+            
+            let evPayStatus = ev.status_pembayaran || ev.paymentStatus;
+            if (evPayStatus && exists.paymentStatus !== evPayStatus) { exists.paymentStatus = evPayStatus; changed = true; }
+            
+            if (changed) isModified = true;
         }
 
         if (!exists) {
@@ -473,46 +482,8 @@ function saveUnifiedEventsDatabase() {
 }
 
 async function pushEventsToServer() {
-    try {
-        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || window.CSRF_TOKEN || '';
-        for (const ev of adminEventsDb) {
-            const dbId = ev._dbEventId || ev.dbEventId;
-            if (!dbId) continue; // Skip events without server ID
-
-            const payload = {
-                nama_acara: ev.title,
-                lokasi: ev.venue,
-                tanggal_acara: ev.date,
-                waktu_mulai: (ev.startTime || '18:00') + ':00',
-                waktu_selesai: (ev.endTime || '21:00') + ':00',
-                status: ev.status,
-                tipe_acara: ev.category || 'Wedding',
-                catatan_khusus: ev.note || '',
-                nilai_kontrak: ev.rawPrice || 0,
-                status_pembayaran: ev.paymentStatus || 'Tentative (Hold)',
-                metadata: {
-                    vipNotes: ev.vipNotes || '',
-                    vipProtocol: ev.vipProtocol || [],
-                    checklist: ev.checklist || [],
-                    expenses: ev.expenses || [],
-                    wardrobeIds: ev.wardrobeIds || [],
-                }
-            };
-
-            await fetch(`/api/cms/events/${dbId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': token
-                },
-                body: JSON.stringify(payload)
-            }).catch(err => console.warn('[Sync] Event push error:', err));
-        }
-        console.log('[Sync] Events pushed to database.');
-    } catch(e) {
-        console.warn('[Sync] pushEventsToServer error:', e);
-    }
+    // Disabled per user request: data lokal tidak boleh menimpa server secara massal
+    console.log('[Sync] pushEventsToServer disabled.');
 }
 
 function populateCommandCenterSelector() {
@@ -2442,7 +2413,38 @@ window.renderCashflowTable = function() {
         
         let transactions = [...(window.cashflowTransactions || [])];
         
-        // Hapus data lokal (semua data hanya dari database server)
+        // Auto-Sync from Customers Data (Bugfix: didata pelanggan padahal ada nominal)
+        if (window.mcCustomers && Array.isArray(window.mcCustomers)) {
+            window.mcCustomers.forEach(c => {
+                if (!c.price || isNaN(c.price)) return;
+                const pStatus = (c.paymentStatus || '').toUpperCase();
+                let amount = 0;
+                let desc = '';
+                
+                if (pStatus.includes('LUNAS') || pStatus.includes('100%') || pStatus === 'PAID') {
+                    amount = Number(c.price);
+                    desc = `Pelunasan Kontrak - ${c.name} (${c.event})`;
+                } else if (pStatus.includes('DP')) {
+                    amount = Number(c.price) * 0.5; // Asumsi DP 50%
+                    desc = `DP 50% - ${c.name} (${c.event})`;
+                }
+                
+                if (amount > 0) {
+                    // Cek jika sudah ada manual entry dengan ID sama atau transaksi auto-sync
+                    if (!transactions.find(t => t.id === 'ev_' + c.id)) {
+                        transactions.push({
+                            id: 'ev_' + c.id,
+                            date: c.date || new Date().toISOString().split('T')[0],
+                            desc: desc,
+                            category: 'Pendapatan Booking',
+                            amount: amount,
+                            type: 'in',
+                            status: 'Berhasil'
+                        });
+                    }
+                }
+            });
+        }
         
         // Sort by date descending
         transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -2481,13 +2483,17 @@ window.renderCashflowTable = function() {
                     const color = isIn ? '#10B981' : '#EF4444';
                     const sign = isIn ? '+' : '-';
                     const isAuto = String(t.id).startsWith('ev_') || String(t.id).startsWith('exp_');
+                    const proofHtml = t.proof ? `<br><a href="${t.proof}" target="_blank" style="color:var(--gold-primary); font-size:0.8rem; text-decoration:underline;">Lihat Bukti</a>` : '';
                     const btn = isAuto ? 
+                        '<button class="btn btn-secondary btn-sm" onclick="viewCashflowTransaction(\'' + t.id + '\')" style="margin-right:4px;">View</button>' +
                         '<span class="badge" style="background:#334155; color:#94A3B8; font-size:0.7rem;">Auto-Sync</span>' : 
+                        '<button class="btn btn-secondary btn-sm" onclick="viewCashflowTransaction(\'' + t.id + '\')" style="margin-right:4px;">View</button>' +
+                        '<button class="btn btn-primary btn-sm" onclick="editCashflowTransaction(\'' + t.id + '\')" style="margin-right:4px;">Edit</button>' +
                         '<button class="btn btn-secondary btn-sm" onclick="deleteCashflowTransaction(\'' + t.id + '\')">Hapus</button>';
                     
                     return '<tr>' +
                         '<td>' + t.date + '</td>' +
-                        '<td><strong>' + (t.desc || '') + '</strong></td>' +
+                        '<td><strong>' + (t.desc || '') + '</strong>' + proofHtml + '</td>' +
                         '<td><span class="badge" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);">' + (t.category || '') + '</span></td>' +
                         '<td style="color:' + color + '; font-weight:600;">' + sign + ' Rp ' + Number(t.amount).toLocaleString('id-ID') + '</td>' +
                         '<td><span style="color:var(--adm-gold);">' + (t.status || 'Berhasil') + '</span></td>' +
@@ -2501,7 +2507,68 @@ window.renderCashflowTable = function() {
     }
 };
 
-window.openAddCashModal = async function() {
+window.viewCashflowTransaction = function(id) {
+    let t = null;
+    if (window.cashflowTransactions) {
+        t = window.cashflowTransactions.find(x => String(x.id) === String(id));
+    }
+    // If not found in main DB, it might be an auto-sync transaction from render array
+    if (!t && window.mcCustomers) {
+        // Fallback for auto-sync transactions if needed (though usually we pass the rendered item)
+        // Let's just re-render to find it
+        let transactions = [...(window.cashflowTransactions || [])];
+        window.mcCustomers.forEach(c => {
+            if (!c.price || isNaN(c.price)) return;
+            const pStatus = (c.paymentStatus || '').toUpperCase();
+            let amount = 0; let desc = '';
+            if (pStatus.includes('LUNAS') || pStatus.includes('100%') || pStatus === 'PAID') {
+                amount = Number(c.price); desc = `Pelunasan Kontrak - ${c.name} (${c.event})`;
+            } else if (pStatus.includes('DP')) {
+                amount = Number(c.price) * 0.5; desc = `DP 50% - ${c.name} (${c.event})`;
+            }
+            if (amount > 0 && !transactions.find(x => x.id === 'ev_' + c.id)) {
+                transactions.push({ id: 'ev_' + c.id, date: c.date, desc: desc, category: 'Pendapatan Booking', amount: amount, type: 'in', status: 'Berhasil' });
+            }
+        });
+        t = transactions.find(x => String(x.id) === String(id));
+    }
+
+    if (!t) return;
+
+    const isAutoSync = String(t.id).startsWith('ev_');
+    let proofHtml = '';
+    if (t.proof) {
+        proofHtml = `<div style="margin-top:12px;"><a href="${t.proof}" target="_blank" class="btn btn-primary btn-sm" style="display:inline-block; text-decoration:none;">Lihat Bukti Foto/Lampiran</a></div>`;
+    } else if (isAutoSync) {
+        const custId = String(t.id).replace('ev_', '');
+        proofHtml = `<div style="margin-top:12px; font-size:0.85rem; color:var(--adm-text-muted);">
+            Ini adalah transaksi Auto-Sync dari sistem jadwal acara.<br>
+            Untuk melihat Invoicenya, silakan buka <a href="javascript:void(0)" onclick="closeModals(); openCustomerInCommandCenter('${custId}'); setTimeout(openInvoicePrintModal, 800);" style="color:var(--gold-primary); text-decoration:underline;">Event Command Center (Cetak Invoice)</a>.
+        </div>`;
+    }
+
+    const html = `
+        <div style="text-align:left; font-size:0.95rem; line-height:1.6; color:#E2E8F0;">
+            <div style="margin-bottom:8px;"><strong>ID Transaksi:</strong> ${t.id}</div>
+            <div style="margin-bottom:8px;"><strong>Jenis Kas:</strong> ${t.type === 'in' || t.type === 'inflow' ? '<span style="color:#10B981;">Masuk (Pendapatan)</span>' : '<span style="color:#EF4444;">Keluar (Pengeluaran)</span>'}</div>
+            <div style="margin-bottom:8px;"><strong>Kategori:</strong> ${t.category || '-'}</div>
+            <div style="margin-bottom:8px;"><strong>Nominal:</strong> Rp ${Number(t.amount).toLocaleString('id-ID')}</div>
+            <div style="margin-bottom:8px;"><strong>Tanggal:</strong> ${t.date || '-'}</div>
+            <div style="margin-bottom:8px;"><strong>Deskripsi:</strong><br><div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:4px; margin-top:4px;">${t.desc || '-'}</div></div>
+            ${proofHtml}
+        </div>
+    `;
+    uiAlert(html, 'Detail Transaksi Kas');
+};
+
+window.editCashflowTransaction = async function(id) {
+    if (!window.cashflowTransactions) return;
+    const t = window.cashflowTransactions.find(x => String(x.id) === String(id));
+    if (!t) return;
+    await window.openAddCashModal(t);
+};
+
+window.openAddCashModal = async function(existingData = null) {
     let incomeCats = ['DP', 'Pelunasan', 'Sponsorship'];
     let expenseCats = ['Operasional', 'Transport', 'Konsumsi', 'Gaji Kru'];
     try {
@@ -2518,13 +2585,23 @@ window.openAddCashModal = async function() {
         }
     } catch(e) { console.warn('Gagal memuat kategori dari DB, menggunakan fallback'); }
 
+    const isEdit = !!existingData;
+    const title = isEdit ? 'Edit Transaksi Kas' : 'Catat Transaksi Kas';
+    
+    let defaultCatOpts = [{value: '', label: '-- Pilih Tipe Kas Dahulu --'}];
+    if (isEdit && existingData.type) {
+        const opts = existingData.type === 'in' ? incomeCats : expenseCats;
+        defaultCatOpts = [{value: '', label: '-- Pilih Kategori --'}, ...opts.map(c => ({value: c, label: c}))];
+    }
+
     const dataPromise = window.uiCustomForm([
-        { id: 'type', label: 'Tipe Kas', type: 'select', options: [{value: 'in', label: 'Kas Masuk (+)'}, {value: 'out', label: 'Kas Keluar (-)'}] },
-        { id: 'category', label: 'Kategori', type: 'select', options: incomeCats.map(c => ({value: c, label: c})) },
-        { id: 'amount', label: 'Nominal (Rp)', type: 'number' },
-        { id: 'date', label: 'Tanggal', type: 'date', value: new Date().toISOString().split('T')[0] },
-        { id: 'desc', label: 'Deskripsi', type: 'text' }
-    ], 'Catat Transaksi Kas');
+        { id: 'type', label: 'Tipe Kas', type: 'select', options: [{value: '', label: '-- Pilih Tipe Kas --'}, {value: 'in', label: 'Kas Masuk (+)'}, {value: 'out', label: 'Kas Keluar (-)'}], value: isEdit ? existingData.type : '' },
+        { id: 'category', label: 'Kategori', type: 'select', options: defaultCatOpts, value: isEdit ? existingData.category : '' },
+        { id: 'amount', label: 'Nominal (Rp)', type: 'number', value: isEdit ? existingData.amount : '' },
+        { id: 'date', label: 'Tanggal', type: 'date', value: isEdit ? existingData.date : new Date().toISOString().split('T')[0] },
+        { id: 'desc', label: 'Deskripsi', type: 'textarea', value: isEdit ? existingData.desc : '' },
+        { id: 'proof', label: 'Bukti (Opsional)', type: 'file' }
+    ], title);
 
     // Attach listener dynamically
     setTimeout(() => {
@@ -2533,8 +2610,13 @@ window.openAddCashModal = async function() {
         if (typeSelect && catSelect) {
             typeSelect.addEventListener('change', (e) => {
                 const val = e.target.value;
-                const opts = val === 'in' ? incomeCats : expenseCats;
                 catSelect.innerHTML = '';
+                if (!val) {
+                    catSelect.innerHTML = '<option value="">-- Pilih Tipe Kas Dahulu --</option>';
+                    return;
+                }
+                const opts = val === 'in' ? incomeCats : expenseCats;
+                catSelect.innerHTML = '<option value="">-- Pilih Kategori --</option>';
                 opts.forEach(opt => {
                     const optionEl = document.createElement('option');
                     optionEl.value = opt;
@@ -2547,23 +2629,28 @@ window.openAddCashModal = async function() {
 
     const data = await dataPromise;
     if (!data) return; // User cancelled
-    if (!data.amount || !data.desc) {
-        uiAlert('Nominal dan Deskripsi wajib diisi!');
+    if (!data.type || !data.category || !data.amount || !data.desc) {
+        uiAlert('Tipe, Kategori, Nominal dan Deskripsi wajib diisi!');
         return;
     }
 
-    const payload = {
-        type: data.type,
-        category: data.category,
-        amount: data.amount,
-        date: data.date,
-        desc: data.desc
-    };
+    const formData = new FormData();
+    formData.append('type', data.type);
+    formData.append('category', data.category);
+    formData.append('amount', data.amount);
+    formData.append('date', data.date);
+    formData.append('desc', data.desc);
+    if (isEdit) formData.append('id', existingData.id);
+    if (data.proof) {
+        formData.append('proof', data.proof);
+    }
 
     fetch('/api/cms/cashflow-transactions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+        },
+        body: formData
     }).then(res => res.json())
       .then(resData => {
           if (resData.success) {
@@ -2744,6 +2831,27 @@ window.openEditInvoiceModal = function() {
         if(typeof uiAlert === 'function') uiAlert('Pilih acara terlebih dahulu!');
         return;
     }
+    const ev = adminEventsDb.find(e => String(e.id) === String(activeCommandCenterEventId));
+    if (!ev) return;
+
+    const container = document.getElementById('invoiceItemsContainer');
+    if(container) {
+        container.innerHTML = '';
+        // Create an initial item based on current contract value
+        const initialVal = ev.rawPrice || 0;
+        const div = document.createElement('div');
+        div.style.display = 'flex';
+        div.style.gap = '10px';
+        div.style.marginBottom = '5px';
+        div.innerHTML = `
+            <input type="text" class="form-input invoice-item-desc" style="flex:1;" value="Jasa MC & Entertainment" placeholder="Deskripsi layanan (ex: Aditional MC)">
+            <input type="number" class="form-input invoice-item-price" style="width:150px;" value="${initialVal}" placeholder="1000000" oninput="calculateInvoiceTotal()">
+            <button type="button" class="btn btn-secondary btn-sm" style="color:var(--adm-danger); border-color:transparent; background:transparent;" onclick="this.parentElement.remove(); calculateInvoiceTotal();">X</button>
+        `;
+        container.appendChild(div);
+    }
+    calculateInvoiceTotal();
+
     const m = document.getElementById('editInvoiceModal');
     if(m) m.classList.add('active');
 };
@@ -2756,11 +2864,100 @@ window.addInvoiceItemRow = function() {
     div.style.gap = '10px';
     div.style.marginBottom = '5px';
     div.innerHTML = `
-        <input type="text" class="form-input" style="flex:1;" placeholder="Deskripsi layanan (ex: Aditional MC)">
-        <input type="number" class="form-input" style="width:150px;" placeholder="1000000">
-        <button type="button" class="btn btn-secondary btn-sm" style="color:var(--adm-danger); border-color:transparent; background:transparent;" onclick="this.parentElement.remove()">X</button>
+        <input type="text" class="form-input invoice-item-desc" style="flex:1;" placeholder="Deskripsi layanan (ex: Aditional MC)">
+        <input type="number" class="form-input invoice-item-price" style="width:150px;" placeholder="1000000" oninput="calculateInvoiceTotal()">
+        <button type="button" class="btn btn-secondary btn-sm" style="color:var(--adm-danger); border-color:transparent; background:transparent;" onclick="this.parentElement.remove(); calculateInvoiceTotal();">X</button>
     `;
     container.appendChild(div);
+    calculateInvoiceTotal();
+};
+
+window.calculateInvoiceTotal = function() {
+    const inputs = document.querySelectorAll('.invoice-item-price');
+    let total = 0;
+    inputs.forEach(inp => {
+        const val = parseInt(inp.value) || 0;
+        total += val;
+    });
+    const preview = document.getElementById('invoiceTotalPreview');
+    if(preview) preview.textContent = 'Rp ' + total.toLocaleString('id-ID');
+    return total;
+};
+
+window.saveInvoiceItems = async function() {
+    if(!activeCommandCenterEventId) return;
+    const total = calculateInvoiceTotal();
+    
+    try {
+        const res = await fetch('/api/cms/events/' + activeCommandCenterEventId, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ nilai_kontrak: total })
+        });
+        if(res.ok) {
+            if(typeof uiAlert === 'function') uiAlert('Rincian Invoice & Nilai Kontrak berhasil diperbarui!');
+            if(typeof closeModals === 'function') closeModals();
+            if(typeof loadUnifiedEventsDatabase === 'function') {
+                await loadUnifiedEventsDatabase();
+                switchCommandCenterEvent(activeCommandCenterEventId);
+            }
+        } else {
+            if(typeof uiAlert === 'function') uiAlert('Gagal update nilai kontrak.');
+        }
+    } catch(e) {
+        console.error(e);
+        if(typeof uiAlert === 'function') uiAlert('Terjadi kesalahan jaringan.');
+    }
+};
+
+window.openInvoicePrintModal = function() {
+    if(!activeCommandCenterEventId) {
+        if(typeof uiAlert === 'function') uiAlert('Pilih acara terlebih dahulu!');
+        return;
+    }
+    const ev = adminEventsDb.find(e => String(e.id) === String(activeCommandCenterEventId));
+    if (!ev) return;
+
+    // Populate data
+    const total = Number(ev.rawPrice) || 0;
+    const dp = total / 2;
+    const sisa = total - dp;
+    
+    document.getElementById('invModalNum').textContent = 'INV-MC-' + ev.id.toString().padStart(4, '0');
+    document.getElementById('invModalClientName').textContent = ev.pic || 'Nama Klien';
+    document.getElementById('invModalClientWa').textContent = 'Kontak: ' + (ev.metadata?.pic_wa || '-');
+    document.getElementById('invModalEventTitle').textContent = ev.title || 'Wedding Reception';
+    document.getElementById('invModalEventDateVenue').textContent = (ev.date || '') + ' ' + (ev.time || '') + ' ' + (ev.metadata?.venue || 'TBD');
+    
+    document.getElementById('invModalPackageName').textContent = 'Jasa MC & Entertainment';
+    document.getElementById('invModalTotalPrice').textContent = 'Rp ' + total.toLocaleString('id-ID');
+    
+    document.getElementById('invModalTotalSummary').textContent = 'Rp ' + total.toLocaleString('id-ID');
+    document.getElementById('invModalDpSummary').textContent = '- Rp ' + dp.toLocaleString('id-ID');
+    document.getElementById('invModalSisaSummary').textContent = 'Rp ' + sisa.toLocaleString('id-ID');
+    
+    const badge = document.getElementById('invModalBadge');
+    if (ev.status === 'Terkunci' || ev.status === 'Selesai') {
+        badge.textContent = 'DP / LUNAS';
+        badge.style.background = '#DCFCE7';
+        badge.style.color = '#166534';
+    } else {
+        badge.textContent = 'UNPAID';
+        badge.style.background = '#FEE2E2';
+        badge.style.color = '#991B1B';
+    }
+    
+    // Bank details
+    const settings = typeof loadPaymentSettings === 'function' ? loadPaymentSettings() : { bankName: 'BCA', bankAccount: '1234567', bankHolder: 'MC' };
+    document.getElementById('invModalBankInfo').innerHTML = `
+        <strong>Pembayaran via Transfer:</strong><br>
+        Bank: ${settings.bankName}<br>
+        No. Rekening: ${settings.bankAccount}<br>
+        A/N: ${settings.bankHolder}
+    `;
+
+    const m = document.getElementById('invoicePrintModal');
+    if(m) m.classList.add('active');
 };
 
 window.promptAssignWardrobe = async function() {
@@ -2927,7 +3124,7 @@ window.updateDashboardMetrics = async function() {
     try {
         const [evRes, cfRes] = await Promise.all([
             fetch('/api/cms/events').catch(() => null),
-            fetch('/api/cms/cashflow').catch(() => null)
+            fetch('/api/cms/cashflow-transactions').catch(() => null)
         ]);
         
         let events = [];

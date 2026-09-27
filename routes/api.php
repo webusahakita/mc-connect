@@ -18,6 +18,20 @@ Route::get('/csrf-token', function () {
     return response()->json(['token' => csrf_token()]);
 });
 
+Route::get('/setup-db', function () {
+    try {
+        if (!Illuminate\Support\Facades\Schema::hasColumn('cms_cashflow_transactions', 'bukti_file')) {
+            Illuminate\Support\Facades\Schema::table('cms_cashflow_transactions', function ($table) {
+                $table->string('bukti_file')->nullable();
+            });
+            return 'Added bukti_file column.';
+        }
+        return 'Column already exists.';
+    } catch (\Exception $e) {
+        return $e->getMessage();
+    }
+});
+
 /*
 |--------------------------------------------------------------------------
 | API Routes - MC-Connect Platform

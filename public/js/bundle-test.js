@@ -1240,7 +1240,7 @@
         }
 
         let csv = "\uFEFF"; // UTF-8 BOM
-        csv += "ID,NamPelanggan,Instansi,Kategori,No WhatsApp,Email,NamAcara,Tanggal Acara,Nilai Kontrak,Status Pembayaran,Catatan Khusus\n";
+        csv += "ID;Nama Pelanggan;Instansi;Kategori;No WhatsApp;Email;Nama Acara;Tanggal Acara;Nilai Kontrak;Status Pembayaran;Catatan Khusus\n";
 
         mcCustomers.forEach(c => {
             const escapeCsv = (str) => `"${(str || '').toString().replace(/"/g, '""')}"`;
@@ -1256,7 +1256,7 @@
                 c.price,
                 escapeCsv(c.paymentStatus || ''),
                 escapeCsv(c.notes)
-            ].join(',') + "\n";
+            ].join(';') + "\n";
         });
 
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -1324,7 +1324,8 @@
     }
     window.sortCustomersTable = sortCustomersTable;
 
-\nwindow.closeModals = function() { document.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('active')); const rf = document.getElementById('requestForm'); if (rf) rf.reset(); };
+
+window.closeModals = function() { document.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('active')); const rf = document.getElementById('requestForm'); if (rf) rf.reset(); };
 /**
  * MC-Connect Main Client Script
  */
@@ -1392,7 +1393,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3500);
     };
 });
-\n/**
+
+/**
  * MC-Connect Admin Core Script v8.0
  * Unified Workspace Engine: Dashboard, Anti-Bentrok Calendar, Cashflow, CMS, Event Command Center, Stage Mode & Vendor
  */
@@ -3947,7 +3949,8 @@ window.renderCashflowCategories = function() {
     }
     cat.innerHTML = opts;
 };
-\nwindow.initAdminCms = function() {
+
+window.initAdminCms = function() {
     try {
         const ts = Date.now();
         Promise.all([

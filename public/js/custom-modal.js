@@ -80,7 +80,7 @@ function showModal({ title = 'Perhatian', message = '', type = 'alert', defaultT
         
         // Set content
         titleEl.textContent = title;
-        messageEl.textContent = message;
+        messageEl.innerHTML = message;
         
         // Reset visibility
         btnCancel.style.display = type === 'alert' ? 'none' : 'inline-block';
@@ -120,7 +120,15 @@ function showModal({ title = 'Perhatian', message = '', type = 'alert', defaultT
                 result = {};
                 fields.forEach(f => {
                     const el = document.getElementById('cm_field_' + f.id);
-                    result[f.id] = el ? el.value : '';
+                    if (el) {
+                        if (el.type === 'file') {
+                            result[f.id] = el.files.length > 0 ? el.files[0] : null;
+                        } else {
+                            result[f.id] = el.value;
+                        }
+                    } else {
+                        result[f.id] = '';
+                    }
                 });
             } else if (type === 'prompt') {
                 result = inputEl.value;

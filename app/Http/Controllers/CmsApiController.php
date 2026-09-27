@@ -760,6 +760,15 @@ class CmsApiController extends Controller
     public function getCashflowTransactions()
     {
         $mc = $this->getMC();
+        
+        try {
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('cms_cashflow_transactions', 'bukti_file')) {
+                \Illuminate\Support\Facades\Schema::table('cms_cashflow_transactions', function ($table) {
+                    $table->string('bukti_file')->nullable();
+                });
+            }
+        } catch (\Exception $e) {}
+
         $transactions = \App\Models\CmsCashflowTransaction::where('mc_id', $mc->id)->orderBy('tanggal', 'desc')->orderBy('id', 'desc')->get();
         
         return response()->json([
@@ -771,7 +780,8 @@ class CmsApiController extends Controller
                 'amount' => (float)$t->nominal,
                 'date' => $t->tanggal ? $t->tanggal->format('Y-m-d') : null,
                 'desc' => $t->deskripsi,
-                'eventId' => $t->event_id
+                'eventId' => $t->event_id,
+                'proof' => $t->bukti_file ? url('storage/' . $t->bukti_file) : null
             ])->values()
         ]);
     }
@@ -790,16 +800,25 @@ class CmsApiController extends Controller
             'eventId' => 'nullable|integer'
         ]);
 
+        $buktiPath = null;
+        if ($request->hasFile('proof')) {
+            $buktiPath = $request->file('proof')->store('cashflow_proofs', 'public');
+        }
+
         if (!empty($validated['id'])) {
             $transaction = \App\Models\CmsCashflowTransaction::where('mc_id', $mc->id)->findOrFail($validated['id']);
-            $transaction->update([
+            $updateData = [
                 'tipe' => $validated['type'],
                 'kategori' => $validated['category'],
                 'nominal' => $validated['amount'],
                 'tanggal' => $validated['date'],
                 'deskripsi' => $validated['desc'],
                 'event_id' => $validated['eventId'] ?? null
-            ]);
+            ];
+            if ($buktiPath) {
+                $updateData['bukti_file'] = $buktiPath;
+            }
+            $transaction->update($updateData);
         } else {
             $transaction = \App\Models\CmsCashflowTransaction::create([
                 'mc_id' => $mc->id,
@@ -808,20 +827,11 @@ class CmsApiController extends Controller
                 'nominal' => $validated['amount'],
                 'tanggal' => $validated['date'],
                 'deskripsi' => $validated['desc'],
-                'event_id' => $validated['eventId'] ?? null
+                'event_id' => $validated['eventId'] ?? null,
+                'is_verified' => true,
+                'bukti_file' => $buktiPath
             ]);
         }
-
-        $transaction = \App\Models\CmsCashflowTransaction::create([
-            'mc_id' => $mc->id,
-            'tipe' => $validated['type'],
-            'kategori' => $validated['category'],
-            'nominal' => $validated['amount'],
-            'tanggal' => $validated['date'],
-            'deskripsi' => $validated['desc'],
-            'event_id' => $validated['eventId'] ?? null,
-            'is_verified' => true
-        ]);
 
         return response()->json(['success' => true, 'message' => 'Transaksi kas disimpan!', 'data' => [
             'id' => $transaction->id,
@@ -830,7 +840,8 @@ class CmsApiController extends Controller
             'amount' => (float)$transaction->nominal,
             'date' => $transaction->tanggal->format('Y-m-d'),
             'desc' => $transaction->deskripsi,
-            'eventId' => $transaction->event_id
+            'eventId' => $transaction->event_id,
+            'proof' => $transaction->bukti_file ? url('storage/' . $transaction->bukti_file) : null
         ]]);
     }
 
