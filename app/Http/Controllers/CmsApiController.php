@@ -521,7 +521,8 @@ class CmsApiController extends Controller
             'imgUrl'   => $w->foto_url,
             'desc'     => $w->deskripsi,
             'colorHex' => $w->warna,
-            'colorName'=> $w->nama,
+            'name'     => $w->nama,
+            'colorName'=> $w->kategori,
             'status'   => $w->is_active ? 'Siap Pakai' : 'Sedang Dicuci/Diperbaiki'
         ])->values()]);
     }
@@ -554,12 +555,12 @@ class CmsApiController extends Controller
 
             CmsWardrobeCatalog::create([
                 'mc_id'     => $mc->id,
-                'nama'      => $w['colorName'] ?? '',
+                'nama'      => $w['name'] ?? ($w['colorName'] ?? ''),
                 'deskripsi' => $w['desc'] ?? '',
                 'warna'     => $w['colorHex'] ?? '#1A365D',
                 'file_path' => '',
                 'foto_url'  => $url,
-                'kategori'  => 'Formal',
+                'kategori'  => $w['colorName'] ?? 'Formal',
                 'is_active' => ($w['status'] ?? 'Siap Pakai') === 'Siap Pakai'
             ]);
         }

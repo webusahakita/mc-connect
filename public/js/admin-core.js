@@ -1726,16 +1726,16 @@ async function renderWardrobe() {
                             }
                         });
                     }
-                    html += '<tr>' +
-                        '<td>' + (item.imgUrl ? '<img src="'+escapeHtml(item.imgUrl)+'" style="width:40px; height:40px; border-radius:6px; object-fit:cover;">' : '<div style="width:40px; height:40px; border-radius:6px; background:#444; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">👔</div>') + '</td>' +
-                        '<td style="font-weight:600;">' + escapeHtml(item.name || '-') + '</td>' +
-                        '<td>' + escapeHtml(item.desc || '-') + '</td>' +
-                        '<td>' + (item.colorName ? escapeHtml(item.colorName) : (item.colorHex ? escapeHtml(item.colorHex) : '-')) + '</td>' +
-                        '<td><span class="badge" style="background:rgba(59,130,246,0.1); color:#60A5FA;">' + escapeHtml(item.status || 'Tersedia') + '</span></td>' +
-                        '<td style="text-align:center;">' + freq + 'x</td>' +
-                        '<td style="text-align:right;">' +
-                            `<button class="btn btn-secondary btn-sm" onclick="promptAddGlobalWardrobe('${encodeURIComponent(JSON.stringify(item))}')">Edit</button> ` +
-                            `<button class="btn btn-secondary btn-sm" style="color:var(--adm-danger); border-color:transparent;" onclick="deleteWardrobeItem('${item.db_id || item.id}')">Hapus</button>` +
+                    html += '<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">' +
+                        '<td style="padding:1rem 0.5rem;">' + (item.imgUrl ? '<img src="'+escapeHtml(item.imgUrl)+'" style="width:48px; height:48px; border-radius:8px; object-fit:cover; border:1px solid rgba(255,255,255,0.1);">' : '<div style="width:48px; height:48px; border-radius:8px; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; font-size:1.5rem;">👔</div>') + '</td>' +
+                        '<td style="padding:1rem 0.5rem;"><div style="font-weight:700; font-size:1.05rem; color:var(--adm-gold, #D4AF37);">' + escapeHtml(item.name || '-') + '</div><div style="font-size:0.75rem; color:var(--adm-text-muted); margin-top:4px;">ID: '+escapeHtml(item.db_id||item.id)+'</div></td>' +
+                        '<td style="padding:1rem 0.5rem; max-width:250px; line-height:1.4; color:rgba(255,255,255,0.8);">' + escapeHtml(item.desc || '-') + '</td>' +
+                        '<td style="padding:1rem 0.5rem;"><span style="display:inline-block; padding:0.4rem 0.8rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:20px; font-size:0.8rem; font-weight:600;">' + (item.colorName ? escapeHtml(item.colorName) : (item.colorHex ? escapeHtml(item.colorHex) : '-')) + '</span></td>' +
+                        '<td style="padding:1rem 0.5rem;"><span class="badge" style="background:'+ (item.status === 'Siap Pakai' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)') + '; color:' + (item.status === 'Siap Pakai' ? '#34d399' : '#f87171') + '; border:1px solid '+ (item.status === 'Siap Pakai' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)') +'; padding:0.4rem 0.8rem; border-radius:6px; font-weight:700; letter-spacing:0.5px;">' + escapeHtml(item.status || 'Tersedia') + '</span></td>' +
+                        '<td style="padding:1rem 0.5rem; text-align:center;"><div style="font-size:1.2rem; font-weight:800; color:#fff;">' + freq + 'x</div><div style="font-size:0.7rem; color:var(--adm-text-muted); text-transform:uppercase;">Dipakai</div></td>' +
+                        '<td style="padding:1rem 0.5rem; text-align:right;">' +
+                            `<button class="btn btn-secondary btn-sm" style="margin-right:0.5rem; background:rgba(255,255,255,0.1); border-color:transparent;" onclick="promptAddGlobalWardrobe('${encodeURIComponent(JSON.stringify(item))}')"><i class="fas fa-edit"></i> Edit</button>` +
+                            `<button class="btn btn-secondary btn-sm" style="background:rgba(239, 68, 68, 0.1); color:#f87171; border-color:transparent;" onclick="deleteWardrobeItem('${item.db_id || item.id}')"><i class="fas fa-trash"></i> Hapus</button>` +
                         '</td>' +
                     '</tr>';
                 });
