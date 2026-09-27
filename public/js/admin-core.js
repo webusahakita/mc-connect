@@ -3175,7 +3175,7 @@ window.promptAddGlobalWardrobe = async function(existingWardrobeStr) {
 
     if(typeof uiCustomForm === 'function') {
         const data = await uiCustomForm([
-            { id: 'imgUrl', label: 'Foto Pakaian (Opsional)', type: 'image' },
+            { id: 'imgUrl', label: 'Foto Pakaian (Opsional, file gambar)', type: 'file' },
             { id: 'name', label: 'Kode / Nama Gaun', type: 'text', value: existingItem ? (existingItem.colorName || existingItem.name) : '' },
             { id: 'desc', label: 'Deskripsi Singkat', type: 'text', value: existingItem ? existingItem.desc : '' },
             { id: 'colorName', label: 'Kategori / Warna', type: 'text', value: existingItem ? existingItem.colorName : '' },
@@ -3187,6 +3187,21 @@ window.promptAddGlobalWardrobe = async function(existingWardrobeStr) {
                 uiAlert('Nama Gaun wajib diisi!');
                 return;
             }
+            
+            let base64Image = existingItem ? existingItem.imgUrl : '';
+            if (data.imgUrl && data.imgUrl instanceof File) {
+                try {
+                    base64Image = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = e => resolve(e.target.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(data.imgUrl);
+                    });
+                } catch(err) {
+                    console.error('Failed to read image', err);
+                }
+            }
+
             try {
                 // Fetch existing first
                 const res = await fetch('/api/cms/wardrobe-catalog');
@@ -3201,7 +3216,7 @@ window.promptAddGlobalWardrobe = async function(existingWardrobeStr) {
                         items[idx].desc = data.desc;
                         items[idx].colorName = data.colorName;
                         items[idx].status = data.status;
-                        if(data.imgUrl && data.imgUrl.startsWith('data:image')) items[idx].imgUrl = data.imgUrl;
+                        items[idx].imgUrl = base64Image;
                     }
                 } else {
                     items.push({
@@ -3209,7 +3224,7 @@ window.promptAddGlobalWardrobe = async function(existingWardrobeStr) {
                         desc: data.desc,
                         colorName: data.colorName,
                         status: data.status,
-                        imgUrl: data.imgUrl || '',
+                        imgUrl: base64Image,
                         frequency: 0
                     });
                 }
