@@ -168,6 +168,7 @@ let adminTokens = 85;
 // 2. Anti-Bentrok Calendar & Unified Events Database Engine
 let adminEventsDb = [];
 let activeCommandCenterEventId = null;
+window.activeCommandCenterEventId = null; // exposed for cross-module access
 
 function formatDateIndoFull(dateStr) {
     if (!dateStr) return '-';
@@ -225,18 +226,49 @@ function normalizeAndDeduplicateEvents(existingEvents, customers, seedEvents) {
             }
         }
 
-        if (map.has(key)) {
-            const ev = map.get(key);
-            ev.customerId = cust.id;
-            ev.price = 'Rp ' + Number(cust.price || 0).toLocaleString('id-ID');
-            ev.rawPrice = Number(cust.price || 0);
-            ev.pic = cust.name + (cust.w? ` (${cust.wa})` : '');
-            ev.paymentStatus = cust.paymentStatus;
-            ev.category = cust.category || ev.category;
-            map.set(key, ev);
+        let targetEv = null;
+        for (let v of map.values()) {
+            if (v.customerId && String(v.customerId) === String(cust.id)) {
+                targetEv = v;
+                break;
+            }
+        }
+        
+        if (!targetEv && map.has(key)) {
+            targetEv = map.get(key);
+        }
+
+        if (targetEv) {
+            targetEv.customerId = cust.id;
+            targetEv.title = cust.event; // Update title to match CRM
+            targetEv.price = 'Rp ' + Number(cust.price || 0).toLocaleString('id-ID');
+            targetEv.rawPrice = Number(cust.price || 0);
+            targetEv.pic = cust.name + (cust.w? ` (${cust.wa})` : '');
+            
+            // Dynamic payment status from invoice cashier logic
+            let calcPaymentStatus = cust.paymentStatus || 'Belum Bayar';
+            if (targetEv.metadata && typeof targetEv.metadata.nominal_dp !== 'undefined') {
+                const dpNominal = Number(targetEv.metadata.nominal_dp);
+                if (dpNominal >= targetEv.rawPrice && targetEv.rawPrice > 0) {
+                    calcPaymentStatus = 'Lunas 100%';
+                } else if (dpNominal > 0) {
+                    calcPaymentStatus = 'DP Dibayar';
+                } else {
+                    calcPaymentStatus = 'Belum Bayar';
+                }
+            }
+            targetEv.paymentStatus = calcPaymentStatus;
+            
+            targetEv.category = cust.category || targetEv.category;
+            
+            // If it matched by customerId but key changed, ensure we don't duplicate
+            if (targetEv.date !== cust.date || `${targetEv.date}::${(targetEv.title || '').trim().toLowerCase()}` !== key) {
+                targetEv.date = cust.date; // Update date as well just in case
+            }
         } else {
             const newEv = {
-                id: cust.id,
+                id: 'v_' + cust.id,
+                dbEventId: null,
                 customerId: cust.id,
                 title: cust.event,
                 date: cust.date,
@@ -311,6 +343,7 @@ async function loadUnifiedEventsDatabase() {
             expenses: Array.isArray(ev.expenses) ? ev.expenses : [],
             wardrobeIds: Array.isArray(ev.wardrobeIds) ? ev.wardrobeIds : [],
             invoiceItems: ev.invoiceItems || null,
+            metadata: ev.metadata || {},
             musicList: Array.isArray(ev.musicList) ? ev.musicList : [],
             rundown: Array.isArray(ev.rundown) ? ev.rundown : [],
             created_at: ev.created_at || null
@@ -339,6 +372,7 @@ async function loadUnifiedEventsDatabase() {
 
     if (!activeCommandCenterEventId && adminEventsDb.length > 0) {
         activeCommandCenterEventId = adminEventsDb[0].id;
+        window.activeCommandCenterEventId = activeCommandCenterEventId;
     }
 }
 
@@ -608,7 +642,7 @@ async function openCustomerInCommandCenter(custId) {
         await loadUnifiedEventsDatabase();
     }
     
-    let ev = adminEventsDb.find(e => String(e.customerId) === String(custId) || String(e.id) === String(custId));
+    let ev = adminEventsDb.find(e => String(e.customerId) === String(custId) || String(e.id) === ('v_' + custId));
     if (!ev) {
         let cust = null;
         try {
@@ -619,7 +653,7 @@ async function openCustomerInCommandCenter(custId) {
 
         if (cust) {
             await syncCustomerToCalendar(cust);
-            ev = adminEventsDb.find(e => String(e.customerId) === String(custId) || String(e.id) === String(custId));
+            ev = adminEventsDb.find(e => String(e.customerId) === String(custId) || String(e.id) === ('v_' + custId));
         }
     }
     
@@ -650,7 +684,7 @@ window.focusCalendarCustomer = focusCalendarCustomer;
 async function syncCustomerToCalendar(cust) {
     if (!cust || !cust.date) return;
     const key = `${cust.date}::${(cust.event || '').trim().toLowerCase()}`;
-    let existingIndex = adminEventsDb.findIndex(e => String(e.id) === String(cust.id) || String(e.customerId) === String(cust.id) || `${e.date}::${(e.title || '').trim().toLowerCase()}` === key);
+    let existingIndex = adminEventsDb.findIndex(e => String(e.id) === ('v_' + cust.id) || String(e.customerId) === String(cust.id) || `${e.date}::${(e.title || '').trim().toLowerCase()}` === key);
 
     let status = 'Review';
     if (cust.paymentStatus && (cust.paymentStatus.includes('Lunas') || cust.paymentStatus.includes('100%') || cust.paymentStatus.includes('DP'))) {
@@ -661,7 +695,8 @@ async function syncCustomerToCalendar(cust) {
 
     const timeFormatted = cust.time || (cust.startTime && cust.endTime ? `${cust.startTime} - ${cust.endTime} WIB (${cust.duration || ''})` : '18:00 - 22:00 WIB (4 Jam)');
     const eventData = {
-        id: cust.id,
+        id: 'v_' + cust.id,
+        dbEventId: null,
         customerId: cust.id,
         title: cust.event,
         date: cust.date,
@@ -710,7 +745,7 @@ window.syncCustomerToCalendar = syncCustomerToCalendar;
 
 async function deleteEventByCustomerId(custId, skipPrompt = false) {
     // 0. Find DB IDs before removing
-    const eventsToDelete = adminEventsDb.filter(e => String(e.id) === String(custId) || String(e.customerId) === String(custId));
+    const eventsToDelete = adminEventsDb.filter(e => String(e.id) === ('v_' + custId) || String(e.customerId) === String(custId));
     
     // 1. Delete from SERVER database (MySQL)
     try {
@@ -720,7 +755,7 @@ async function deleteEventByCustomerId(custId, skipPrompt = false) {
         // Delete events from server
         for (const ev of eventsToDelete) {
             const dbEvId = ev._dbEventId || ev.dbEventId || ev.id;
-            if (dbEvId) {
+            if (dbEvId && !String(dbEvId).startsWith('v_')) {
                 await fetch(`/api/cms/events/${dbEvId}`, { method: 'DELETE', headers }).catch(() => {});
             }
         }
@@ -932,6 +967,7 @@ function loadActiveEventInCommandCenter(eventId) {
         ev = adminEventsDb[0];
     }
     activeCommandCenterEventId = ev.id;
+    window.activeCommandCenterEventId = ev.id; // sync to window for cross-module access
     try { AdminDB.setItem('activeCommandCenterEventId', ev.id); } catch(e) {}
 
     // 1. Selector Dropdown
@@ -989,9 +1025,10 @@ function loadActiveEventInCommandCenter(eventId) {
     } catch(e) {}
 
     const clientName = cust ? cust.name : (ev.pic ? ev.pic.split('(')[0].trim() : 'Klien Belum Terdaftar');
-    const clientPhone = cust ? cust.w: (ev.pic && ev.pic.includes('(') ? ev.pic.split('(')[1].replace(')', '').trim() : '-');
+    const clientPhone = cust ? cust.wa : (ev.pic && ev.pic.includes('(') ? ev.pic.split('(')[1].replace(')', '').trim() : '-');
     const clientEmail = cust ? (cust.email || '-') : '-';
     const clientPkg = cust ? cust.category : (ev.category || 'Belum Dipilih');
+    const clientCat = cust ? (cust.client_category || (cust.isVip ? 'VIP' : '-')) : '-';
     const clientDuration = ev.duration ? `${ev.duration}  ${ev.time}` : (cust && cust.duration ? `${cust.duration}  ${ev.time}` : (ev.time || 'Waktu Belum Diset'));
 
     // 3. Tab 1 - Client Profile Card
@@ -1034,6 +1071,9 @@ function loadActiveEventInCommandCenter(eventId) {
 
     const clientPkgEl = document.getElementById('eccClientPkg');
     if (clientPkgEl) clientPkgEl.textContent = clientPkg;
+    
+    const clientCatEl = document.getElementById('eccClientCategory');
+    if (clientCatEl) clientCatEl.textContent = clientCat;
 
     const clientPriceEl = document.getElementById('eccClientPrice');
     if (clientPriceEl) clientPriceEl.textContent = ev.price;
@@ -1138,10 +1178,17 @@ function loadActiveEventInCommandCenter(eventId) {
     }
 
     // 7. Tab 2 - Finance Cards & QRI
-        const rawVal = Number(ev.rawPrice || ev.price || 0);
+    const rawVal = Number(ev.rawPrice || ev.price || 0);
     const isLunas = (ev.paymentStatus && (ev.paymentStatus.includes('Lunas') || ev.paymentStatus.includes('100%')));
     const isDp = (ev.paymentStatus && ev.paymentStatus.includes('DP')) || ev.status === 'Terkunci';
-    const dpVal = isLunas ? rawVal : (isDp ? Math.round(rawVal * 0.5) : 0);
+    
+    let dpVal = 0;
+    if (ev.metadata && typeof ev.metadata.nominal_dp !== 'undefined') {
+        dpVal = Number(ev.metadata.nominal_dp);
+    } else {
+        dpVal = isLunas ? rawVal : (isDp ? Math.round(rawVal * 0.5) : 0);
+    }
+    
     const sisaVal = rawVal - dpVal;
 
     const contractEl = document.getElementById('adminContractVal');
@@ -1164,9 +1211,9 @@ function loadActiveEventInCommandCenter(eventId) {
         if (isLunas) {
             financeBadge.className = 'badge badge-available';
             financeBadge.textContent = 'Lunas (Fully Paid)';
-        } else if (isDp) {
+        } else if (dpVal > 0) {
             financeBadge.className = 'badge badge-tentative';
-            financeBadge.textContent = 'DP 50% Diterima';
+            financeBadge.textContent = 'DP / Sebagian Dibayar';
         } else {
             financeBadge.className = 'badge badge-locked';
             financeBadge.textContent = 'Belum Dibayar (Unpaid)';
@@ -1365,7 +1412,7 @@ function navigateToSection(sectionId, menuElement) {
         window.loadCustomersData();
     }
     if (sectionId === 'sec-command-center' && typeof window.loadActiveEventInCommandCenter === 'function') {
-        window.loadActiveEventInCommandCenter();
+        window.loadActiveEventInCommandCenter(activeCommandCenterEventId);
     }
     if (sectionId === 'sec-dashboard' && typeof renderDashEvents === 'function') {
         renderDashEvents();
@@ -1501,26 +1548,95 @@ window.loadPaymentSettings = loadPaymentSettings;
 // Admin Checklist Progress Updater
 // ============================================================
 function updateAdminChkProgress() {
-    const progressBar = document.getElementById('eccChecklistProgress');
-    const progressText = document.getElementById('eccChecklistProgressText');
+    const progressBar = document.getElementById('adminChkBar');
+    const progressText = document.getElementById('adminChkCount');
     if (!progressBar) return;
     
     try {
-        const checkboxes = document.querySelectorAll('#eccChecklistBody input[type="checkbox"]');
-        if (checkboxes.length === 0) return;
+        const checkboxes = document.querySelectorAll('#adminChkList input[type="checkbox"]');
+        if (checkboxes.length === 0) {
+            progressBar.style.width = '0%';
+            if (progressText) progressText.textContent = '0/0 Selesai (0%)';
+            return;
+        }
         
-        const checked = document.querySelectorAll('#eccChecklistBody input[type="checkbox"]:checked').length;
+        const checked = document.querySelectorAll('#adminChkList input[type="checkbox"]:checked').length;
         const total = checkboxes.length;
         const pct = Math.round((checked / total) * 100);
         
         progressBar.style.width = pct + '%';
-        progressBar.setAttribute('aria-valuenow', pct);
         if (progressText) {
-            progressText.textContent = checked + '/' + total + ' (' + pct + '%)';
+            progressText.textContent = checked + '/' + total + ' Selesai (' + pct + '%)';
         }
     } catch(e) {}
 }
 window.updateAdminChkProgress = updateAdminChkProgress;
+
+window.toggleAdminChkItem = async function(eventId, idx, el) {
+    try {
+        const ev = window.adminEventsDb.find(e => String(e.id) === String(eventId));
+        if (!ev || !ev.checklist || !ev.checklist[idx]) return;
+        
+        ev.checklist[idx].done = el.checked;
+        if (el.checked) {
+            el.closest('.checklist-item').classList.add('done');
+        } else {
+            el.closest('.checklist-item').classList.remove('done');
+        }
+        updateAdminChkProgress();
+        
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        const res = await fetch('/api/cms/events/' + eventId, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': token},
+            body: JSON.stringify({ checklist: ev.checklist })
+        });
+        if (!res.ok) throw new Error('Gagal menyimpan checklist');
+    } catch(e) {
+        console.error(e);
+        el.checked = !el.checked;
+        updateAdminChkProgress();
+    }
+};
+
+window.addAdminChk = async function() {
+    const input = document.getElementById('adminNewChkInput');
+    if (!input || !input.value.trim()) return;
+    const text = input.value.trim();
+    
+    const eventId = window.activeCommandCenterEventId;
+    if (!eventId) return;
+    
+    try {
+        const ev = window.adminEventsDb.find(e => String(e.id) === String(eventId));
+        if (!ev) return;
+        
+        ev.checklist = ev.checklist || [];
+        ev.checklist.push({ text: text, done: false });
+        
+        const chkContainer = document.getElementById('adminChkList');
+        if (chkContainer) {
+            chkContainer.innerHTML = ev.checklist.map((chk, idx) => `
+                <label class="checklist-item ${chk.done ? 'done' : ''}">
+                    <input type="checkbox" ${chk.done ? 'checked' : ''} onchange="toggleAdminChkItem(${ev.id}, ${idx}, this)">
+                    <span>${window.escapeHtml ? window.escapeHtml(chk.text) : chk.text}</span>
+                </label>
+            `).join('');
+        }
+        input.value = '';
+        updateAdminChkProgress();
+        
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        const res = await fetch('/api/cms/events/' + eventId, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': token},
+            body: JSON.stringify({ checklist: ev.checklist })
+        });
+        if (!res.ok) throw new Error('Gagal menambah checklist');
+    } catch(e) {
+        console.error(e);
+    }
+};
 
 // ============================================================
 // Dashboard Events Renderer
@@ -1993,7 +2109,8 @@ function autoSyncCustomersToEvents(customers) {
         } else {
             // Create new
             const eventData = {
-                id: cust.id || Date.now(),
+                id: cust.id ? 'v_' + cust.id : 'v_' + Date.now(),
+                dbEventId: null,
                 customerId: cust.id,
                 title: cust.event,
                 date: cust.date,
@@ -2546,14 +2663,40 @@ window.loadCashflowTransactions = function() {
         .then(data => {
             if (data.success) {
                 window.cashflowTransactions = data.data || [];
+                window.mcCashflow = data.data || []; // Also set mcCashflow for pie charts
                 renderCashflowTable();
+                if (typeof window.renderDashboardPies === 'function') window.renderDashboardPies();
             }
         })
         .catch(err => {
             console.error('Failed to load cashflow', err);
             window.cashflowTransactions = [];
+            window.mcCashflow = [];
             renderCashflowTable();
+            if (typeof window.renderDashboardPies === 'function') window.renderDashboardPies();
         });
+};
+
+window.sortCashflowTable = function(key) {
+    if (window.cashflowSortKey === key) {
+        window.cashflowSortOrder = window.cashflowSortOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+        window.cashflowSortKey = key;
+        window.cashflowSortOrder = 'asc';
+    }
+    
+    // Update headers UI
+    const headers = document.querySelectorAll('#cashFlowTable th');
+    headers.forEach(th => {
+        let text = th.innerText.replace(/ ▼| ▲/g, '');
+        if (th.getAttribute('onclick') && th.getAttribute('onclick').includes(key)) {
+            th.innerText = text + (window.cashflowSortOrder === 'asc' ? ' ▲' : ' ▼');
+        } else {
+            th.innerText = text;
+        }
+    });
+    
+    window.renderCashflowTable();
 };
 
 window.renderCashflowTable = function() {
@@ -2581,9 +2724,11 @@ window.renderCashflowTable = function() {
                 if (amount > 0) {
                     // Cek jika sudah ada manual entry dengan ID sama atau transaksi auto-sync
                     if (!transactions.find(t => t.id === 'ev_' + c.id)) {
+                        let tDate = c.updated_at || c.created_at || new Date().toISOString();
+                        tDate = tDate.split('T')[0];
                         transactions.push({
                             id: 'ev_' + c.id,
-                            date: c.date || new Date().toISOString().split('T')[0],
+                            date: tDate,
                             desc: desc,
                             category: 'Pendapatan Booking',
                             amount: amount,
@@ -2595,8 +2740,29 @@ window.renderCashflowTable = function() {
             });
         }
         
-        // Sort by date descending
-        transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+        // Dynamic Sorting
+        const sortKey = window.cashflowSortKey || 'date';
+        const sortOrder = window.cashflowSortOrder || 'desc';
+        
+        transactions.sort((a, b) => {
+            let valA = a[sortKey];
+            let valB = b[sortKey];
+            
+            if (sortKey === 'amount') {
+                valA = Number(valA || 0);
+                valB = Number(valB || 0);
+            } else if (sortKey === 'date') {
+                valA = new Date(valA || 0).getTime();
+                valB = new Date(valB || 0).getTime();
+            } else {
+                valA = String(valA || '').toLowerCase();
+                valB = String(valB || '').toLowerCase();
+            }
+            
+            if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+            if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+            return 0;
+        });
         
         let totalInflow = 0;
         let totalOutflow = 0;
@@ -2676,7 +2842,9 @@ window.viewCashflowTransaction = function(id) {
                 amount = Number(c.price) * 0.5; desc = `DP 50% - ${c.name} (${c.event})`;
             }
             if (amount > 0 && !transactions.find(x => x.id === 'ev_' + c.id)) {
-                transactions.push({ id: 'ev_' + c.id, date: c.date, desc: desc, category: 'Pendapatan Booking', amount: amount, type: 'in', status: 'Berhasil' });
+                let tDate = c.updated_at || c.created_at || new Date().toISOString();
+                tDate = tDate.split('T')[0];
+                transactions.push({ id: 'ev_' + c.id, date: tDate, desc: desc, category: 'Pendapatan Booking', amount: amount, type: 'in', status: 'Berhasil' });
             }
         });
         t = transactions.find(x => String(x.id) === String(id));
@@ -2959,12 +3127,15 @@ window.updateAdminFinance = async function(val) {
             body: JSON.stringify({ status_pembayaran: val })
         });
         if(res.ok) {
+            var json = await res.json().catch(function(){return {};});
+            var newId = (json.data && json.data.id) ? json.data.id : activeCommandCenterEventId;
             if(typeof uiAlert === 'function') uiAlert('Status pembayaran berhasil diupdate!');
             const sel = document.getElementById('adminFinanceSelect');
             if(sel) sel.setAttribute('data-original-value', val);
+            if(typeof loadCustomersData === 'function') { await loadCustomersData(); }
             if(typeof loadUnifiedEventsDatabase === 'function') {
                 await loadUnifiedEventsDatabase();
-                switchCommandCenterEvent(activeCommandCenterEventId);
+                switchCommandCenterEvent(newId);
             }
         } else {
             if(typeof uiAlert === 'function') uiAlert('Gagal update status pembayaran.');
@@ -3005,35 +3176,83 @@ window.updateCcStatus = async function(statusVal) {
     }
 };
 
-window.openEditInvoiceModal = function() {
-    if(!activeCommandCenterEventId) {
-        if(typeof uiAlert === 'function') uiAlert('Pilih acara terlebih dahulu!');
-        return;
+// Helper: force-show a modal by directly setting inline styles (bypass CSS class/variable issues)
+window._forceShowModal = function(id) {
+    const m = document.getElementById(id);
+    if (!m) { console.error('Modal not found: ' + id); return null; }
+    m.style.cssText = [
+        'display: flex !important',
+        'position: fixed !important',
+        'inset: 0 !important',
+        'z-index: 99999 !important',
+        'align-items: center !important',
+        'justify-content: center !important',
+        'padding: 1rem !important',
+        'opacity: 1 !important',
+        'pointer-events: auto !important',
+        'background: rgba(0,0,0,0.75) !important',
+        'backdrop-filter: blur(6px) !important'
+    ].join(';');
+    m.classList.add('active');
+    // Ensure modal-content is visible
+    const content = m.querySelector('.modal-content');
+    if (content) {
+        content.style.cssText = [
+            'background: #1a2035 !important',
+            'color: #e2e8f0 !important',
+            'border-radius: 12px !important',
+            'padding: 2rem !important',
+            'max-width: 650px !important',
+            'width: 100% !important',
+            'max-height: 90vh !important',
+            'overflow-y: auto !important',
+            'box-shadow: 0 25px 50px rgba(0,0,0,0.7) !important',
+            'border: 1px solid rgba(255,255,255,0.1) !important'
+        ].join(';');
     }
-    const ev = adminEventsDb.find(e => String(e.id) === String(activeCommandCenterEventId));
-    if (!ev) return;
+    return m;
+};
 
+window._forceHideModal = function(id) {
+    const m = document.getElementById(id);
+    if (!m) return;
+    m.style.cssText = '';
+    m.classList.remove('active');
+};
+
+window.closeModals = function() {
+    document.querySelectorAll('.modal-overlay').forEach(el => {
+        el.style.cssText = '';
+        el.classList.remove('active');
+    });
+};
+
+window.openEditInvoiceModal = function() {
     const container = document.getElementById('invoiceItemsContainer');
-    if(container) {
+    if (container) {
         container.innerHTML = '';
-        // Create an initial item based on current contract value
-        const initialVal = ev.rawPrice || 0;
-        const div = document.createElement('div');
-        div.style.display = 'flex';
-        div.style.gap = '10px';
-        div.style.marginBottom = '5px';
-        div.innerHTML = `
-            <input type="text" class="form-input invoice-item-desc" style="flex:1;" value="Jasa MC & Entertainment" placeholder="Deskripsi layanan (ex: Aditional MC)">
-            <input type="number" class="form-input invoice-item-price" style="width:150px;" value="${initialVal}" placeholder="1000000" oninput="calculateInvoiceTotal()">
-            <button type="button" class="btn btn-secondary btn-sm" style="color:var(--adm-danger); border-color:transparent; background:transparent;" onclick="this.parentElement.remove(); calculateInvoiceTotal();">X</button>
-        `;
-        container.appendChild(div);
+        const ev = (typeof adminEventsDb !== 'undefined' && activeCommandCenterEventId)
+            ? adminEventsDb.find(e => String(e.id) === String(activeCommandCenterEventId))
+            : null;
+        const items = (ev && ev.invoiceItems && Array.isArray(ev.invoiceItems) && ev.invoiceItems.length > 0)
+            ? ev.invoiceItems
+            : [{ desc: ev ? 'Jasa MC & Entertainment' : '', price: (ev && ev.rawPrice) || 0 }];
+
+        items.forEach(item => {
+            const div = document.createElement('div');
+            div.style.cssText = 'display:flex; gap:10px; margin-bottom:8px; align-items:center;';
+            div.innerHTML = `
+                <input type="text" class="form-input invoice-item-desc" style="flex:1; background:#0f172a; color:#e2e8f0; border:1px solid rgba(255,255,255,0.2); border-radius:8px; padding:0.5rem;" value="${item.desc || ''}" placeholder="Deskripsi layanan">
+                <input type="number" class="form-input invoice-item-price" style="width:140px; background:#0f172a; color:#e2e8f0; border:1px solid rgba(255,255,255,0.2); border-radius:8px; padding:0.5rem;" value="${item.price || 0}" oninput="calculateInvoiceTotal()">
+                <button type="button" style="background:transparent; border:none; color:#ef4444; font-size:1.2rem; cursor:pointer; padding:0 0.5rem;" onclick="this.parentElement.remove(); calculateInvoiceTotal();">✕</button>
+            `;
+            container.appendChild(div);
+        });
     }
     calculateInvoiceTotal();
-
-    const m = document.getElementById('editInvoiceModal');
-    if(m) m.classList.add('active');
+    window._forceShowModal('editInvoiceModal');
 };
+
 
 window.sendWaTemplate = async function(encodedBody) {
     if(!activeCommandCenterEventId) return;
@@ -3096,11 +3315,42 @@ window.saveInvoiceItems = async function() {
     if(!activeCommandCenterEventId) return;
     const total = calculateInvoiceTotal();
     
+    const ev = adminEventsDb.find(e => String(e.id) === String(activeCommandCenterEventId));
+    if (!ev) return;
+
+    // Collect items from UI
+    const inputsDesc = document.querySelectorAll('.invoice-item-desc');
+    const inputsPrice = document.querySelectorAll('.invoice-item-price');
+    const items = [];
+    for(let i=0; i<inputsDesc.length; i++) {
+        items.push({
+            desc: inputsDesc[i].value,
+            price: parseInt(inputsPrice[i].value) || 0
+        });
+    }
+    
+    ev.invoiceItems = items; // Update locally
+
+    const payload = { 
+        nilai_kontrak: total,
+        metadata: {
+            vipNotes: ev.vipNotes,
+            vipProtocol: ev.vipProtocol,
+            checklist: ev.checklist,
+            expenses: ev.expenses,
+            wardrobeIds: ev.wardrobeIds,
+            invoice_items: ev.invoiceItems,
+            musicList: ev.musicList,
+            rundown: ev.rundown,
+            vendors: ev.vendors
+        }
+    };
+    
     try {
         const res = await fetch('/api/cms/events/' + activeCommandCenterEventId, {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ nilai_kontrak: total })
+            body: JSON.stringify(payload)
         });
         if(res.ok) {
             if(typeof uiAlert === 'function') uiAlert('Rincian Invoice & Nilai Kontrak berhasil diperbarui!');
@@ -3164,8 +3414,24 @@ window.openInvoicePrintModal = function() {
         A/N: ${settings.bankHolder}
     `;
 
-    const m = document.getElementById('invoicePrintModal');
-    if(m) m.classList.add('active');
+    const m = window._forceShowModal('invoicePrintModal');
+    if (m) {
+        // Invoice print modal has a white/light background
+        const content = m.querySelector('.modal-content');
+        if (content) {
+            content.style.cssText = [
+                'background: #ffffff !important',
+                'color: #0f172a !important',
+                'border-radius: 12px !important',
+                'padding: 2.5rem !important',
+                'max-width: 850px !important',
+                'width: 100% !important',
+                'max-height: 90vh !important',
+                'overflow-y: auto !important',
+                'box-shadow: 0 25px 50px rgba(0,0,0,0.7) !important'
+            ].join(';');
+        }
+    }
 };
 
 window.deleteWardrobeItem = async function(id) {
@@ -3502,7 +3768,7 @@ window.updateDashboardMetrics = async function() {
         const targetPercent = Math.round((revTerkunci / annualTarget) * 100);
 
         // Calculate expenses
-        const expenses = cashflows.filter(c => c.type === 'expense');
+        const expenses = cashflows.filter(c => c.type === 'expense' || c.type === 'out');
         const totalExpense = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
         const avgExpense = expenses.length > 0 ? Math.round(totalExpense / expenses.length) : 0;
 
@@ -3575,31 +3841,7 @@ window.deleteWardrobeItem = async function(id) {
 
 
 
-window.openInvoicePrintModal = function() {
-    if(!activeCommandCenterEventId) return;
-    const ev = window.activeCommandCenterEvent;
-    if(!ev) return;
-    const url = '/api/cms/events/' + ev.id + '/invoice';
-    const newWindow = window.open('', '_blank');
-    newWindow.document.write(`
-        <html><head><title>Invoice #${ev.id}</title>
-        <style>body{font-family:sans-serif; padding:40px; color:#333;}</style></head>
-        <body>
-        <h1 style="color:#D4AF37;">INVOICE</h1>
-        <p><strong>Kepada:</strong> ${ev.clientName || 'Klien'}</p>
-        <p><strong>Acara:</strong> ${ev.title}</p>
-        <p><strong>Tanggal:</strong> ${ev.date}</p>
-        <hr>
-        <h3>Rincian Pembayaran</h3>
-        <p>Paket: ${ev.metadata?.pkg || '-'}</p>
-        <p>Total: Rp ${parseInt(ev.price||0).toLocaleString('id-ID')}</p>
-        <p>Status: ${ev.status}</p>
-        <br>
-        <button onclick="window.print()">Cetak PDF</button>
-        </body></html>
-    `);
-    newWindow.document.close();
-};
+
 
 window.fetchWaTemplates = async function() {
     try {

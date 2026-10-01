@@ -676,6 +676,7 @@ class CmsApiController extends Controller
             'calendarStatus'  => $c->calendar_status ?? 'Review',
             'notes'           => $c->catatan_khusus ?? '',
             'created_at'      => $c->created_at ? $c->created_at->toISOString() : null,
+            'updated_at'      => $c->updated_at ? $c->updated_at->toISOString() : null,
             ];
         })->values()]);
     }
@@ -692,6 +693,32 @@ class CmsApiController extends Controller
             $calendarStatus = 'Review';
         }
 
+        // Preserve or calculate status_pembayaran dynamically from invoice if it exists
+        $paymentStatus = 'Belum Bayar';
+        $event = $id ? Event::where('client_id', $id)->first() : null;
+        if ($event && $event->metadata) {
+            $metadata = json_decode($event->metadata, true);
+            if (isset($metadata['nominal_dp'])) {
+                $dp = (int)$metadata['nominal_dp'];
+                $totalForSync = $request->input('price') !== null ? (int)$request->input('price') : (int)$event->nilai_kontrak;
+                if ($dp >= $totalForSync && $totalForSync > 0) {
+                    $paymentStatus = 'Lunas 100%';
+                    if ($calendarStatus === 'Review' || $calendarStatus === 'Tentative') {
+                        $calendarStatus = 'Terkunci';
+                    }
+                } elseif ($dp > 0) {
+                    $paymentStatus = 'DP Dibayar';
+                    if ($calendarStatus === 'Review' || $calendarStatus === 'Tentative') {
+                        $calendarStatus = 'Terkunci';
+                    }
+                }
+            }
+        } else {
+            // Fallback to manual if no invoice logic
+            if ($calendarStatus === 'Selesai') $paymentStatus = 'Lunas 100%';
+            elseif ($calendarStatus === 'Tentative') $paymentStatus = 'Belum Bayar';
+        }
+
         $data = [
             'mc_id'                    => $mc->id,
             'nama_pic'                 => $request->input('name', $request->input('nama_pic', '')) ?: '',
@@ -702,7 +729,7 @@ class CmsApiController extends Controller
             'kategori'                 => $request->input('category', 'Wedding') ?: 'Wedding',
             'client_category'          => $request->input('client_category', '') ?: '',
             'nilai_kontrak'            => $request->input('price') !== null ? $request->input('price') : 0,
-            'status_pembayaran'        => $request->input('paymentStatus', 'Belum Bayar') ?: 'Belum Bayar',
+            'status_pembayaran'        => $paymentStatus,
             'nama_acara'               => $request->input('event', '') ?: '',
             'tanggal_acara'            => $request->input('date') ?: null,
             'calendar_status'          => $calendarStatus,
@@ -917,6 +944,7 @@ class CmsApiController extends Controller
                 'expenses'      => $meta['expenses'] ?? [],
                 'wardrobeIds'   => $meta['wardrobeIds'] ?? [],
                 'invoiceItems'  => $meta['invoice_items'] ?? null,
+                'metadata'      => $meta,
                 'created_at'    => $e->created_at ? $e->created_at->toISOString() : null,
             ];
         })->values()]);
@@ -981,7 +1009,25 @@ class CmsApiController extends Controller
 
     public function updateEvent(Request $request, $id)
     {
-        $event = Event::findOrFail($id);
+        if (str_starts_with($id, 'v_')) {
+            $clientId = str_replace('v_', '', $id);
+            $client = Client::findOrFail($clientId);
+            $event = Event::create([
+                'client_id'         => $client->id,
+                'nama_acara'        => $client->nama_acara ?? ('Event ' . $client->nama_pic),
+                'lokasi'            => 'Venue TBD',
+                'tanggal_acara'     => $client->tanggal_acara ?? date('Y-m-d'),
+                'waktu_mulai'       => '18:00:00',
+                'waktu_selesai'     => '21:00:00',
+                'status'            => 'Tentative',
+                'tipe_acara'        => $client->kategori ?? 'Wedding',
+                'nilai_kontrak'     => $client->nilai_kontrak ?? 0,
+                'status_pembayaran' => $client->status_pembayaran ?? 'Tentative (Hold)',
+                'metadata'          => null,
+            ]);
+        } else {
+            $event = Event::findOrFail($id);
+        }
 
         $allowedStatuses = ['Review', 'Tentative', 'Terkunci', 'Selesai'];
 
@@ -1008,15 +1054,68 @@ class CmsApiController extends Controller
         if ($request->has('status_pembayaran')) $data['status_pembayaran'] = $request->input('status_pembayaran');
         if ($request->has('metadata'))          $data['metadata'] = json_encode($request->input('metadata'));
 
-        // Tentukan prioritas status_pembayaran berdasarkan status utama
-        if (isset($data['status'])) {
+        // Tentukan prioritas status_pembayaran berdasarkan nominal_dp di invoice (kasir)
+        $totalForSync = isset($data['nilai_kontrak']) ? (int)$data['nilai_kontrak'] : (int)$event->nilai_kontrak;
+        if ($request->has('metadata') && isset($request->input('metadata')['nominal_dp'])) {
+            $inputMeta = $request->input('metadata');
+            $newDp = (int)$inputMeta['nominal_dp'];
+            $oldMeta = $event->metadata ? json_decode($event->metadata, true) : [];
+            
+            $oldDp = 0;
+            if (isset($oldMeta['payment_history']) && is_array($oldMeta['payment_history'])) {
+                foreach ($oldMeta['payment_history'] as $ph) {
+                    $oldDp += (int)($ph['amount'] ?? 0);
+                }
+            } else {
+                $oldDp = (int)($oldMeta['nominal_dp'] ?? 0);
+            }
+            
+            $difference = $newDp - $oldDp;
+            if ($difference > 0) {
+                // Record to cashflow
+                $mc = $this->getMC();
+                \App\Models\CmsCashflowTransaction::create([
+                    'mc_id' => $mc->id,
+                    'tipe' => 'in',
+                    'kategori' => 'Pendapatan Booking',
+                    'nominal' => $difference,
+                    'tanggal' => date('Y-m-d'),
+                    'deskripsi' => 'Pelunasan/DP Invoice - ' . ($data['nama_acara'] ?? $event->nama_acara),
+                    'status' => 'Berhasil'
+                ]);
+                
+                // Save payment history
+                $history = (isset($oldMeta['payment_history']) && is_array($oldMeta['payment_history'])) ? $oldMeta['payment_history'] : [];
+                $history[] = [
+                    'date' => date('Y-m-d'),
+                    'amount' => $difference,
+                    'label' => 'Pembayaran ke-' . (count($history) + 1)
+                ];
+                $inputMeta['payment_history'] = $history;
+                $data['metadata'] = json_encode($inputMeta);
+            }
+
+            $dp = $newDp;
+            if ($dp >= $totalForSync && $totalForSync > 0) {
+                $data['status_pembayaran'] = 'Lunas 100%';
+                if (!isset($data['status']) || $data['status'] === 'Review' || $data['status'] === 'Tentative') {
+                    $data['status'] = 'Terkunci';
+                }
+            } elseif ($dp > 0) {
+                $data['status_pembayaran'] = 'DP Dibayar';
+                if (!isset($data['status']) || $data['status'] === 'Review' || $data['status'] === 'Tentative') {
+                    $data['status'] = 'Terkunci';
+                }
+            } else {
+                $data['status_pembayaran'] = 'Belum Bayar';
+            }
+        } elseif (isset($data['status'])) {
+            // Fallback manual status calendar updates
             $status = $data['status'];
-            if ($status === 'Terkunci') {
-                $data['status_pembayaran'] = 'DP 50% Paid';
-            } elseif ($status === 'Selesai') {
+            if ($status === 'Selesai') {
                 $data['status_pembayaran'] = 'Lunas 100%';
             } elseif ($status === 'Tentative') {
-                $data['status_pembayaran'] = 'Tentative (Hold)';
+                $data['status_pembayaran'] = 'Belum Bayar';
             }
         }
 

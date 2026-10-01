@@ -740,8 +740,18 @@
         if (nameEl) nameEl.value = '';
         
         const pkgEl = document.getElementById('newCustPackage');
-        if (pkgEl) pkgEl.value = '';
-        
+        if (pkgEl) {
+            pkgEl.innerHTML = '<option value="" disabled selected>-- Pilih Paket --</option><option value="Custom">Custom</option>';
+            if (window.cmsConfig && window.cmsConfig.pkgs && window.cmsConfig.pkgs.length > 0) {
+                window.cmsConfig.pkgs.forEach(pkg => {
+                    if (pkg.name) {
+                        const priceFmt = parseInt(pkg.price || 0).toLocaleString('id-ID');
+                        pkgEl.innerHTML += `<option value="${pkg.name}" data-price="${pkg.price || 0}">${pkg.name} - Rp ${priceFmt}</option>`;
+                    }
+                });
+            }
+            pkgEl.value = '';
+        }
         const venueEl = document.getElementById('newCustVenue');
         if (venueEl) venueEl.value = '';
         const catEl = document.getElementById('newCustCategory');
@@ -804,6 +814,20 @@
         setTimeout(() => document.getElementById('newCustName')?.focus(), 150);
     }
     window.openAddCustomerModal = openAddCustomerModal;
+    
+    window.autoFillPriceFromPackage = function() {
+        const pkgEl = document.getElementById('newCustPackage');
+        const priceEl = document.getElementById('newCustPrice');
+        if (pkgEl && priceEl) {
+            const selectedOpt = pkgEl.options[pkgEl.selectedIndex];
+            if (selectedOpt && selectedOpt.value !== 'Custom' && selectedOpt.value !== '') {
+                const price = selectedOpt.getAttribute('data-price');
+                if (price) {
+                    priceEl.value = price;
+                }
+            }
+        }
+    };
 
     window.openEditCustomerModal = function(cust) {
         if (!cust) return;
@@ -820,8 +844,18 @@
         if (nameEl) nameEl.value = cust.name || '';
         
         const pkgEl = document.getElementById('newCustPackage');
-        if (pkgEl) pkgEl.value = cust.package || 'Custom';
-        
+        if (pkgEl) {
+            pkgEl.innerHTML = '<option value="" disabled selected>-- Pilih Paket --</option><option value="Custom">Custom</option>';
+            if (window.cmsConfig && window.cmsConfig.pkgs && window.cmsConfig.pkgs.length > 0) {
+                window.cmsConfig.pkgs.forEach(pkg => {
+                    if (pkg.name) {
+                        const priceFmt = parseInt(pkg.price || 0).toLocaleString('id-ID');
+                        pkgEl.innerHTML += `<option value="${pkg.name}" data-price="${pkg.price || 0}">${pkg.name} - Rp ${priceFmt}</option>`;
+                    }
+                });
+            }
+            pkgEl.value = cust.package || 'Custom';
+        }
         const venueEl = document.getElementById('newCustVenue');
         if (venueEl) venueEl.value = cust.venue || '';
         
@@ -1339,7 +1373,7 @@ window.renderDashboardPies = function() {
          let totalInc = 0;
          const incCounts = {};
          (window.mcCashflow || []).forEach(tx => {
-             if (tx.type === 'income') {
+             if (tx.type === 'income' || tx.type === 'in') {
                  const c = tx.category || 'Lainnya';
                  incCounts[c] = (incCounts[c] || 0) + (tx.amount || 0);
                  totalInc += (tx.amount || 0);
@@ -1367,6 +1401,45 @@ window.renderDashboardPies = function() {
              });
              incSvg.innerHTML = htmlSvg;
              incLeg.innerHTML = htmlLegend;
+         }
+    }
+    
+    // Expense Proportion Pie (Dashboard)
+    const expSvg = document.getElementById('dashExpenseProporsiSvg');
+    const expLeg = document.getElementById('dashExpenseProporsiLegend');
+    if (expSvg && expLeg) {
+         let totalExp = 0;
+         const expCounts = {};
+         (window.mcCashflow || []).forEach(tx => {
+             // In backend, type is 'expense' for 'out'
+             if (tx.type === 'expense' || tx.type === 'out') {
+                 const c = tx.category || 'Lainnya';
+                 expCounts[c] = (expCounts[c] || 0) + (tx.amount || 0);
+                 totalExp += (tx.amount || 0);
+             }
+         });
+         
+         if (totalExp === 0) {
+             expSvg.innerHTML = '<circle r="0.5" cx="0" cy="0" fill="transparent" stroke="#555" stroke-width="1" stroke-dasharray="3.14159 3.14159" />';
+             expLeg.innerHTML = '<div style="text-align:center;">Belum ada data</div>';
+         } else {
+             const colors = ['#EF4444', '#F87171', '#FCA5A5', '#991B1B', '#DC2626'];
+             let htmlSvg = '';
+             let htmlLegend = '';
+             let currentOffset = 0;
+             const circumference = Math.PI; 
+             
+             Object.keys(expCounts).forEach((cat, idx) => {
+                 const amt = expCounts[cat];
+                 const perc = amt / totalExp;
+                 const strokeLength = perc * circumference;
+                 const color = colors[idx % colors.length];
+                 htmlSvg += `<circle r="0.5" cx="0" cy="0" fill="transparent" stroke="${color}" stroke-width="1" stroke-dasharray="${strokeLength} ${circumference}" stroke-dashoffset="${-currentOffset}" />`;
+                 htmlLegend += `<div style="display:flex; justify-content:space-between;"><span style="color:${color}; font-weight:600;"> ${cat}</span> <span>${Math.round(perc * 100)}%</span></div>`;
+                 currentOffset += strokeLength;
+             });
+             expSvg.innerHTML = htmlSvg;
+             expLeg.innerHTML = htmlLegend;
          }
     }
 };
