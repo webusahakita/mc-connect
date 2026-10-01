@@ -117,6 +117,12 @@ function buildFormFields(formContainer, fields) {
             input.className = 'custom-modal-input';
             input.style.marginBottom = '0';
             input.value = field.value !== undefined ? field.value : '';
+            if (field.readonly) {
+                input.readOnly = true;
+                input.style.backgroundColor = 'rgba(0,0,0,0.2)';
+                input.style.color = '#64748b';
+                input.style.cursor = 'not-allowed';
+            }
         }
         
         wrapper.appendChild(label);

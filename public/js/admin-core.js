@@ -968,6 +968,7 @@ function loadActiveEventInCommandCenter(eventId) {
     }
     activeCommandCenterEventId = ev.id;
     window.activeCommandCenterEventId = ev.id; // sync to window for cross-module access
+    window.activeCommandCenterEvent = ev; // sync the actual object as well!
     try { AdminDB.setItem('activeCommandCenterEventId', ev.id); } catch(e) {}
 
     // 1. Selector Dropdown
@@ -1005,10 +1006,10 @@ function loadActiveEventInCommandCenter(eventId) {
     if (titleH1) titleH1.textContent = ev.title;
 
     const metaDate = document.getElementById('ccEventMetaDate');
-    if (metaDate) metaDate.textContent = `& ${formatDateIndoFull(ev.date)}`;
+    if (metaDate) metaDate.textContent = `${formatDateIndoFull(ev.date)}`;
 
     const metaTime = document.getElementById('ccEventMetaTime');
-    if (metaTime) metaTime.textContent = `⏰ ${ev.time || '19:00 - 22:00 WIB'}`;
+    if (metaTime) metaTime.textContent = `${ev.time || '19:00 - 22:00 WIB'}`;
 
     const metaVenue = document.getElementById('ccEventMetaVenue');
     if (metaVenue) metaVenue.textContent = `${ev.venue || 'Venue Terdaftar'}`;
@@ -1321,10 +1322,16 @@ function loadActiveEventInCommandCenter(eventId) {
     }
 
     // 9c. Tab 4 - Layar Kolaborasi Vendor (Live Rundown & Music Cue Sync)
+    const vcTitle = document.getElementById('vendorCollabEventTitle');
+    if (vcTitle) vcTitle.textContent = ev.title || 'Acara Tanpa Judul';
+    const vcMeta = document.getElementById('vendorCollabEventMeta');
+    if (vcMeta) {
+        vcMeta.textContent = `📅 ${ev.date || '-'} ⏰ ${ev.time || '-'} 📍 ${ev.venue || 'TBD'}`;
+    }
+    
     if (typeof renderAdminVendorCollab === 'function') {
         renderAdminVendorCollab(ev);
     }
-    
     // Tab 1 - Wardrobe Tracker
     if (typeof renderWardrobe === 'function') {
         renderWardrobe();
@@ -1333,11 +1340,11 @@ function loadActiveEventInCommandCenter(eventId) {
     // 10. Tab 5 - Post-Event Review & Loyalty Sync
     const postReviewArea = document.getElementById('postEventReviewTemplate');
     if (postReviewArea) {
-        postReviewArea.value = `Halo Kak ${clientName}, salam hangat dari VanyArsyad & Tim MC-Connect.nnTerimkasih banyak atas kepercayaan luar biasyang telah diberikan kepadkami untuk memandu agendistimew"${ev.title}". Merupakan suatu kehormatan dan kebahagiaan tak terhinggdapat menjadi bagian dari momen indah Anda!nnJikKak ${clientName} berkenan, kami akan sangat berterimkasih atas ulasan bintang 5 dan testimoni singkat melalui tautan berikut:n⭐ https://vanyaarsyad.com/review?id=${ev.id}nnUlasan dan feedback Kak ${clientName} sangat berhargbagi peningkatan standar performpanggung kami di masdepan. Sukses dan bahagiselalu!nnSalam hormat,nVanyArsyad, S.I.Kom`;
+        postReviewArea.value = `Halo Kak ${clientName}, salam hangat dari Vanya Arsyad & Tim MC-Connect.\n\nTerima kasih banyak atas kepercayaan luar biasa yang telah diberikan kepada kami untuk memandu agenda istimewa "${ev.title}". Merupakan suatu kehormatan dan kebahagiaan tak terhingga dapat menjadi bagian dari momen indah Anda!\n\nJika Kak ${clientName} berkenan, kami akan sangat berterima kasih atas ulasan bintang 5 dan testimoni singkat melalui tautan berikut:\n⭐ https://vanyaarsyad.com/review?id=${ev.id}\n\nUlasan dan feedback Kak ${clientName} sangat berharga bagi peningkatan standar performa panggung kami di masa depan. Sukses dan bahagia selalu!\n\nSalam hormat,\nVanya Arsyad, S.I.Kom`;
     }
     const postReviewSub = document.getElementById('tabReviewSubtitle');
     if (postReviewSub) {
-        postReviewSub.textContent = `Kirim pesan otomatis WhatsApp kepad${clientName} (${clientPhone}) untuk meminttestimoni & rating bintang 5 setelah acara selesai.`;
+        postReviewSub.textContent = `Kirim pesan otomatis WhatsApp kepada ${clientName} (${clientPhone}) untuk meminta testimoni & rating bintang 5 setelah acara selesai.`;
     }
 }
 window.loadActiveEventInCommandCenter = loadActiveEventInCommandCenter;
@@ -1819,9 +1826,211 @@ function renderAdminAgendaList() {
 window.renderAdminAgendaList = renderAdminAgendaList;
 
 function renderAdminRundownList(ev) {
-    renderAdminAgendaList(); // Reuse agenda list for rundown
+    const titleEl = document.getElementById('rundownActiveEventTitle');
+    const metaEl = document.getElementById('rundownActiveEventMeta');
+    
+    if (!ev) {
+        if (titleEl) titleEl.textContent = 'Belum Ada Acara Terpilih';
+        if (metaEl) metaEl.textContent = '📅 - ⏰ - 📍 -';
+        const container = document.getElementById('adminRundownTimeline');
+        if (container) container.innerHTML = '<div style="text-align:center; padding:1rem; color:var(--adm-text-muted);">Pilih acara terlebih dahulu.</div>';
+        return;
+    } else {
+        if (titleEl) titleEl.textContent = ev.title || ev.event || 'Acara Tanpa Judul';
+        if (metaEl) {
+            const date = ev.date || '-';
+            const time = ev.time || '-';
+            const venue = ev.venue || (ev.metadata && ev.metadata.venue) || 'TBD';
+            metaEl.textContent = `📅 ${date} ⏰ ${time} 📍 ${venue}`;
+        }
+    }
+    
+    const container = document.getElementById('adminRundownTimeline');
+    if (!container) return;
+    
+    const agenda = ev.rundown || ev.agenda || [];
+    if (agenda.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:2rem; background:rgba(255,255,255,0.02); border-radius:12px; color:var(--adm-text-muted);">Belum ada segmen rundown. Klik "+ Tambah Segmen" untuk memulai.</div>';
+        return;
+    }
+    
+    container.innerHTML = agenda.map((item, i) => {
+        return `
+        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; margin-bottom:1rem; overflow:hidden;">
+            <div style="display:flex; align-items:center; padding:0.8rem 1rem; border-bottom:1px solid rgba(255,255,255,0.05); gap:1rem; flex-wrap:wrap;">
+                <div style="display:flex; align-items:center; gap:0.75rem;">
+                    <input type="checkbox" style="width:16px; height:16px; accent-color:var(--adm-gold);">
+                    <span style="color:var(--adm-gold); font-weight:800; font-size:1rem; min-width:24px;">${i+1}</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:1rem; flex:1; min-width:200px;">
+                    <div style="background:rgba(255,255,255,0.06); padding:0.2rem 0.6rem; border-radius:6px; font-size:0.8rem; font-weight:600; color:var(--adm-gold); display:flex; align-items:center; gap:0.4rem;">
+                        ⏰ ${item.time || (item.start_time + ' - ' + item.end_time)}
+                    </div>
+                    <div style="font-size:1rem; font-weight:700; color:#fff;">
+                        ${escapeHtml(item.title || 'Segmen Tanpa Judul')}
+                    </div>
+                </div>
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                    <button class="btn btn-secondary btn-sm" style="padding:0.2rem 0.5rem;" onclick="window.moveRundownSegment(${i}, -1)" ${i===0 ? 'disabled' : ''}>▲</button>
+                    <button class="btn btn-secondary btn-sm" style="padding:0.2rem 0.5rem;" onclick="window.moveRundownSegment(${i}, 1)" ${i===agenda.length-1 ? 'disabled' : ''}>▼</button>
+                    <button class="btn btn-secondary btn-sm" style="color:var(--adm-gold); border-color:rgba(212,175,55,0.3);" onclick="window.openAddRundownModal(${i})">✏️ Edit</button>
+                    <button class="btn btn-secondary btn-sm" style="color:#F87171; border-color:rgba(248,113,113,0.3);" onclick="window.deleteRundownSegment(${i})">🗑️</button>
+                </div>
+            </div>
+            <div style="padding:1rem; border-left:3px solid var(--adm-gold); background:rgba(0,0,0,0.2);">
+                <div style="font-size:0.75rem; font-weight:700; color:var(--adm-gold); margin-bottom:0.4rem; letter-spacing:0.5px;">🎤 PANDUAN NASKAH / PROMPTER MC:</div>
+                <div style="font-size:0.9rem; color:var(--adm-text-secondary); line-height:1.5; margin-bottom:1rem; white-space:pre-wrap;">${escapeHtml(item.prompter || 'Tidak ada naskah khusus untuk segmen ini.')}</div>
+                <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+                    ${item.cue_music ? `<div style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); border-radius:6px; padding:0.3rem 0.6rem; font-size:0.8rem; color:#38BDF8; font-weight:600; display:flex; align-items:center; gap:0.4rem;">🎵 Cue Audio: ${escapeHtml(item.cue_music)}</div>` : ''}
+                    ${item.pic ? `<div style="background:rgba(167,139,250,0.1); border:1px solid rgba(167,139,250,0.3); border-radius:6px; padding:0.3rem 0.6rem; font-size:0.8rem; color:#A78BFA; font-weight:600; display:flex; align-items:center; gap:0.4rem;">👤 PIC: ${escapeHtml(item.pic)}</div>` : ''}
+                </div>
+            </div>
+        </div>
+        `;
+    }).join('');
 }
 window.renderAdminRundownList = renderAdminRundownList;
+
+window.openAddRundownModal = async function(editIndex = -1) {
+    const ev = window.activeCommandCenterEvent;
+    if (!ev) {
+        uiAlert('Pilih acara terlebih dahulu di kalender.');
+        return;
+    }
+    
+    let editItem = null;
+    if (editIndex >= 0 && ev.rundown && ev.rundown[editIndex]) {
+        editItem = ev.rundown[editIndex];
+    }
+    
+    // Build music options
+    const musicOpts = [{value: '', label: '-- Pilih Cue Musik (Opsional) --'}];
+    if (ev.musicList && Array.isArray(ev.musicList)) {
+        ev.musicList.forEach(m => {
+            const title = typeof m === 'object' ? m.title : m;
+            if (title) musicOpts.push({ value: title, label: '🎵 ' + title });
+        });
+    }
+
+    try {
+        const formData = await window.uiCustomForm([
+            { id: 'start_time', label: 'Jam Mulai *', type: 'time', value: editItem ? (editItem.start_time || '') : '' },
+            { id: 'end_time', label: 'Jam Selesai *', type: 'time', value: editItem ? (editItem.end_time || '') : '' },
+            { id: 'title', label: 'Nama / Judul Segmen Acara *', type: 'text', value: editItem ? editItem.title : '' },
+            { id: 'prompter', label: 'Naskah Panduan MC (Prompter & Cue)', type: 'textarea', value: editItem ? editItem.prompter : '' },
+            { id: 'cue_music', label: 'Cue Musik / Sound FX / Lighting', type: 'select', options: musicOpts, value: editItem ? editItem.cue_music : '' },
+            { id: 'pic', label: 'PIC / Koordinator Lapangan', type: 'text', value: editItem ? editItem.pic : '' }
+        ], {
+            title: editItem ? `Edit Segmen Rundown (${ev.title || 'Acara'})` : `➕ Tambah Segmen Rundown Baru (${ev.title || 'Acara'})`,
+            okText: 'Simpan Segmen Rundown'
+        });
+
+        if (!formData.title || !formData.start_time || !formData.end_time) {
+            uiAlert('Judul Segmen dan Waktu (Mulai - Selesai) harus diisi!');
+            return;
+        }
+
+        const newItem = {
+            title: formData.title,
+            start_time: formData.start_time,
+            end_time: formData.end_time,
+            time: `${formData.start_time} - ${formData.end_time}`,
+            prompter: formData.prompter || '',
+            cue_music: formData.cue_music || '',
+            pic: formData.pic || ''
+        };
+
+        if (!ev.rundown) ev.rundown = [];
+        
+        if (editIndex >= 0) {
+            ev.rundown[editIndex] = newItem;
+        } else {
+            ev.rundown.push(newItem);
+        }
+
+        // Sort by start time
+        ev.rundown.sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
+        
+        // Save to backend metadata if possible
+        if (!ev.metadata) ev.metadata = {};
+        ev.metadata.rundown = ev.rundown;
+        
+        const tm = document.querySelector('meta[name="csrf-token"]');
+        const tk = tm ? tm.getAttribute('content') : '';
+        const payload = { metadata: ev.metadata };
+        
+        // Non-blocking fetch
+        fetch('/api/cms/events/' + ev.id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': tk },
+            body: JSON.stringify(payload)
+        }).catch(e => console.error('Silent save error', e));
+        
+        renderAdminRundownList(ev);
+        if (typeof window.showToast === 'function') window.showToast('Rundown berhasil disimpan!');
+    } catch(err) {
+        if (err !== 'CANCEL') {
+            console.error(err);
+            if (typeof uiAlert === 'function') uiAlert('Terjadi kesalahan sistem.');
+        }
+    }
+};
+
+window.deleteRundownSegment = async function(index) {
+    const ev = window.activeCommandCenterEvent;
+    if (!ev || !ev.rundown || !ev.rundown[index]) return;
+    
+    if (!(await window.uiConfirm(`Hapus segmen: "${ev.rundown[index].title}"?`))) return;
+    
+    ev.rundown.splice(index, 1);
+    if (!ev.metadata) ev.metadata = {};
+    ev.metadata.rundown = ev.rundown;
+    
+    const tm = document.querySelector('meta[name="csrf-token"]');
+    const tk = tm ? tm.getAttribute('content') : '';
+    fetch('/api/cms/events/' + ev.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': tk },
+        body: JSON.stringify({ metadata: ev.metadata })
+    }).catch(e => console.error('Silent save error', e));
+    
+    renderAdminRundownList(ev);
+    if (typeof window.showToast === 'function') window.showToast('Segmen dihapus!');
+};
+
+window.moveRundownSegment = function(index, direction) {
+    const ev = window.activeCommandCenterEvent;
+    if (!ev || !ev.rundown) return;
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= ev.rundown.length) return;
+    
+    const temp = ev.rundown[index];
+    ev.rundown[index] = ev.rundown[newIndex];
+    ev.rundown[newIndex] = temp;
+    
+    if (!ev.metadata) ev.metadata = {};
+    ev.metadata.rundown = ev.rundown;
+    
+    const tm = document.querySelector('meta[name="csrf-token"]');
+    const tk = tm ? tm.getAttribute('content') : '';
+    fetch('/api/cms/events/' + ev.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': tk },
+        body: JSON.stringify({ metadata: ev.metadata })
+    }).catch(e => console.error('Silent save error', e));
+    
+    renderAdminRundownList(ev);
+};
+
+window.openRundownPrintModal = function() {
+    if (typeof uiAlert === 'function') uiAlert('Fitur cetak rundown fisik sedang dikembangkan!', 'Info');
+    else alert('Fitur cetak rundown fisik sedang dikembangkan!');
+};
+
+window.openAiCoPilotModal = function() {
+    if (typeof uiAlert === 'function') uiAlert('MC-Connect AI Co-Pilot sedang dalam tahap beta dan akan dirilis segera!', 'Info AI');
+    else alert('MC-Connect AI Co-Pilot sedang dalam tahap beta dan akan dirilis segera!');
+};
 
 function renderAdminMusicList(ev) {
     try {
@@ -1851,19 +2060,42 @@ window.renderAdminSoundboardList = renderAdminSoundboardList;
 
 function renderAdminVendorCollab(ev) {
     try {
-        const container = document.getElementById('eccVendorBody');
+        const container = document.getElementById('vendorCollabTableBody');
+        const badge = document.getElementById('vendorCollabCountBadge');
         if (!container) return;
-        if (!ev || !ev.vendors || ev.vendors.length === 0) {
-            container.innerHTML = '<div style="text-align:center; padding:1rem; color:var(--adm-text-muted);">Belum ada vendor terdaftar.</div>';
+        
+        const rundown = ev.rundown || [];
+        if (badge) badge.textContent = `${rundown.length} segmen tersedia`;
+        
+        if (rundown.length === 0) {
+            container.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:2rem; color:var(--text-muted);">Belum ada segmen rundown.</td></tr>';
             return;
         }
-        container.innerHTML = ev.vendors.map(v => {
-            return '<div style="padding:0.5rem 0; border-bottom:1px solid rgba(255,255,255,0.05);">' +
-                '<strong>' + escapeHtml(v.name || 'Vendor') + '</strong>' +
-                '<div style="font-size:0.8rem; color:var(--adm-text-muted);">' + escapeHtml(v.role || v.type || '') + '</div>' +
-            '</div>';
+        
+        container.innerHTML = rundown.map((item, i) => {
+            return `
+            <tr style="border-bottom: 1px solid var(--border-subtle);">
+                <td style="text-align: center; color: var(--gold-primary); font-weight: bold;">${i+1}</td>
+                <td>
+                    <div style="font-weight:600;">${item.start_time || ''} - ${item.end_time || ''}</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">${item.time || ''}</div>
+                </td>
+                <td>
+                    <div style="font-weight:700; color:var(--text-primary); margin-bottom:0.25rem;">${escapeHtml(item.title || 'Segmen')}</div>
+                    <div style="font-size:0.8rem; color:var(--text-secondary); line-height:1.4;">${escapeHtml(item.prompter || '')}</div>
+                </td>
+                <td>
+                    ${item.cue_music ? `<div style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); padding:0.25rem 0.5rem; border-radius:4px; font-size:0.8rem; color:#38BDF8; font-weight:600; display:inline-block;">🎵 ${escapeHtml(item.cue_music)}</div>` : '<span style="color:var(--text-muted); font-size:0.8rem;">(Tidak ada audio khusus)</span>'}
+                </td>
+                <td>
+                    ${item.pic ? `<div style="font-weight:600; font-size:0.85rem; color:#A78BFA;">👤 ${escapeHtml(item.pic)}</div>` : '<span style="color:var(--text-muted); font-size:0.8rem;">-</span>'}
+                </td>
+            </tr>
+            `;
         }).join('');
-    } catch(e) {}
+    } catch(e) {
+        console.error('Error rendering Vendor Collab:', e);
+    }
 }
 window.renderAdminVendorCollab = renderAdminVendorCollab;
 
@@ -2070,7 +2302,106 @@ window.addEventListener('resize', () => {
     }
 });
 
+window.openWaPreviewModal = async function(type) {
+    let textareaId = '';
+    let title = '';
+    
+    if (type === 'review') {
+        textareaId = 'postEventReviewTemplate';
+        title = 'Pratinjau & Edit Pesan (Post-Event Review)';
+    } else {
+        // Fallback for other types if they exist
+        textareaId = type + 'Template';
+        title = 'Pratinjau & Edit Pesan';
+    }
+    
+    const textareaEl = document.getElementById(textareaId);
+    if (!textareaEl) {
+        if (typeof uiAlert === 'function') uiAlert('Template pesan tidak ditemukan!');
+        return;
+    }
+    
+    const currentText = textareaEl.value;
+    
+    try {
+        const formData = await window.uiCustomForm([
+            { id: 'msg_content', label: 'Isi Pesan WhatsApp', type: 'textarea', value: currentText }
+        ], {
+            title: title,
+            okText: 'Simpan Perubahan'
+        });
+        
+        if (formData && formData.msg_content) {
+            textareaEl.value = formData.msg_content;
+            if (typeof window.showToast === 'function') window.showToast('Template pesan berhasil diperbarui!', 'success');
+        }
+    } catch (err) {
+        if (err !== 'CANCEL') console.error(err);
+    }
+};
 
+window.sendWaAutomation = function(type) {
+    const ev = window.activeCommandCenterEvent;
+    if (!ev) {
+        if (typeof uiAlert === 'function') uiAlert('Pilih acara terlebih dahulu di kalender.');
+        else alert('Pilih acara terlebih dahulu di kalender.');
+        return;
+    }
+    
+    let textareaId = '';
+    
+    if (type === 'review') {
+        textareaId = 'postEventReviewTemplate';
+    } else {
+        textareaId = type + 'Template';
+    }
+    
+    const textareaEl = document.getElementById(textareaId);
+    if (!textareaEl) {
+        if (typeof uiAlert === 'function') uiAlert('Template pesan tidak ditemukan!');
+        return;
+    }
+    
+    const msgText = textareaEl.value;
+    if (!msgText.trim()) {
+        if (typeof uiAlert === 'function') uiAlert('Isi pesan tidak boleh kosong!');
+        return;
+    }
+    
+    // Resolve Phone Number
+    let clientPhone = '';
+    let cust = null;
+    try {
+        const rawCust = JSON.stringify(window.mcCustomers || []);
+        const custs = rawCust ? JSON.parse(rawCust) : [];
+        cust = custs.find(c => String(c.id) === String(ev.customerId) || String(c.id) === String(ev.id) || (c.date === ev.date && c.event === ev.title));
+    } catch(e) {}
+
+    if (cust && cust.wa) {
+        clientPhone = cust.wa;
+    } else if (ev.pic && ev.pic.includes('(')) {
+        clientPhone = ev.pic.split('(')[1].replace(')', '').trim();
+    } else if (ev.pic) {
+        clientPhone = ev.pic;
+    }
+    
+    // Clean phone number
+    let cleanPhone = String(clientPhone).replace(/\D/g, '');
+    if (cleanPhone.startsWith('0')) {
+        cleanPhone = '62' + cleanPhone.substring(1);
+    }
+    
+    if (!cleanPhone || cleanPhone.length < 9) {
+        if (typeof uiAlert === 'function') uiAlert('Nomor WhatsApp klien tidak ditemukan atau tidak valid pada acara ini!');
+        return;
+    }
+    
+    const encodedText = encodeURIComponent(msgText);
+    const waUrl = `https://wa.me/${cleanPhone}?text=${encodedText}`;
+    
+    window.open(waUrl, '_blank');
+    if (typeof window.showToast === 'function') window.showToast('Membuka WhatsApp Web / App...', 'info');
+};
 function autoSyncCustomersToEvents(customers) {
     if (!customers || !Array.isArray(customers)) return;
     
@@ -2911,10 +3242,12 @@ window.openAddCashModal = async function(existingData = null) {
         defaultCatOpts = [{value: '', label: '-- Pilih Kategori --'}, ...opts.map(c => ({value: c, label: c}))];
     }
 
+    const isAutoSync = isEdit && (String(existingData.id).startsWith('ev_') || String(existingData.id).startsWith('exp_') || (existingData.desc && existingData.desc.includes('Pelunasan/DP Invoice')));
+
     const dataPromise = window.uiCustomForm([
         { id: 'type', label: 'Tipe Kas', type: 'select', options: [{value: '', label: '-- Pilih Tipe Kas --'}, {value: 'in', label: 'Kas Masuk (+)'}, {value: 'out', label: 'Kas Keluar (-)'}], value: isEdit ? existingData.type : '' },
         { id: 'category', label: 'Kategori', type: 'select', options: defaultCatOpts, value: isEdit ? existingData.category : '' },
-        { id: 'amount', label: 'Nominal (Rp)', type: 'number', value: isEdit ? existingData.amount : '' },
+        { id: 'amount', label: 'Nominal (Rp)' + (isAutoSync ? ' (Auto-Sync: Tidak dapat diedit)' : ''), type: 'number', value: isEdit ? existingData.amount : '', readonly: isAutoSync },
         { id: 'date', label: 'Tanggal', type: 'date', value: isEdit ? existingData.date : new Date().toISOString().split('T')[0] },
         { id: 'desc', label: 'Deskripsi', type: 'textarea', value: isEdit ? existingData.desc : '' },
         { id: 'proof', label: 'Bukti (Opsional)', type: 'file' }
@@ -3023,8 +3356,11 @@ window.handleSaveCashEntry = function(e) {
 };
 
 window.deleteCashflowTransaction = async function(id) {
-    if (String(id).startsWith('ev_') || String(id).startsWith('exp_')) {
-        uiAlert('Data auto-sync dari kalender tidak dapat dihapus dari sini.');
+    let t = window.cashflowTransactions ? window.cashflowTransactions.find(x => String(x.id) === String(id)) : null;
+    let isAutoSync = String(id).startsWith('ev_') || String(id).startsWith('exp_') || (t && t.desc && t.desc.includes('Pelunasan/DP Invoice'));
+    
+    if (isAutoSync) {
+        uiAlert('Data kas yang tersinkronisasi dari Invoice ECC tidak dapat dihapus manual dari sini.');
         return;
     }
     if (!(await window.uiConfirm('Hapus transaksi kas ini?'))) return;
@@ -3882,3 +4218,168 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchWaTemplates();
 });
 
+// ============================================================
+// Edit Venue & Jam Acara Terpadu
+// ============================================================
+
+window.openEditEventScheduleModal = function(eventId) {
+    if (!eventId) eventId = window.activeCommandCenterEventId;
+    if (!eventId || !window.adminEventsDb) return;
+    
+    const ev = window.adminEventsDb.find(e => String(e.id) === String(eventId));
+    if (!ev) return;
+    
+    document.getElementById('editScheduleEventId').value = ev.id;
+    document.getElementById('editScheduleEventTitle').value = ev.title || ev.event || '';
+    document.getElementById('editScheduleEventDate').value = ev.date || '';
+    document.getElementById('editScheduleEventStatus').value = ev.status || 'Review';
+    document.getElementById('editScheduleEventVenue').value = ev.venue || (ev.metadata && ev.metadata.venue) || '';
+    
+    let startTime = '18:00';
+    let endTime = '22:00';
+    
+    if (ev.time) {
+        const parts = ev.time.split('-');
+        if (parts.length > 0) startTime = parts[0].replace('WIB', '').trim();
+        if (parts.length > 1) endTime = parts[1].replace('WIB', '').trim();
+    }
+    
+    document.getElementById('editScheduleStartTime').value = startTime;
+    document.getElementById('editScheduleEndTime').value = endTime;
+    
+    document.getElementById('editScheduleCollisionAlert').style.display = 'none';
+    
+    const modal = document.getElementById('editEventScheduleModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        // Give it a tiny delay to allow CSS transitions if needed
+        setTimeout(() => modal.classList.add('show'), 10);
+    }
+    
+    window.handleEditTimeChange();
+};
+
+window.handleEditTimeChange = function() {
+    const start = document.getElementById('editScheduleStartTime').value;
+    const end = document.getElementById('editScheduleEndTime').value;
+    
+    let durationText = '0 Jam';
+    if (start && end) {
+        let [sh, sm] = start.split(':').map(Number);
+        let [eh, em] = end.split(':').map(Number);
+        
+        let startMins = sh * 60 + sm;
+        let endMins = eh * 60 + em;
+        if (endMins < startMins) endMins += 24 * 60; // cross midnight
+        
+        let diff = endMins - startMins;
+        let diffH = Math.floor(diff / 60);
+        let diffM = diff % 60;
+        
+        if (diffM === 0) durationText = `${diffH} Jam`;
+        else durationText = `${diffH} Jam ${diffM} Menit`;
+    }
+    
+    document.getElementById('editScheduleDuration').value = durationText;
+    document.getElementById('editScheduleTimePreview').textContent = `${start} - ${end} WIB (${durationText})`;
+};
+
+window.checkEditScheduleCollision = function() {
+    const date = document.getElementById('editScheduleEventDate').value;
+    const currentId = document.getElementById('editScheduleEventId').value;
+    const alertBox = document.getElementById('editScheduleCollisionAlert');
+    
+    if (!date || !window.adminEventsDb) return;
+    
+    const conflicts = window.adminEventsDb.filter(e => e.date === date && String(e.id) !== String(currentId));
+    
+    if (conflicts.length > 0) {
+        alertBox.style.display = 'block';
+        alertBox.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+        alertBox.style.color = '#EF4444';
+        alertBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+        alertBox.innerHTML = `⚠️ <strong>Peringatan Bentrok:</strong> Ada ${conflicts.length} acara lain pada tanggal ini!`;
+    } else {
+        alertBox.style.display = 'block';
+        alertBox.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+        alertBox.style.color = '#10B981';
+        alertBox.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+        alertBox.innerHTML = `✅ Tanggal ini aman dari jadwal acara lain.`;
+    }
+};
+
+window.handleSaveEventSchedule = async function(e) {
+    if (e) e.preventDefault();
+    
+    const eventId = document.getElementById('editScheduleEventId').value;
+    const title = document.getElementById('editScheduleEventTitle').value;
+    const date = document.getElementById('editScheduleEventDate').value;
+    const status = document.getElementById('editScheduleEventStatus').value;
+    const venue = document.getElementById('editScheduleEventVenue').value;
+    const start = document.getElementById('editScheduleStartTime').value;
+    const end = document.getElementById('editScheduleEndTime').value;
+    
+    if (!eventId || !title || !date || !venue || !start || !end) {
+        if (typeof uiAlert === 'function') uiAlert('Mohon lengkapi semua data wajib!');
+        return;
+    }
+    
+    const timeStr = `${start} - ${end} WIB`;
+    
+    const payload = {
+        title: title,
+        event: title,
+        date: date,
+        time: timeStr,
+        status: status,
+        venue: venue,
+        metadata: { venue: venue } // ensure venue is also saved to metadata if used there
+    };
+    
+    try {
+        const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+        const token = tokenMeta ? tokenMeta.getAttribute('content') : '';
+        
+        const res = await fetch('/api/cms/events/' + eventId, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': token
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!res.ok) throw new Error('Gagal menyimpan perubahan');
+        
+        const json = await res.json();
+        
+        // Update local DB
+        if (window.adminEventsDb) {
+            const ev = window.adminEventsDb.find(e => String(e.id) === String(eventId));
+            if (ev) {
+                ev.title = title;
+                ev.event = title;
+                ev.date = date;
+                ev.time = timeStr;
+                ev.status = status;
+                ev.venue = venue;
+                if (!ev.metadata) ev.metadata = {};
+                ev.metadata.venue = venue;
+            }
+        }
+        
+        if (typeof window.showToast === 'function') window.showToast('Jadwal Acara berhasil diperbarui!', 'success');
+        if (typeof closeModals === 'function') closeModals();
+        
+        // Refresh UI
+        if (window.activeCommandCenterEventId === eventId && typeof loadActiveEventInCommandCenter === 'function') {
+            loadActiveEventInCommandCenter(eventId);
+        }
+        if (typeof renderDashEvents === 'function') renderDashEvents();
+        
+    } catch (error) {
+        console.error(error);
+        if (typeof uiAlert === 'function') uiAlert('Terjadi kesalahan saat menyimpan data.');
+    }
+};

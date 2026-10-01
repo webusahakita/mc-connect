@@ -43,8 +43,10 @@
         '.inv-qr{display:flex;gap:1.4rem;align-items:flex-start;background:#f8fafc;border-radius:10px;padding:1rem 1.2rem;margin-top:1rem;}' +
         '.inv-bpaid{display:inline-block;background:#dcfce7;color:#166534;padding:.18rem .65rem;border-radius:999px;font-size:.75rem;font-weight:700;}' +
         '.inv-bunpaid{display:inline-block;background:#fee2e2;color:#991b1b;padding:.18rem .65rem;border-radius:999px;font-size:.75rem;font-weight:700;}' +
-        '@media print{#inv-bd{background:transparent!important;position:static!important;display:block!important;padding:0!important;}' +
-        '.inv-m{box-shadow:none!important;max-height:none!important;overflow:visible!important;border:none!important;animation:none!important;}' +
+        '@media print{ @page { margin: 0; } body > *:not(#inv-bd){display:none!important;}#inv-bd{background:transparent!important;position:static!important;display:block!important;padding:15mm!important;}' +
+        '*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}' +
+        '.inv-m{box-shadow:none!important;max-height:none!important;overflow:visible!important;border:none!important;animation:none!important;margin:0!important;width:100%!important;}' +
+        '.inv-qr, .inv-sum, .inv-tbl tr{page-break-inside:avoid;}' +
         '.inv-x,.inv-ft,.inv-hint{display:none!important;}}';
 
     function injectCSS() {
@@ -75,6 +77,7 @@
         var bio = (window.cmsConfig && window.cmsConfig.bio) ? window.cmsConfig.bio : {};
         var pay = window.mcGlobalPaymentSettings || {};
         var account = (pay.accounts && pay.accounts.length > 0) ? pay.accounts[0] : {};
+        var accounts = (pay.accounts && pay.accounts.length > 0) ? pay.accounts : [{ bank: s.bankName || 'BCA', number: s.bankAccount || '-', name: s.bankHolder || '-' }];
         
         return { 
             co: s.companyName || 'MC Connect', 
@@ -83,7 +86,9 @@
             em: bio.email || s.email || '-',
             bk: account.bank || s.bankName || 'BCA', 
             ac: account.number || s.bankAccount || '-', 
-            ho: account.name || s.bankHolder || '-' 
+            ho: account.name || s.bankHolder || '-',
+            accounts: accounts,
+            qris: pay.qrisUrl || s.qrisUrl || ''
         };
     }
     
@@ -195,6 +200,15 @@
         var dpInpEl = dpContainer.querySelector('#inv-dp-manual');
         dpInpEl.dataset.histDp = initDp;
         dpInpEl.value = '';
+        
+        var isAlreadyLunas = ev && ev.paymentStatus && ev.paymentStatus.toLowerCase().includes('lunas');
+        if (isAlreadyLunas) {
+            dpInpEl.disabled = true;
+            dpInpEl.placeholder = "Invoice sudah lunas.";
+            dpInpEl.style.opacity = "0.5";
+            dpInpEl.style.cursor = "not-allowed";
+        }
+        
         dpInpEl.addEventListener('input', calcTot);
         body.appendChild(dpContainer);
         
@@ -269,7 +283,10 @@
         var invN = 'INV-MC-' + String(ev.dbEventId || ev.id).replace('v_', '').padStart(4, '0');
         var items = (ev.invoiceItems && ev.invoiceItems.length > 0) ? ev.invoiceItems : [{ desc: getClientPkg(ev), price: total }];
         var rows = items.map(function(it) { return '<tr><td>' + (it.desc || '-') + '</td><td style="text-align:right;font-weight:700;">' + fmt(it.price) + '</td></tr>'; }).join('');
-        var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(invN);
+        var qrUrl = s.qris ? s.qris : ('https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(invN));
+        var accountsHtml = (s.accounts && s.accounts.length > 0) ? s.accounts.map(function(acc) {
+            return 'Bank: ' + (acc.bank || acc.bankName || '-') + '<br>No. Rek: ' + (acc.account_number || acc.number || acc.bankAccount || '-') + '<br>A/N: ' + (acc.account_name || acc.name || acc.bankHolder || '-');
+        }).join('<br><br>') : ('Bank: ' + s.bk + '<br>No. Rek: ' + s.ac + '<br>A/N: ' + s.ho);
         var wa = (ev.metadata && ev.metadata.pic_wa) ? 'WA: ' + ev.metadata.pic_wa : '';
         var venue = (ev.metadata && ev.metadata.venue) ? ' \u00b7 ' + ev.metadata.venue : '';
         var paymentRows = '';
@@ -280,7 +297,7 @@
             }).join('');
         }
         var m = document.createElement('div'); m.className = 'inv-m print';
-        m.innerHTML = '<div class="inv-hd"><div><div style="font-size:1.45rem;font-weight:800;color:#D4AF37;">' + s.co + '</div>' + (s.artist ? '<div style="font-size:1.05rem;font-weight:700;color:#1e293b;margin-bottom:0.2rem;margin-top:0.1rem;">' + s.artist + '</div>' : '') + '<div style="font-size:.78rem;color:#64748b;">' + s.ph + ' \u00b7 ' + s.em + '</div></div><div style="text-align:right;margin-right:.5rem;"><div style="font-size:1rem;font-weight:800;color:#1e293b;">' + invN + '</div><span class="' + (paid ? 'inv-bpaid' : 'inv-bunpaid') + '">' + (paid ? 'LUNAS' : 'UNPAID') + '</span></div><button class="inv-x" id="inv-xp" style="background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;">\u2715</button></div><div class="inv-bd2"><div class="inv-pi"><div><div style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;font-weight:700;margin-bottom:.2rem;">Ditujukan Kepada</div><div style="font-size:.95rem;font-weight:700;color:#1e293b;">' + (ev.pic || 'Nama Klien') + '</div><div style="font-size:.82rem;color:#64748b;">' + wa + '</div></div><div><div style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;font-weight:700;margin-bottom:.2rem;">Detail Acara</div><div style="font-size:.95rem;font-weight:700;color:#1e293b;">' + (ev.title || '-') + '</div><div style="font-size:.82rem;color:#64748b;">' + (ev.date || '') + ' ' + (ev.time || '') + venue + '</div></div></div><table class="inv-tbl"><thead><tr><th>Deskripsi Layanan</th><th style="text-align:right;">Subtotal</th></tr></thead><tbody>' + rows + '</tbody></table><div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;"><div class="inv-qr" style="flex:1;min-width:210px;"><img style="width:88px;height:88px;" src="' + qrUrl + '" alt="QRIS"><div style="font-size:.8rem;color:#475569;line-height:1.6;"><strong style="color:#0f172a;">Transfer / QRIS:</strong><br>Bank: ' + s.bk + '<br>No. Rek: ' + s.ac + '<br>A/N: ' + s.ho + '</div></div><div class="inv-sum"><div class="inv-sum-r"><span>Total Kontrak:</span><strong>' + fmt(total) + '</strong></div>' + paymentRows + '<div class="inv-sum-r" style="color:#16a34a; border-top:1px dashed #e2e8f0; padding-top:0.4rem; margin-top:0.4rem;"><span>Total Telah Dibayar:</span><strong>- ' + fmt(dp) + '</strong></div><div class="inv-sum-t"><span style="color:' + (sisa < 0 ? '#16a34a' : '') + '">' + (sisa < 0 ? 'Kembalian:' : 'Sisa Tagihan:') + '</span><span style="color:' + (sisa < 0 ? '#16a34a' : '') + '">' + fmt(Math.abs(sisa)) + '</span></div></div></div></div><div class="inv-ft"><button class="inv-btn sec" id="inv-cp" style="background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;">Tutup</button><button class="inv-btn pri" onclick="window.print()">Cetak / Simpan PDF</button></div>';
+        m.innerHTML = '<div class="inv-hd"><div><div style="font-size:1.45rem;font-weight:800;color:#D4AF37;">' + s.co + '</div>' + (s.artist ? '<div style="font-size:1.05rem;font-weight:700;color:#1e293b;margin-bottom:0.2rem;margin-top:0.1rem;">' + s.artist + '</div>' : '') + '<div style="font-size:.78rem;color:#64748b;">' + s.ph + ' \u00b7 ' + s.em + '</div></div><div style="text-align:right;margin-right:.5rem;"><div style="font-size:1rem;font-weight:800;color:#1e293b;">' + invN + '</div><span class="' + (paid ? 'inv-bpaid' : 'inv-bunpaid') + '">' + (paid ? 'LUNAS' : 'UNPAID') + '</span></div><button class="inv-x" id="inv-xp" style="background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;">\u2715</button></div><div class="inv-bd2"><div class="inv-pi"><div><div style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;font-weight:700;margin-bottom:.2rem;">Ditujukan Kepada</div><div style="font-size:.95rem;font-weight:700;color:#1e293b;">' + (ev.pic || 'Nama Klien') + '</div><div style="font-size:.82rem;color:#64748b;">' + wa + '</div></div><div><div style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;font-weight:700;margin-bottom:.2rem;">Detail Acara</div><div style="font-size:.95rem;font-weight:700;color:#1e293b;">' + (ev.title || '-') + '</div><div style="font-size:.82rem;color:#64748b;">' + (ev.date || '') + ' ' + (ev.time || '') + venue + '</div></div></div><table class="inv-tbl"><thead><tr><th>Deskripsi Layanan</th><th style="text-align:right;">Subtotal</th></tr></thead><tbody>' + rows + '</tbody></table><div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;"><div class="inv-qr" style="flex:1;min-width:210px;"><img style="width:88px;height:88px;object-fit:contain;" src="' + qrUrl + '" alt="QRIS"><div style="font-size:.8rem;color:#475569;line-height:1.6;"><strong style="color:#0f172a;">Transfer / QRIS:</strong><br>' + accountsHtml + '</div></div><div class="inv-sum"><div class="inv-sum-r"><span>Total Kontrak:</span><strong>' + fmt(total) + '</strong></div>' + paymentRows + '<div class="inv-sum-r" style="color:#16a34a; border-top:1px dashed #e2e8f0; padding-top:0.4rem; margin-top:0.4rem;"><span>Total Telah Dibayar:</span><strong>- ' + fmt(dp) + '</strong></div><div class="inv-sum-t"><span style="color:' + (sisa < 0 ? '#16a34a' : '') + '">' + (sisa < 0 ? 'Kembalian:' : 'Sisa Tagihan:') + '</span><span style="color:' + (sisa < 0 ? '#16a34a' : '') + '">' + fmt(Math.abs(sisa)) + '</span></div></div></div></div><div class="inv-ft"><button class="inv-btn sec" id="inv-cp" style="background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;">Tutup</button><button class="inv-btn pri" onclick="window.print()">Cetak / Simpan PDF</button></div>';
         m.querySelector('#inv-xp').addEventListener('click', closeAll);
         m.querySelector('#inv-cp').addEventListener('click', closeAll);
         return m;
