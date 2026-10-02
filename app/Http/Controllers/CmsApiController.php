@@ -1327,4 +1327,46 @@ class CmsApiController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Template WA berhasil disimpan!', 'data' => $cleanTemplates]);
     }
+
+    public function getMusicBank(Request $request)
+    {
+        $host = $request->getHost();
+        if (auth()->check()) {
+            $mc = $this->getMC();
+        } else {
+            $mc = \App\Models\UserMC::where('custom_domain', $host)->first() ?? \App\Models\UserMC::first();
+        }
+
+        if (!$mc) {
+            return response()->json(['success' => false, 'message' => 'MC not found']);
+        }
+
+        $data = $mc->music_bank ? (is_string($mc->music_bank) ? json_decode($mc->music_bank, true) : $mc->music_bank) : [];
+        return response()->json(['success' => true, 'data' => $data]);
+    }
+
+    public function saveMusicBank(Request $request)
+    {
+        $mc = $this->getMC();
+        if (!$mc) return response()->json(['success' => false, 'message' => 'Not authenticated']);
+        
+        $mc->music_bank = json_encode($request->input('data', []));
+        $mc->save();
+        
+        return response()->json(['success' => true]);
+    }
+
+    public function uploadMusicBankFile(Request $request)
+    {
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/music'), $filename);
+            return response()->json([
+                'success' => true,
+                'url' => '/uploads/music/' . $filename
+            ]);
+        }
+        return response()->json(['success' => false, 'message' => 'No file uploaded']);
+    }
 }

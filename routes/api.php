@@ -26,6 +26,12 @@ Route::get('/setup-db', function () {
             });
             return 'Added bukti_file column.';
         }
+        if (!Illuminate\Support\Facades\Schema::hasColumn('users_mc', 'music_bank')) {
+            Illuminate\Support\Facades\Schema::table('users_mc', function ($table) {
+                $table->longText('music_bank')->nullable();
+            });
+            return 'Added music_bank column.';
+        }
         return 'Column already exists.';
     } catch (\Exception $e) {
         return $e->getMessage();
@@ -124,3 +130,8 @@ Route::delete('/cms/events/{id}', [CmsApiController::class, 'deleteEvent']);
 // 11. Event Categories (Settings)
 Route::get('/cms/event-categories', [CmsApiController::class, 'getEventCategories']);
 Route::post('/cms/event-categories', [CmsApiController::class, 'saveEventCategories']);
+
+// 12. Master Music Bank
+Route::get('/cms/music-bank', [CmsApiController::class, 'getMusicBank']);
+Route::post('/cms/music-bank', [CmsApiController::class, 'saveMusicBank']);
+Route::post('/cms/music-bank/upload', [CmsApiController::class, 'uploadMusicBankFile']);

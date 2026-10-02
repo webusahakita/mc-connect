@@ -71,7 +71,8 @@ window.SyncEngine = {
                 { ep: '/api/cms/cashflow-categories', key: 'mc_cashflow_categories' },
                 { ep: '/api/cms/customers', key: 'mc_customers_db_v1' },
                 { ep: '/api/cms/events', key: 'mc_events_db_v1' },
-                { ep: '/api/cms/payment-settings', key: 'mc_payment_settings' }
+                { ep: '/api/cms/payment-settings', key: 'mc_payment_settings' },
+                { ep: '/api/cms/music-bank', key: 'mc_music_bank_data' }
             ];
 
             for (const item of endpoints) {

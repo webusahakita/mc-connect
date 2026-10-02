@@ -431,7 +431,18 @@
                     </li>
 
 
-                </ul>
+                
+                    <!-- MENU 7: MUSIC BANK -->
+                    <li>
+                        <button class="sidebar-item-btn" id="menu-musicbank"
+                            onclick="navigateToSection('sec-musicbank', this); window.renderMusicBankSection();">
+                            <div class="sidebar-item-left">
+                                <div class="sidebar-icon-sq">&#128194;</div>
+                                <span>Master Bank Musik</span>
+                            </div>
+                        </button>
+                    </li>
+</ul>
             </div>
 
             <div class="sidebar-footer">
@@ -891,7 +902,7 @@
                                     Command Center
                                 </button>
                                 <a href="stage.html" target="_blank" class="btn btn-secondary btn-sm"
-                                    title="BukStage Mode">tage
+                                    title="BBuka Stage Mode">tage
                                 </a>
                             </div>
                         </div>
@@ -992,7 +1003,7 @@
                                     Command Center
                                 </button>
                                 <a href="stage.html" target="_blank" class="btn btn-secondary btn-sm"
-                                    title="BukStage Mode">tage
+                                    title="BBuka Stage Mode">tage
                                 </a>
                             </div>
                         </div>
@@ -2174,93 +2185,68 @@ Kebutuhan Hospitality:
                 <div class="command-center-layout" style="min-height:auto;">
                     <div class="command-center-main" style="padding:0; width:100%;">
                         <!-- Command Center Top Header Bar -->
-                        <!-- Control Navigasi Acara -->
-                        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); padding:1rem 1.5rem; border:1px solid rgba(255,255,255,0.05); margin-bottom:2rem; border-radius:var(--adm-radius-md); flex-wrap:wrap; gap:1rem;">
-                            <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
-                                <div style="display:flex; align-items:center; gap:0.5rem;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" style="color:var(--adm-gold);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-                                    <span style="font-size:0.85rem; font-weight:800; color:var(--adm-text-primary); text-transform:uppercase; letter-spacing:0.05em;">Navigasi Command Center:</span>
+                        <div class="ecc-header ecc-card" style="margin-bottom:2.5rem; align-items:flex-start; display:flex; flex-wrap:wrap; gap:1.5rem; justify-content:space-between; background: linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(15,23,42,0.95) 100%); border:1px solid rgba(212,175,55,0.15); padding:2rem 2.5rem; border-radius:18px; box-shadow: 0 15px 45px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);">
+                            <div class="ecc-title-group" style="flex: 1; min-width: 340px;">
+                                <div style="display:flex; align-items:center; gap:0.85rem; margin-bottom:1.25rem;">
+                                    <span class="badge badge-locked" id="ccEventStatusBadge" style="font-size:0.8rem; padding:0.45rem 1rem; text-transform:uppercase; letter-spacing:1.5px; box-shadow:0 0 20px rgba(212,175,55,0.25); border:1px solid rgba(212,175,55,0.4);">Status: Terkunci</span>
+                                    <span style="color:var(--adm-text-muted); font-size:0.85rem; font-family:var(--font-mono); font-weight:800; background:rgba(0,0,0,0.4); padding:0.4rem 1rem; border-radius:8px; border:1px solid rgba(255,255,255,0.1); box-shadow:inset 0 2px 4px rgba(0,0,0,0.5);" id="ccEventIdDisplay">Event_ID #1</span>
                                 </div>
-                                
-                                <select id="eccStatusFilter" class="form-select"
-                                    style="min-width:140px; padding:0.4rem 0.8rem; font-size:0.85rem; font-weight:600; border-color:rgba(255,255,255,0.1); background:rgba(0,0,0,0.2);"
-                                    onchange="window.currentAgendaFilter=this.value; if(typeof populateCommandCenterSelector === 'function') populateCommandCenterSelector();">
-                                    <option value="all">Semua Status</option>
-                                    <option value="terkunci">Terkunci</option>
-                                    <option value="tentative">Tentative</option>
-                                    <option value="review">Review</option>
-                                    <option value="selesai">Selesai</option>
-                                </select>
-
-                                <select id="eccEventSelector" class="form-select"
-                                    style="min-width:320px; padding:0.4rem 1rem; font-size:0.9rem; font-weight:700; background:rgba(212,175,55,0.08); color:var(--adm-gold); border-color:rgba(212,175,55,0.3);"
-                                    onchange="switchCommandCenterEvent(this.value)">
-                                    <!-- Dynamically populated from unified events database -->
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Command Center Top Header Bar -->
-                        <div class="ecc-header" style="background:transparent; padding:0; border:none; margin-bottom:2rem; align-items:flex-start;">
-                            <div class="ecc-title-group" style="flex: 1;">
-                                <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.8rem;">
-                                    <span class="badge badge-locked" id="ccEventStatusBadge" style="font-size:0.8rem; padding:0.35rem 0.75rem;">Status: Terkunci</span>
-                                    <span style="color:var(--adm-text-muted); font-size:0.85rem; font-family:var(--font-mono); font-weight:700; background:rgba(255,255,255,0.05); padding:0.3rem 0.6rem; border-radius:4px;"
-                                        id="ccEventIdDisplay">Event_ID #1</span>
-                                </div>
-                                <h1 id="ccEventTitle" style="font-size:2.2rem; font-weight:800; margin:0 0 1rem 0; color:var(--adm-text-primary); letter-spacing:-0.02em; line-height:1.2;">
+                                <h1 id="ccEventTitle" style="font-size:2.8rem; font-weight:900; margin:0 0 1.5rem 0; color:#F8FAFC; letter-spacing:-0.03em; line-height:1.1; text-shadow: 0 4px 12px rgba(0,0,0,0.8);">
                                     Wedding Reception Farhan & Natasha</h1>
-                                <div class="ecc-meta-bar" style="display:flex; gap:1.25rem; flex-wrap:wrap; font-size:0.9rem; color:var(--adm-text-secondary); align-items:center;">
-                                    <div style="display:flex; align-items:center; gap:0.4rem;">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-                                        <span id="ccEventMetaDate">Jumat, 18 September 2026</span>
+                                <div class="ecc-meta-bar" style="display:flex; gap:0.85rem; flex-wrap:wrap; font-size:0.9rem; color:var(--adm-text-secondary); align-items:center;">
+                                    <div style="display:flex; align-items:center; gap:0.6rem; background:rgba(255,255,255,0.03); padding:0.6rem 1rem; border-radius:10px; border:1px solid rgba(255,255,255,0.04); backdrop-filter:blur(4px);">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--adm-gold)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                                        <span id="ccEventMetaDate" style="color:#E2E8F0; font-weight:600; font-size:0.9rem;">Jumat, 18 September 2026</span>
                                     </div>
-                                    <div style="display:flex; align-items:center; gap:0.4rem;">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                        <span id="ccEventMetaTime">19:00 - 22:00 WIB</span>
+                                    <div style="display:flex; align-items:center; gap:0.6rem; background:rgba(255,255,255,0.03); padding:0.6rem 1rem; border-radius:10px; border:1px solid rgba(255,255,255,0.04); backdrop-filter:blur(4px);">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                        <span id="ccEventMetaTime" style="color:#E2E8F0; font-weight:600; font-size:0.9rem;">19:00 - 22:00 WIB</span>
                                     </div>
-                                    <div style="display:flex; align-items:center; gap:0.4rem;">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                                        <span id="ccEventMetaVenue">Grand Ballroom Hotel Mulia Senayan</span>
+                                    <div style="display:flex; align-items:center; gap:0.6rem; background:rgba(255,255,255,0.03); padding:0.6rem 1rem; border-radius:10px; border:1px solid rgba(255,255,255,0.04); backdrop-filter:blur(4px);">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                        <span id="ccEventMetaVenue" style="color:#E2E8F0; font-weight:600; font-size:0.9rem;">Grand Ballroom Hotel Mulia Senayan</span>
                                     </div>
-                                    <div style="display:flex; align-items:center; gap:0.4rem;">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                                        <span id="ccEventMetaPic">PIC: Natasha (081122334455)</span>
+                                    <div style="display:flex; align-items:center; gap:0.6rem; background:rgba(255,255,255,0.03); padding:0.6rem 1rem; border-radius:10px; border:1px solid rgba(255,255,255,0.04); backdrop-filter:blur(4px);">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F472B6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                        <span id="ccEventMetaPic" style="color:#E2E8F0; font-weight:600; font-size:0.9rem;">PIC: Natasha (081122334455)</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="ecc-actions" style="display:flex; flex-direction:column; align-items:flex-end; gap:0.85rem;">
+                            <div class="ecc-actions" style="display:flex; flex-direction:column; align-items:flex-end; justify-content:flex-start; gap:1.5rem;">
                                 <!-- Row 1: Status & Hapus -->
-                                <div style="display:flex; gap:0.5rem; align-items:center;">
-                                    <select class="form-select" id="ccStatusSelect"
-                                        style="width:auto; padding:0.45rem 1rem; font-size:0.85rem; font-weight:600; border-color:rgba(255,255,255,0.1);"
-                                        onchange="updateCcStatus(this.value)">
-                                        <option value="Review">Set: Review</option>
-                                        <option value="Tentative">Set: Tentative</option>
-                                        <option value="Terkunci">Set: Terkunci (DP Paid)</option>
-                                        <option value="Selesai">Set: Selesai</option>
-                                    </select>
+                                <div style="display:flex; gap:0.75rem; align-items:center;">
+                                    <div style="background:rgba(0,0,0,0.5); padding:0.25rem; border-radius:12px; display:flex; align-items:center; border:1px solid rgba(255,255,255,0.15); box-shadow:inset 0 2px 6px rgba(0,0,0,0.6);">
+                                        <span style="font-size:0.8rem; color:var(--adm-text-secondary); padding:0 0.5rem 0 0.75rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Set Status:</span>
+                                        <select class="form-select" id="ccStatusSelect"
+                                            style="width:auto; padding:0.4rem 1.5rem 0.4rem 0.5rem; font-size:0.9rem; font-weight:800; border:none; background:transparent; color:var(--adm-gold); cursor:pointer;"
+                                            onchange="updateCcStatus(this.value)">
+                                            <option value="Review" style="color:#000;">Review</option>
+                                            <option value="Tentative" style="color:#000;">Tentative</option>
+                                            <option value="Terkunci" style="color:#000;">Terkunci (DP Paid)</option>
+                                            <option value="Selesai" style="color:#000;">Selesai</option>
+                                        </select>
+                                    </div>
                                     <button class="btn btn-secondary btn-sm"
                                         onclick="if(activeCommandCenterEventId) window.deleteEventByCustomerId(activeCommandCenterEventId)"
-                                        style="color:#FCA5A5; background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.2); padding:0.45rem 0.75rem;" title="Hapus Acara">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                                        style="color:#FCA5A5; background:rgba(239,68,68,0.15); border-color:rgba(239,68,68,0.4); padding:0.6rem; border-radius:12px; transition:all 0.2s;" title="Hapus Acara" onmouseover="this.style.background='rgba(239,68,68,0.3)'" onmouseout="this.style.background='rgba(239,68,68,0.15)'">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
                                     </button>
                                 </div>
                                 
                                 <!-- Row 2: Main Actions -->
-                                <div style="display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:flex-end;">
-                                    <a href="stage.html" target="_blank" class="btn btn-primary btn-sm" style="padding:0.55rem 1rem; font-size:0.85rem; font-weight:700; box-shadow:0 4px 12px rgba(212,175,55,0.25);">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right:4px;"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg> Masuk Stage Mode
+                                <div style="display:flex; gap:0.75rem; flex-wrap:wrap; justify-content:flex-end;">
+                                    <a href="stage.html" target="_blank" class="btn btn-primary btn-sm" style="padding:0.75rem 1.5rem; font-size:0.95rem; font-weight:900; border-radius:12px; box-shadow:0 6px 20px rgba(212,175,55,0.4); text-transform:uppercase; letter-spacing:0.5px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: text-bottom; margin-right:6px;"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg> Masuk Stage Mode
                                     </a>
-                                    <a href="vendor.html" target="_blank" class="btn btn-secondary btn-sm" style="padding:0.55rem 1rem; font-size:0.85rem;" title="Layar Khusus Operator Suara/ DJ">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right:4px;"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg> Layar Vendor Musik
+                                    <a href="vendor.html" target="_blank" class="btn btn-secondary btn-sm" style="padding:0.75rem 1.25rem; font-size:0.9rem; font-weight:800; border-radius:12px; border-color:rgba(255,255,255,0.25); background:rgba(255,255,255,0.06);" title="Layar Khusus Operator Suara/ DJ">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: text-bottom; margin-right:6px;"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg> Vendor Musik
                                     </a>
-                                    <button class="btn btn-outline-gold btn-sm" style="padding:0.55rem 1rem; font-size:0.85rem;" onclick="openEditEventScheduleModal(activeCommandCenterEventId)" title="Edit Venue & Jam Acara">
-                                        Edit Venue & Jam
+                                    <button class="btn btn-outline-gold btn-sm" style="padding:0.75rem 1.25rem; font-size:0.9rem; font-weight:800; border-radius:12px;" onclick="window.openEditEventScheduleModal(activeCommandCenterEventId)" title="Edit Venue & Jam Acara">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: text-bottom; margin-right:6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit
                                     </button>
-                                    <button class="btn btn-secondary btn-sm" style="padding:0.55rem 1rem; font-size:0.85rem;" onclick="openInvoicePrintModal()">
-                                        Cetak Invoice PDF
+                                    <button class="btn btn-secondary btn-sm" style="padding:0.75rem 1.25rem; font-size:0.9rem; font-weight:800; border-radius:12px;" onclick="window.openInvoicePrintModal()">
+                                        Cetak Invoice
                                     </button>
                                 </div>
                             </div>
@@ -2874,17 +2860,63 @@ Terimkasih banyak, Kak!</textarea>
                         <!-- TAB 6: MUSIK & SOUND ACARA -->
                         <div class="tab-panel" id="tab-music">
                             <!-- Sub-tab Navigation Bar: BGM Segmen vs Soundboard Dibaw-->
-                            <div class="music-subtab-bar">
+                            
+<style id="musicSubtabStyles">
+.music-subtab-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 0.5rem;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+}
+.music-subtab-btn {
+    background: transparent !important;
+    border: none !important;
+    color: var(--adm-text-secondary) !important;
+    padding: 0.6rem 1.25rem !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.music-subtab-btn:hover {
+    color: #FFF !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+.music-subtab-btn.active {
+    background: linear-gradient(135deg, var(--adm-gold), #FDE047) !important;
+    color: #1E293B !important;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4) !important;
+}
+.music-subtab-btn.active .badge {
+    background: rgba(0, 0, 0, 0.15) !important;
+    color: #000 !important;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+</style>
+<div class="music-subtab-bar">
                                 <button class="btn music-subtab-btn active" id="btnSubtabBgm"
                                     onclick="switchMusicSubtab('bgm')">
                                     <span>🎵 Musik Latar Segmen Rundown (BGM)</span>
                                 </button>
                                 <button class="btn music-subtab-btn" id="btnSubtabSoundboard"
                                     onclick="switchMusicSubtab('soundboard')">
-                                    <span>Soundboard & SFX yang Dibawa</span>
+                                    <span>🔊 Soundboard & SFX yang Dibawa</span>
                                     <span class="badge" id="soundboardCountBadge"
                                         style="background:rgba(212,175,55,0.2); color:var(--adm-gold); font-size:0.75rem; padding:0.15rem 0.5rem; border-radius:9999px;">6
                                         Sound</span>
+                                </button>
+                                <button class="btn music-subtab-btn" id="btnSubtabLanding"
+                                    onclick="switchMusicSubtab('landing')">
+                                    <span>🌐 Musik Landing Page</span>
                                 </button>
                             </div>
 
@@ -3021,7 +3053,7 @@ Terimkasih banyak, Kak!</textarea>
                                             style="width:auto; padding:0.45rem 0.75rem; font-size:0.82rem;">
                                             <option>Semua Status Kaitan</option>
                                             <option value="LINKED">Terpasang di Rundown</option>
-                                            <option>tandby / Cadangan</option>
+                                            <option value="STANDBY">Standby / Cadangan</option>
                                         </select>
                                     </div>
                                 </div>
@@ -3042,12 +3074,12 @@ Terimkasih banyak, Kak!</textarea>
                                     <div>
                                         <h2
                                             style="font-size:1.4rem; font-weight:800; margin:0 0 0.25rem 0; color:var(--adm-gold);">
-                                            Pengaturan Soundboard & SFX Panggung yang Dibaw</h2>
+                                            Pengaturan Soundboard & SFX Panggung yang Dibawa</h2>
                                         <p style="color:var(--text-secondary); font-size:0.88rem; margin:0;">
-                                            Atur koleksi efek suarinstan panggung (tepuk tangan, fanfare, drumroll,
-                                            buzzer, chime, dll.) yang dibawMC untuk acar<strong
+                                            Atur koleksi efek suara instan panggung (tepuk tangan, fanfare, drumroll,
+                                            buzzer, chime, dll.) yang dibawa MC untuk acara<strong
                                                 id="soundboardEventTitle" style="color:#FFF;">-</strong>. Efek suara
-                                            dapat dibunyikan instan dari stage prompter visentuhan atau shortcut
+                                            dapat dibunyikan instan dari stage prompter via sentuhan atau shortcut
                                             keyboard.
                                         </p>
                                     </div>
@@ -3149,6 +3181,28 @@ Terimkasih banyak, Kak!</textarea>
                                     </div>
                                     <div style="overflow-x: auto;" id="adminSoundboardTableContainer">
                                         <!-- Populated dynamically virenderAdminSoundboardList() -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SUB-TAB 3: MUSIK LANDING PAGE -->
+                            <div id="musicSubtabLanding" style="display:none;">
+                                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; flex-wrap:wrap; gap:1rem;">
+                                    <div>
+                                        <h2 style="font-size:1.4rem; font-weight:800; margin:0 0 0.25rem 0; color:var(--adm-gold);">Musik Background Landing Page</h2>
+                                        <p style="color:var(--text-secondary); font-size:0.88rem; margin:0;">
+                                            Pilih musik latar belakang yang akan berputar saat tamu mengunjungi halaman publik acara.
+                                        </p>
+                                    </div>
+                                    <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+                                        <button class="btn btn-primary btn-sm" onclick="window.openAddLandingMusicModal()">
+                                            + Tambah/Ubah Musik Landing Page</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="ecc-card" style="padding:0; overflow:hidden;">
+                                    <div style="overflow-x: auto;" id="adminLandingMusicContainer">
+                                        <!-- Populated dynamically via JS -->
                                     </div>
                                 </div>
                             </div>
@@ -3660,8 +3714,32 @@ Terimkasih banyak, Kak!</textarea>
                 </div>
             </div> <!-- end sec-customers -->
 
-    </div> <!-- end admin-content-pad -->
-    </main>
+    
+                <!-- ================= MENU 7: MUSIC BANK (GLOBAL) ================= -->
+                <div id="sec-musicbank" class="admin-section">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+                        <div>
+                            <div style="color:var(--gold-primary); font-size:0.85rem; font-weight:700; text-transform:uppercase;">
+                                Koleksi Musik & Audio
+                            </div>
+                            <h1 style="font-size:2rem; font-weight:800;">Master Bank Musik</h1>
+                            <p style="color:var(--text-secondary); font-size:0.9rem;">
+                                Kelola seluruh koleksi bank lagu, musik latar, dan soundboard di sini.
+                            </p>
+                        </div>
+                        <button class="btn btn-primary" onclick="window.openMasterBankForm()">+ Tambah Lagu</button>
+                    </div>
+                    
+                    <div class="ecc-card" style="padding:0; overflow:hidden;">
+                        <div id="musicBankSectionBody"></div>
+                    </div>
+                </div>
+
+            </div> <!-- end admin-content-pad -->
+    
+            
+
+        </main>
     </div>
 
     <!-- MODAL: Tambah / Edit Pelanggan (CRM) -->
@@ -5160,6 +5238,8 @@ Terimkasih banyak, Kak!</textarea>
                 </div>
             </form>
         </div>
+    
+            
     </div>
 
     <!-- Scripts -->
@@ -5172,7 +5252,7 @@ Terimkasih banyak, Kak!</textarea>
     <script src="js/calendar.js?v=8.14" defer></script>
     <script src="js/customers.js?v=8.9" defer></script>
     <script src="js/app.js?v=8.11" defer></script>
-    <script src="js/admin-core.js?v=8.65" defer></script>
+    <script src="js/admin-core.js?v=8.66" defer></script>
     <script src="js/invoice-modal.js?v=1.20" defer></script>
     <script src="js/cms-overrides.js?v=8.7" defer></script>
     </div>
