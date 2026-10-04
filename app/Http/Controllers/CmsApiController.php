@@ -944,6 +944,10 @@ class CmsApiController extends Controller
                 'expenses'      => $meta['expenses'] ?? [],
                 'wardrobeIds'   => $meta['wardrobeIds'] ?? [],
                 'invoiceItems'  => $meta['invoice_items'] ?? null,
+                'musicList'     => $meta['musicList'] ?? [],
+                'landingMusic'  => $meta['landingMusic'] ?? [],
+                'rundown'       => $meta['rundown'] ?? [],
+                'soundboard'    => $meta['soundboard'] ?? [],
                 'metadata'      => $meta,
                 'created_at'    => $e->created_at ? $e->created_at->toISOString() : null,
             ];
@@ -1052,7 +1056,17 @@ class CmsApiController extends Controller
             $data['nilai_kontrak'] = $request->input('total_budget');
         }
         if ($request->has('status_pembayaran')) $data['status_pembayaran'] = $request->input('status_pembayaran');
-        if ($request->has('metadata'))          $data['metadata'] = json_encode($request->input('metadata'));
+        if ($request->has('metadata')) {
+            $incomingMeta = $request->input('metadata');
+            $existingMeta = $event->metadata ? json_decode($event->metadata, true) : [];
+            if (!is_array($existingMeta)) $existingMeta = [];
+            if (is_array($incomingMeta)) {
+                $mergedMeta = array_merge($existingMeta, $incomingMeta);
+                $data['metadata'] = json_encode($mergedMeta);
+            } else {
+                $data['metadata'] = json_encode($incomingMeta);
+            }
+        }
 
         // Tentukan prioritas status_pembayaran berdasarkan nominal_dp di invoice (kasir)
         $totalForSync = isset($data['nilai_kontrak']) ? (int)$data['nilai_kontrak'] : (int)$event->nilai_kontrak;
@@ -1091,8 +1105,11 @@ class CmsApiController extends Controller
                     'amount' => $difference,
                     'label' => 'Pembayaran ke-' . (count($history) + 1)
                 ];
-                $inputMeta['payment_history'] = $history;
-                $data['metadata'] = json_encode($inputMeta);
+                
+                // Fix: Merge into the already merged metadata, not just the input meta
+                $mergedForPayment = json_decode($data['metadata'], true) ?: [];
+                $mergedForPayment['payment_history'] = $history;
+                $data['metadata'] = json_encode($mergedForPayment);
             }
 
             $dp = $newDp;

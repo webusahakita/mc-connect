@@ -1,0 +1,55 @@
+.stage-anticipation-bar {
+    display: flex;
+    border-bottom: 1px solid #1E293B;
+    background: #0B0F19;
+}
+.anticipation-box {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    border-right: 1px solid #1E293B;
+    transition: background 0.2s;
+}
+.anticipation-box:hover {
+    background: #111827;
+}
+.anticipation-box.next-box {
+    border-right: none;
+    background: rgba(212, 175, 55, 0.03);
+}
+.anticipation-box.next-box:hover {
+    background: rgba(212, 175, 55, 0.08);
+}
+.anticipation-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    font-weight: 800;
+    margin-bottom: 0.4rem;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+}
+.anticipation-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #F8FAFC;
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.anticipation-cue {
+    font-size: 0.8rem;
+    color: #38BDF8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.anticipation-peek-script {
+    font-size: 0.85rem;
+    color: #94A3B8;
+    margin-top: 0.4rem;
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

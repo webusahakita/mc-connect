@@ -2295,6 +2295,7 @@ function loadActiveEventInCommandCenter(eventId) {
     }
     activeCommandCenterEventId = ev.id;
     try { AdminDB.setItem('activeCommandCenterEventId', ev.id); } catch(e) {}
+    try { localStorage.setItem('activeCommandCenterEventId', ev.id); } catch(e) {}
 
     // 1. Selector Dropdown
     const selector = document.getElementById('eccEventSelector');

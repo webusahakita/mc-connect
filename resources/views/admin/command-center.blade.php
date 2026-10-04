@@ -434,6 +434,9 @@
                     <button class="btn btn-accent btn-sm" onclick="openAiCoPilotModal()">
                         🤖 AI MC Co-Pilot Naskah
                     </button>
+                    <button class="btn btn-secondary btn-sm" onclick="window.applyDefaultRundown()" title="Terapkan Susunan Acara Standar (Bawaan)" style="color:var(--adm-gold); border-color:rgba(212,175,55,0.3);">
+                        📋 Gunakan Template Default
+                    </button>
                     <button class="btn btn-secondary btn-sm" onclick="document.getElementById('addRundownModal').classList.add('active')">
                         + Tambah Segmen Baru
                     </button>

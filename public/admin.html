@@ -2219,12 +2219,12 @@ Kebutuhan Hospitality:
                                     <div style="background:rgba(0,0,0,0.5); padding:0.25rem; border-radius:12px; display:flex; align-items:center; border:1px solid rgba(255,255,255,0.15); box-shadow:inset 0 2px 6px rgba(0,0,0,0.6);">
                                         <span style="font-size:0.8rem; color:var(--adm-text-secondary); padding:0 0.5rem 0 0.75rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Set Status:</span>
                                         <select class="form-select" id="ccStatusSelect"
-                                            style="width:auto; padding:0.4rem 1.5rem 0.4rem 0.5rem; font-size:0.9rem; font-weight:800; border:none; background:transparent; color:var(--adm-gold); cursor:pointer;"
+                                            style="width:auto; padding:0.4rem 1.5rem 0.4rem 0.5rem; font-size:0.9rem; font-weight:800; border:none; background:transparent; color:var(--adm-gold); cursor:pointer; outline:none; appearance:none; -webkit-appearance:none; background-image:url('data:image/svg+xml;utf8,<svg fill=%22%23D4AF37%22 height=%2224%22 viewBox=%220 0 24 24%22 width=%2224%22 xmlns=%22http://www.w3.org/2000/svg%22><path d=%22M7 10l5 5 5-5z%22/><path d=%22M0 0h24v24H0z%22 fill=%22none%22/></svg>'); background-repeat:no-repeat; background-position-x:100%; background-position-y:5px;"
                                             onchange="updateCcStatus(this.value)">
-                                            <option value="Review" style="color:#000;">Review</option>
-                                            <option value="Tentative" style="color:#000;">Tentative</option>
-                                            <option value="Terkunci" style="color:#000;">Terkunci (DP Paid)</option>
-                                            <option value="Selesai" style="color:#000;">Selesai</option>
+                                            <option value="Review" style="background:#0f172a; color:#fff; font-weight:600; padding:10px;">Review</option>
+                                            <option value="Tentative" style="background:#0f172a; color:#fff; font-weight:600; padding:10px;">Tentative</option>
+                                            <option value="Terkunci" style="background:#0f172a; color:#D4AF37; font-weight:800; padding:10px;">Terkunci (DP Paid)</option>
+                                            <option value="Selesai" style="background:#0f172a; color:#10b981; font-weight:800; padding:10px;">Selesai</option>
                                         </select>
                                     </div>
                                     <button class="btn btn-secondary btn-sm"
@@ -2595,6 +2595,9 @@ Kebutuhan Hospitality:
                                     <button class="btn btn-primary btn-sm" onclick="openAddRundownModal()">
                                         + Tambah Segmen
                                     </button>
+                                    <button class="btn btn-secondary btn-sm" onclick="window.applyDefaultRundown()" title="Terapkan Susunan Acara Standar (Bawaan)" style="color:var(--adm-gold); border-color:rgba(212,175,55,0.3);">
+                                        📋 Auto Generate Template
+                                    </button>
                                     <button class="btn btn-secondary btn-sm" onclick="openRundownPrintModal()"
                                         style="border-color:var(--adm-gold); color:var(--adm-gold); font-weight:700;">
                                         Cetak Rundown (Print)
@@ -2629,7 +2632,7 @@ Kebutuhan Hospitality:
                                         </div>
                                         <div id="rundownProgressBadge"
                                             style="font-size:0.85rem; font-weight:800; color:#34D399;">
-                                            1/7 Selesai (14%)
+                                            0/0 Selesai (0%)
                                         </div>
                                     </div>
                                     <button class="btn btn-secondary btn-sm" onclick="resetCurrentEventRundown()"
