@@ -6017,7 +6017,7 @@ window.saveEventMusicForm = async function() {
     ev.metadata.musicList = ev.musicList;
     ev.music = ev.musicList; 
     
-    _setEv(ev);
+
     if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
     
     document.getElementById('modalEventMusicForm').style.display = 'none';
@@ -6043,7 +6043,7 @@ window.deleteMusic = async function(index) {
     ev.metadata.musicList = ev.musicList;
     ev.music = ev.musicList;
     
-    _setEv(ev);
+
     if (typeof window.renderAdminMusicListWrapper === 'function') window.renderAdminMusicListWrapper(ev);
     if (typeof window.renderAdminRundown === 'function') window.renderAdminRundown();
     
