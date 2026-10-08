@@ -253,22 +253,23 @@
             }
         }
 
-        function populateEventSelector() {
-            let events = [];
-            try {
-                const raw = localStorage.getItem('unified_events_database_v8');
-                if (raw) events = JSON.parse(raw);
-            } catch(e) {}
+        async function populateEventSelector() {
+    let events = [];
+    try {
+        const res = await fetch('/api/cms/events');
+        const json = await res.json();
+        if (json.success && json.data) events = json.data;
+    } catch(e) {
+        console.error('Gagal fetch event dari server', e);
+    }
 
-            if (!events || events.length === 0) {
-                events = [
-                    { id: 1, title: 'Wedding Reception Farhan & Natasha', venue: 'Grand Ballroom Hotel Mulia Senayan' },
-                    { id: 2, title: 'Corporate Gala Astra International', venue: 'Fairmont Hotel Ballroom Jakarta' },
-                    { id: 3, title: 'Intimate Akad Nikah Sarah & Dimas', venue: 'Plataran Dharmawangsa' }
-                ];
-            }
+    if (!events || events.length === 0) {
+        events = [
+            { id: 1, title: 'Menunggu koneksi server...', venue: '-' }
+        ];
+    }
 
-            const sel = document.getElementById('vendorEventSelect');
+    const sel = document.getElementById('vendorEventSelect');
             if (sel) {
                 sel.innerHTML = events.map(e => `<option value="${e.id}" ${String(e.id) === String(activeEventId) ? 'selected' : ''}>${e.title}</option>`).join('');
             }
@@ -481,13 +482,8 @@ function updateLiveBanner(segmentIndex, segmentTitle, musicCue, mTitle, mArtist)
             const row = document.getElementById(`row-segment-${rowIdx + 1}`);
             if (row) row.classList.add('playing');
 
-            let masterBank = [];
-            try {
-                const rawBank = localStorage.getItem('mc_music_bank_data');
-                if (rawBank) masterBank = JSON.parse(rawBank);
-            } catch(e) {}
             
-            const musicItem = masterBank.find(m => m.title === item.cue_music);
+            const musicItem = vendorMusicList.find(m => m.title === item.cue_music || m.cue_instruction === item.cue_music);
             if (musicItem) {
                 let src = musicItem.url_link || '';
                 if (!src && musicItem.file_upload) {

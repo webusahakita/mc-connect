@@ -228,7 +228,11 @@
         window.playSegmentMusic = function() {
             const btn = document.getElementById('prompterPlayMusicBtn');
             if (btn && btn.dataset.found === 'false') {
-                alert("Lagu tidak ditemukan di master bank musik. Harap pastikan judul lagu persis (misal: 'Lagu upload').");
+                alert("Lagu tidak ditemukan di data acara. Pastikan lagu sudah ditambahkan ke Segmen Rundown ini melalui Command Center.");
+                return;
+            }
+            if (btn && btn.dataset.hasAudio === 'false') {
+                alert("Lagu ditemukan, tetapi file audio (.mp3/.wav) atau Link URL belum diatur. Silakan upload file audio di Master Bank Musik terlebih dahulu.");
                 return;
             }
             
@@ -360,9 +364,22 @@
                             const cleanCue = trimName(item.instruksi_musik).replace(/^[🎵🎺🍾🎸🥁🎻]\s*/, '');
                             const musicFound = mList.find(m => trimName(m.title) === cleanCue || trimName(m.cue_instruction) === cleanCue);
                             
-                            if (musicFound && (musicFound.file_upload || musicFound.url_link)) {
+                            if (musicFound) {
                                 playBtn.dataset.found = 'true';
-                                if (audioPlayer) audioPlayer.src = musicFound.file_upload || musicFound.url_link;
+                                
+                                let src = musicFound.url_link || '';
+                                if (!src && musicFound.file_upload) {
+                                    if (String(musicFound.file_upload).startsWith('uploads/')) src = '/' + musicFound.file_upload;
+                                    else if (String(musicFound.file_upload).startsWith('/uploads/')) src = musicFound.file_upload;
+                                    else src = '/uploads/music/' + musicFound.file_upload;
+                                }
+                                
+                                if (src && audioPlayer) {
+                                    audioPlayer.src = src;
+                                    playBtn.dataset.hasAudio = 'true';
+                                } else {
+                                    playBtn.dataset.hasAudio = 'false';
+                                }
                             }
                         }
                     }
