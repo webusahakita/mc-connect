@@ -4867,7 +4867,7 @@ window.saveEventMusicForm = async function() {
     if (idxStr === '') {
         const isExist = ev.musicList.find(m => m.title === selectedBankItem.title);
         if (isExist) {
-            return window.uiAlert('Lagu ini sudah ada di dalam daftar Playlist Acara. Silakan edit lagu yang sudah ada jika ingin mengubah segmennya.');
+            return window.uiAlert('Lagu ini sudah ada di dalam daftar Playlist Acara. Silakan edit lagu yang sudah ada (tekan tombol pensil) jika ingin menambahkan ke segmen lain.');
         }
     }
     
@@ -4890,7 +4890,7 @@ window.saveEventMusicForm = async function() {
     }
     
     // Sinkronisasi ulang secara menyeluruh
-    window.syncMusicToRundown(ev);
+    if(typeof window.syncMusicToRundown === 'function') window.syncMusicToRundown(ev);
     
     ev.metadata = ev.metadata || {};
     ev.metadata.musicList = ev.musicList;
@@ -4913,9 +4913,17 @@ window.deleteMusic = async function(index) {
     ev.musicList.splice(index, 1);
     
     // Sinkronisasi ulang secara menyeluruh
-    window.syncMusicToRundown(ev);
+    if(typeof window.syncMusicToRundown === 'function') window.syncMusicToRundown(ev);
     
     if (!ev.metadata) ev.metadata = {};
+    ev.metadata.musicList = ev.musicList;
+    ev.music = ev.musicList;
+    
+    if (typeof window.renderAdminMusicListWrapper === 'function') window.renderAdminMusicListWrapper(ev);
+    if (typeof window.renderAdminRundown === 'function') window.renderAdminRundown();
+    
+    if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
+};
     ev.metadata.musicList = ev.musicList;
     ev.music = ev.musicList;
     
@@ -6001,6 +6009,14 @@ window.saveEventMusicForm = async function() {
     const selectedBankItem = bank[parseInt(bankIdxStr)];
     if (!selectedBankItem) return window.uiAlert('Lagu di Master Bank tidak ditemukan!');
     
+    // Mencegah duplikasi lagu yang sama ditambahkan dua kali sebagai baris berbeda
+    if (idxStr === '') {
+        const isExist = ev.musicList.find(m => m.title === selectedBankItem.title);
+        if (isExist) {
+            return window.uiAlert('Lagu ini sudah ada di dalam daftar Playlist Acara. Silakan edit lagu yang sudah ada (tekan tombol pensil) jika ingin menambahkan ke segmen lain.');
+        }
+    }
+    
     const newItem = {
         id: (idxStr !== '') ? ev.musicList[parseInt(idxStr)].id : 'music_' + Date.now(),
         title: selectedBankItem.title,
@@ -6014,31 +6030,18 @@ window.saveEventMusicForm = async function() {
     };
     
     if (idxStr !== '') {
-        const oldItem = ev.musicList[parseInt(idxStr)];
-        const oldIdxs = Array.isArray(oldItem.segment_idxs) ? oldItem.segment_idxs : (oldItem.segment_idx !== null && oldItem.segment_idx !== undefined ? [oldItem.segment_idx] : []);
-        
-        oldIdxs.forEach(oldIdx => {
-            if (!segment_idxs.includes(oldIdx) && ev.rundown && ev.rundown[oldIdx]) {
-                ev.rundown[oldIdx].cue_music = ''; 
-            }
-        });
-        
         ev.musicList[parseInt(idxStr)] = newItem;
     } else {
         ev.musicList.push(newItem);
     }
     
-    segment_idxs.forEach(idx => {
-        if (ev.rundown && ev.rundown[idx]) {
-            ev.rundown[idx].cue_music = newItem.title;
-        }
-    });
+    // Sinkronisasi ulang secara menyeluruh
+    if(typeof window.syncMusicToRundown === 'function') window.syncMusicToRundown(ev);
     
     ev.metadata = ev.metadata || {};
     ev.metadata.musicList = ev.musicList;
     ev.music = ev.musicList; 
     
-
     if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
     
     document.getElementById('modalEventMusicForm').style.display = 'none';
@@ -6056,9 +6059,17 @@ window.deleteMusic = async function(index) {
     ev.musicList.splice(index, 1);
     
     // Sinkronisasi ulang secara menyeluruh
-    window.syncMusicToRundown(ev);
+    if(typeof window.syncMusicToRundown === 'function') window.syncMusicToRundown(ev);
     
     if (!ev.metadata) ev.metadata = {};
+    ev.metadata.musicList = ev.musicList;
+    ev.music = ev.musicList;
+    
+    if (typeof window.renderAdminMusicListWrapper === 'function') window.renderAdminMusicListWrapper(ev);
+    if (typeof window.renderAdminRundown === 'function') window.renderAdminRundown();
+    
+    if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
+};
     ev.metadata.musicList = ev.musicList;
     ev.music = ev.musicList;
     
