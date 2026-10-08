@@ -4818,7 +4818,11 @@ window.saveEventMusicForm = async function() {
     const idxStr = document.getElementById('evmFormIdx').value;
     const bankIdxStr = document.getElementById('evmFormBankSelect').value;
     const cue_instruction = document.getElementById('evmFormCue').value.trim();
-    const segment_idx = document.getElementById('evmFormSegment').value;
+    
+    const checkedBoxes = Array.from(document.querySelectorAll('.evm-segment-cb:checked'));
+    const segment_idxs = checkedBoxes.map(cb => parseInt(cb.value));
+    const segment_idx = segment_idxs.length > 0 ? segment_idxs[0] : null; 
+    
     const category = document.getElementById('evmFormCategory').value;
     
     if (bankIdxStr === '') return window.uiAlert('Pilih lagu dari Master Bank terlebih dahulu!');
@@ -4838,31 +4842,35 @@ window.saveEventMusicForm = async function() {
         url_link: selectedBankItem.url_link,
         file_upload: selectedBankItem.file_upload,
         cue_instruction: cue_instruction,
-        segment_idx: segment_idx !== '' ? parseInt(segment_idx) : null,
+        segment_idx: segment_idx,
+        segment_idxs: segment_idxs,
         category: category
     };
     
-    // Check if modifying an existing mapped segment to remove the old mapping
     if (idxStr !== '') {
         const oldItem = ev.musicList[parseInt(idxStr)];
-        if (oldItem.segment_idx !== null && oldItem.segment_idx !== undefined && oldItem.segment_idx !== newItem.segment_idx) {
-            if (ev.rundown && ev.rundown[oldItem.segment_idx]) {
-                ev.rundown[oldItem.segment_idx].cue_music = ''; // clear old mapping
+        const oldIdxs = Array.isArray(oldItem.segment_idxs) ? oldItem.segment_idxs : (oldItem.segment_idx !== null && oldItem.segment_idx !== undefined ? [oldItem.segment_idx] : []);
+        
+        oldIdxs.forEach(oldIdx => {
+            if (!segment_idxs.includes(oldIdx) && ev.rundown && ev.rundown[oldIdx]) {
+                ev.rundown[oldIdx].cue_music = ''; 
             }
-        }
+        });
+        
         ev.musicList[parseInt(idxStr)] = newItem;
     } else {
         ev.musicList.push(newItem);
     }
     
-    // Update the Rundown segment with the new mapping
-    if (newItem.segment_idx !== null && ev.rundown && ev.rundown[newItem.segment_idx]) {
-        ev.rundown[newItem.segment_idx].cue_music = newItem.title;
-    }
+    segment_idxs.forEach(idx => {
+        if (ev.rundown && ev.rundown[idx]) {
+            ev.rundown[idx].cue_music = newItem.title;
+        }
+    });
     
     ev.metadata = ev.metadata || {};
     ev.metadata.musicList = ev.musicList;
-    ev.music = ev.musicList; // Sync top-level field just in case
+    ev.music = ev.musicList; 
     
     _setEv(ev);
     if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
@@ -4871,8 +4879,6 @@ window.saveEventMusicForm = async function() {
     document.getElementById('modalEventMusicForm').classList.remove('active');
     
     if (typeof window.renderAdminMusicListWrapper === 'function') window.renderAdminMusicListWrapper(ev);
-    
-    // Force re-render of rundown tab so we see the new cue text instantly
     if (typeof window.renderAdminRundown === 'function') window.renderAdminRundown();
 };
 
@@ -4881,23 +4887,24 @@ window.deleteMusic = async function(index) {
     if (!ev || !ev.musicList || !ev.musicList[index]) return;
     if (!(await window.uiConfirm(`Hapus lagu: "${ev.musicList[index].title}" dari playlist?`))) return;
     
-    // Check if it was mapped to a segment, and if so, clear the segment's cue_music
     const oldItem = ev.musicList[index];
-    if (oldItem.segment_idx !== null && oldItem.segment_idx !== undefined && ev.rundown && ev.rundown[oldItem.segment_idx]) {
-        ev.rundown[oldItem.segment_idx].cue_music = '';
-    }
+    const oldIdxs = Array.isArray(oldItem.segment_idxs) ? oldItem.segment_idxs : (oldItem.segment_idx !== null && oldItem.segment_idx !== undefined ? [oldItem.segment_idx] : []);
+    oldIdxs.forEach(oldIdx => {
+        if (ev.rundown && ev.rundown[oldIdx]) ev.rundown[oldIdx].cue_music = '';
+    });
     
     ev.musicList.splice(index, 1);
-    
     if (!ev.metadata) ev.metadata = {};
     ev.metadata.musicList = ev.musicList;
     ev.music = ev.musicList;
     
+    _setEv(ev);
     if (typeof window.renderAdminMusicListWrapper === 'function') window.renderAdminMusicListWrapper(ev);
     if (typeof window.renderAdminRundown === 'function') window.renderAdminRundown();
     
     if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
 };
+
 
 window.resetCurrentEventMusic = async function() {
     let ev = _getEv();
@@ -5830,37 +5837,95 @@ window.openAddMusicModal = async function(editIndex = -1) {
                 
                 <div class="form-group" style="padding:1rem; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.05); border-radius:8px; margin-bottom:1.5rem;">
                     <label class="form-label" style="color:var(--adm-gold); font-size:1.1rem; margin-bottom:0.8rem;">Pilih Lagu dari Master Bank *</label>
-                    <input type="text" id="evmFormBankSearch" class="form-input" placeholder="🔍 Ketik untuk mencari judul lagu..." style="margin-bottom:0.5rem;" oninput="
-                        const filter = this.value.toLowerCase();
-                        const select = document.getElementById('evmFormBankSelect');
-                        if (!window._fullBankOptionsMusic) {
-                            window._fullBankOptionsMusic = Array.from(select.options).map(o => ({val: o.value, text: o.text, selected: o.selected}));
-                        }
-                        select.innerHTML = '';
-                        window._fullBankOptionsMusic.forEach(o => {
-                            if (o.val === '' || o.text.toLowerCase().includes(filter)) {
-                                const opt = document.createElement('option');
-                                opt.value = o.val;
-                                opt.textContent = o.text;
-                                if (o.selected) opt.selected = true;
-                                select.appendChild(opt);
+                    
+                    <!-- Custom Select UI -->
+                    <div style="position:relative; width:100%; font-size:1.05rem;">
+                        <input type="hidden" id="evmFormBankSelect" value="${editItem ? bank.findIndex(b => b.title === editItem.title) : ''}">
+                        
+                        <!-- The clickable "button" -->
+                        <div id="evmCustomSelectBtn" style="padding:0.6rem 1rem; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); border-radius:6px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;" onclick="document.getElementById('evmCustomSelectDropdown').style.display = document.getElementById('evmCustomSelectDropdown').style.display === 'none' ? 'block' : 'none'; document.getElementById('evmCustomSelectSearch').focus();">
+                            <span id="evmCustomSelectLabel">${editItem ? editItem.title + (editItem.artist ? ' - ' + editItem.artist : '') : '-- Pilih Lagu --'}</span>
+                            <span style="font-size:0.8rem;">▼</span>
+                        </div>
+                        
+                        <!-- The dropdown panel -->
+                        <div id="evmCustomSelectDropdown" style="display:none; position:absolute; top:100%; left:0; right:0; margin-top:4px; background:#1A1E29; border:1px solid rgba(255,255,255,0.1); border-radius:6px; box-shadow:0 8px 16px rgba(0,0,0,0.5); z-index:999999;">
+                            
+                            <!-- Search box inside dropdown -->
+                            <div style="padding:0.5rem; border-bottom:1px solid rgba(255,255,255,0.05);">
+                                <input type="text" id="evmCustomSelectSearch" class="form-input" placeholder="🔍 Cari lagu..." style="padding:0.5rem; font-size:0.95rem;" oninput="
+                                    const filter = this.value.toLowerCase();
+                                    document.querySelectorAll('.evm-option-item').forEach(item => {
+                                        if(item.textContent.toLowerCase().includes(filter)) item.style.display = 'block';
+                                        else item.style.display = 'none';
+                                    });
+                                ">
+                            </div>
+                            
+                            <!-- Options list -->
+                            <div id="evmCustomSelectOptionsList" style="max-height:200px; overflow-y:auto; padding:0.25rem;">
+                                ${bank.map((b, idx) => `
+                                    <div class="evm-option-item" style="padding:0.6rem 1rem; cursor:pointer; border-radius:4px; margin-bottom:2px;" 
+                                         onmouseover="this.style.background='rgba(56,189,248,0.1)'" 
+                                         onmouseout="this.style.background='transparent'"
+                                         onclick="
+                                            document.getElementById('evmFormBankSelect').value = '${idx}';
+                                            document.getElementById('evmCustomSelectLabel').textContent = '${b.title.replace(/'/g, "\'")} ${b.artist ? ' - ' + b.artist.replace(/'/g, "\'") : ''}';
+                                            document.getElementById('evmCustomSelectDropdown').style.display = 'none';
+                                         ">
+                                        ${b.title} ${b.artist ? '- ' + b.artist : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                            
+                        </div>
+                    </div>
+                    
+                    <!-- Close dropdown when clicking outside -->
+                    <script>
+                        document.addEventListener('click', function(e) {
+                            const btn = document.getElementById('evmCustomSelectBtn');
+                            const drop = document.getElementById('evmCustomSelectDropdown');
+                            if(btn && drop && !btn.contains(e.target) && !drop.contains(e.target)) {
+                                drop.style.display = 'none';
                             }
                         });
-">
-                    <select class="form-select" id="evmFormBankSelect" style="font-size:1.05rem; padding:0.6rem;">
-                        <option value="">-- Pilih Lagu --</option>
-                        ${bankOptionsHtml}
-                    </select>
+                    </script>
+
                     <div style="font-size:0.75rem; color:var(--adm-text-muted); margin-top:0.6rem;">
                         <i>💡 Mengunggah file audio atau memasukkan link YouTube sekarang hanya dapat dilakukan secara terpusat melalui menu <b>Master Bank Musik</b>.</i>
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">Terhubung ke Segmen Rundown</label>
-                    <select class="form-select" id="evmFormSegment">
-                        ${rundownOptions.map(opt => `<option value="${opt.value}" ${editItem && editItem.segment_idx == opt.value ? 'selected' : ''}>${opt.label}</option>`).join('')}
-                    </select>
+                    <label class="form-label">Terhubung ke Segmen Rundown <span style="font-size:0.75rem; color:#888;">(Bisa pilih lebih dari satu)</span></label>
+                    <div id="evmFormSegmentContainer" style="height: 160px; overflow-y: auto; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 0.8rem;">
+                        ${(() => {
+                            let isStandby = false;
+                            if (!editItem || (editItem.segment_idx === null && (!editItem.segment_idxs || editItem.segment_idxs.length===0))) {
+                                isStandby = true;
+                            }
+                            return `
+                            <label style="display: flex; align-items: center; margin-bottom: 0.8rem; cursor: pointer; padding-bottom: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <input type="checkbox" value="" id="evmFormSegmentStandby" ${isStandby ? 'checked' : ''} style="width: 18px; height: 18px; margin-right: 0.5rem; accent-color: var(--adm-gold);" onchange="if(this.checked) document.querySelectorAll('.evm-segment-cb').forEach(cb => cb.checked = false)">
+                                <span style="color:var(--adm-text-muted);">-- Tidak Terhubung (Standby) --</span>
+                            </label>`;
+                        })()}
+                        
+                        ${rundownOptions.filter(o => o.value !== '').map(opt => {
+                            let isSelected = false;
+                            if (editItem && Array.isArray(editItem.segment_idxs)) {
+                                isSelected = editItem.segment_idxs.includes(parseInt(opt.value)) || editItem.segment_idxs.includes(opt.value);
+                            } else if (editItem && editItem.segment_idx == opt.value) {
+                                isSelected = true;
+                            }
+                            return `
+                            <label style="display: flex; align-items: center; margin-bottom: 0.6rem; cursor: pointer;">
+                                <input type="checkbox" class="evm-segment-cb" value="${opt.value}" ${isSelected ? 'checked' : ''} style="width: 18px; height: 18px; margin-right: 0.5rem; accent-color: #38BDF8;" onchange="if(this.checked) document.getElementById('evmFormSegmentStandby').checked = false"> 
+                                <span>${opt.label}</span>
+                            </label>`;
+                        }).join('')}
+                    </div>
                 </div>
                 
                 <div class="form-group">
@@ -5898,7 +5963,11 @@ window.saveEventMusicForm = async function() {
     const idxStr = document.getElementById('evmFormIdx').value;
     const bankIdxStr = document.getElementById('evmFormBankSelect').value;
     const cue_instruction = document.getElementById('evmFormCue').value.trim();
-    const segment_idx = document.getElementById('evmFormSegment').value;
+    
+    const checkedBoxes = Array.from(document.querySelectorAll('.evm-segment-cb:checked'));
+    const segment_idxs = checkedBoxes.map(cb => parseInt(cb.value));
+    const segment_idx = segment_idxs.length > 0 ? segment_idxs[0] : null; 
+    
     const category = document.getElementById('evmFormCategory').value;
     
     if (bankIdxStr === '') return window.uiAlert('Pilih lagu dari Master Bank terlebih dahulu!');
@@ -5918,39 +5987,69 @@ window.saveEventMusicForm = async function() {
         url_link: selectedBankItem.url_link,
         file_upload: selectedBankItem.file_upload,
         cue_instruction: cue_instruction,
-        segment_idx: segment_idx !== '' ? parseInt(segment_idx) : null,
+        segment_idx: segment_idx,
+        segment_idxs: segment_idxs,
         category: category
     };
     
     if (idxStr !== '') {
+        const oldItem = ev.musicList[parseInt(idxStr)];
+        const oldIdxs = Array.isArray(oldItem.segment_idxs) ? oldItem.segment_idxs : (oldItem.segment_idx !== null && oldItem.segment_idx !== undefined ? [oldItem.segment_idx] : []);
+        
+        oldIdxs.forEach(oldIdx => {
+            if (!segment_idxs.includes(oldIdx) && ev.rundown && ev.rundown[oldIdx]) {
+                ev.rundown[oldIdx].cue_music = ''; 
+            }
+        });
+        
         ev.musicList[parseInt(idxStr)] = newItem;
     } else {
         ev.musicList.push(newItem);
     }
     
+    segment_idxs.forEach(idx => {
+        if (ev.rundown && ev.rundown[idx]) {
+            ev.rundown[idx].cue_music = newItem.title;
+        }
+    });
+    
     ev.metadata = ev.metadata || {};
     ev.metadata.musicList = ev.musicList;
-    // _setEv(ev);
+    ev.music = ev.musicList; 
+    
+    _setEv(ev);
     if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
     
     document.getElementById('modalEventMusicForm').style.display = 'none';
     document.getElementById('modalEventMusicForm').classList.remove('active');
     
     if (typeof window.renderAdminMusicListWrapper === 'function') window.renderAdminMusicListWrapper(ev);
+    if (typeof window.renderAdminRundown === 'function') window.renderAdminRundown();
 };
 
-
 window.deleteMusic = async function(index) {
+    let ev = _getEv();
     if (!ev || !ev.musicList || !ev.musicList[index]) return;
     if (!(await window.uiConfirm(`Hapus lagu: "${ev.musicList[index].title}" dari playlist?`))) return;
+    
+    const oldItem = ev.musicList[index];
+    const oldIdxs = Array.isArray(oldItem.segment_idxs) ? oldItem.segment_idxs : (oldItem.segment_idx !== null && oldItem.segment_idx !== undefined ? [oldItem.segment_idx] : []);
+    oldIdxs.forEach(oldIdx => {
+        if (ev.rundown && ev.rundown[oldIdx]) ev.rundown[oldIdx].cue_music = '';
+    });
+    
     ev.musicList.splice(index, 1);
     if (!ev.metadata) ev.metadata = {};
     ev.metadata.musicList = ev.musicList;
-    window.renderAdminMusicListWrapper(ev);
-    if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) {
-        window.syncEngine.pushEventsToServer();
-    }
+    ev.music = ev.musicList;
+    
+    _setEv(ev);
+    if (typeof window.renderAdminMusicListWrapper === 'function') window.renderAdminMusicListWrapper(ev);
+    if (typeof window.renderAdminRundown === 'function') window.renderAdminRundown();
+    
+    if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
 };
+
 
 window.downloadAllAudioPack = function() {
     if (typeof window.uiAlert === 'function') window.uiAlert('Menyiapkan Audio Pack (.wav)... Harap tunggu, mengumpulkan aset untuk Mode Offline.', 'Mengunduh Audio Pack');
@@ -6040,8 +6139,23 @@ window.renderAdminMusicListWrapper = function(currentEv) {
         const realIdx = currentEv.musicList.findIndex(m => m.id === item.id);
         
         let segmentText = '<span style="display:inline-block; padding:0.25rem 0.5rem; background:rgba(255,255,255,0.05); border-radius:4px; font-size:0.75rem; color:var(--adm-text-muted);">Trek Standby (Bebas Main)</span>';
-        if (item.segment_idx !== null && item.segment_idx !== undefined && item.segment_idx !== '' && currentEv.rundown && currentEv.rundown[item.segment_idx]) {
-            segmentText = '<div style="color:#38BDF8; font-weight:600; font-size:0.85rem; margin-bottom:0.2rem;"><span style="background:rgba(56,189,248,0.15); padding:0.15rem 0.4rem; border-radius:4px; margin-right:0.4rem;">Segmen ' + (item.segment_idx + 1) + '</span>' + escapeHtml(currentEv.rundown[item.segment_idx].title || '') + '</div><div style="font-size:0.75rem; color:var(--adm-text-secondary);">➡️  Auto-cue di Stage Mode saat segmen ini aktif.</div>';
+        
+        let activeIdxs = [];
+        if (Array.isArray(item.segment_idxs) && item.segment_idxs.length > 0) activeIdxs = item.segment_idxs;
+        else if (item.segment_idx !== null && item.segment_idx !== undefined && item.segment_idx !== '') activeIdxs = [item.segment_idx];
+        
+        if (activeIdxs.length > 0 && currentEv.rundown) {
+            segmentText = activeIdxs.map(s_idx => {
+                if (currentEv.rundown[s_idx]) {
+                    return '<div style="color:#38BDF8; font-weight:600; font-size:0.85rem; margin-bottom:0.3rem;"><span style="background:rgba(56,189,248,0.15); padding:0.15rem 0.4rem; border-radius:4px; margin-right:0.4rem;">Segmen ' + (s_idx + 1) + '</span>' + escapeHtml(currentEv.rundown[s_idx].title || '') + '</div>';
+                }
+                return '';
+            }).join('');
+            if(segmentText !== '') {
+                segmentText += '<div style="font-size:0.75rem; color:var(--adm-text-secondary); margin-top:0.3rem;">➡️  Auto-cue di Stage Mode aktif.</div>';
+            } else {
+                segmentText = '<span style="display:inline-block; padding:0.25rem 0.5rem; background:rgba(255,255,255,0.05); border-radius:4px; font-size:0.75rem; color:var(--adm-text-muted);">Trek Standby (Bebas Main)</span>';
+            }
         }
         
         html += '<tr style="border-bottom:1px solid rgba(255,255,255,0.05); transition: background 0.2s;" onmouseover="this.style.background=\'rgba(255,255,255,0.02)\'" onmouseout="this.style.background=\'transparent\'">';
