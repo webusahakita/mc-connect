@@ -353,7 +353,9 @@ async function loadUnifiedEventsDatabase() {
             wardrobeIds: Array.isArray(ev.wardrobeIds) ? ev.wardrobeIds : [],
             invoiceItems: ev.invoiceItems || null,
             metadata: ev.metadata || {},
-            musicList: Array.isArray(ev.musicList) ? ev.musicList : [],
+            musicList: (ev.metadata && Array.isArray(ev.metadata.music)) ? ev.metadata.music : (Array.isArray(ev.musicList) ? ev.musicList : []),
+            soundboard: (ev.metadata && Array.isArray(ev.metadata.soundboard)) ? ev.metadata.soundboard : (Array.isArray(ev.soundboard) ? ev.soundboard : []),
+            landingMusic: (ev.metadata && Array.isArray(ev.metadata.landingMusic)) ? ev.metadata.landingMusic : (Array.isArray(ev.landingMusic) ? ev.landingMusic : []),
             rundown: Array.isArray(ev.rundown) ? ev.rundown : [],
             created_at: ev.created_at || null
         }));
@@ -534,30 +536,39 @@ function saveUnifiedEventsDatabase(evToSync = null) {
 }
 
 async function pushEventsToServer() {
-    // Disabled per user request: data lokal tidak boleh menimpa server secara massal
-    console.log('[Sync] pushEventsToServer disabled.');
+    let ev = _getEv();
+    if (ev && typeof window.syncEventMetadata === 'function') {
+        await window.syncEventMetadata(ev);
+        console.log('[Sync] Event metadata synced via fallback pushEventsToServer.');
+    } else {
+        console.log('[Sync] pushEventsToServer fallback failed: No event selected.');
+    }
 }
 
 window.syncEventMetadata = async function(ev) {
     if (!ev) return;
     try {
         const payload = {
+            rundown: ev.rundown || [],
             metadata: {
                 checklist: ev.checklist || [],
                 expenses: ev.expenses || [],
                 vipNotes: ev.vipNotes || '',
                 vipProtocol: ev.vipProtocol || [],
                 invoice_items: ev.invoiceItems || null,
-                wardrobeIds: ev.wardrobeIds || []
+                wardrobeIds: ev.wardrobeIds || [],
+                soundboard: ev.soundboard || [],
+                landingMusic: ev.landingMusic || [],
+                music: ev.music || []
             }
         };
         const actualId = ev.db_id || String(ev.id).replace('e_', '');
         await fetch('/api/cms/events/' + actualId, {
             method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
+            headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
             body: JSON.stringify(payload)
         });
-        console.log('[Sync] Event metadata synced to server for event ID:', ev.id);
+        console.log('[Sync] Event metadata and rundown synced to server for event ID:', ev.id);
     } catch (err) {
         console.error("Gagal sync event metadata:", err);
     }
@@ -2213,20 +2224,20 @@ function renderAdminVendorCollab(ev) {
         container.innerHTML = rundown.map((item, i) => {
             return `
             <tr style="border-bottom: 1px solid var(--border-subtle);">
-                <td style="text-align: center; color: var(--gold-primary); font-weight: bold;">${i+1}</td>
-                <td>
+                <td style="text-align: center; color: var(--gold-primary); font-weight: bold; padding: 1rem 0.5rem; vertical-align: top;">${i+1}</td>
+                <td style="padding: 1rem 0.5rem; vertical-align: top; white-space: nowrap; min-width: 120px;">
                     <div style="font-weight:600;">${item.start_time || ''} - ${item.end_time || ''}</div>
                     <div style="font-size:0.75rem; color:var(--text-muted);">${item.time || ''}</div>
                 </td>
-                <td>
-                    <div style="font-weight:700; color:var(--text-primary); margin-bottom:0.25rem;">${escapeHtml(item.title || 'Segmen')}</div>
-                    <div style="font-size:0.8rem; color:var(--text-secondary); line-height:1.4;">${escapeHtml(item.prompter || '')}</div>
+                <td style="padding: 1rem 0.5rem; vertical-align: top; white-space: normal; word-wrap: break-word; min-width: 300px; max-width: 600px;">
+                    <div style="font-weight:700; color:var(--text-primary); margin-bottom:0.25rem; font-size:1.05rem;">${escapeHtml(item.title || 'Segmen')}</div>
+                    <div style="font-size:0.85rem; color:var(--text-secondary); line-height:1.6;">${escapeHtml(item.prompter || '')}</div>
                 </td>
-                <td>
-                    ${item.cue_music ? `<div style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); padding:0.25rem 0.5rem; border-radius:4px; font-size:0.8rem; color:#38BDF8; font-weight:600; display:inline-block;">🎵 ${escapeHtml(item.cue_music)}</div>` : '<span style="color:var(--text-muted); font-size:0.8rem;">(Tidak ada audio khusus)</span>'}
+                <td style="padding: 1rem 0.5rem; vertical-align: top; white-space: normal; min-width: 180px;">
+                    ${item.cue_music ? `<div style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); padding:0.4rem 0.8rem; border-radius:4px; font-size:0.8rem; color:#38BDF8; font-weight:600; display:inline-block; word-wrap:break-word;">🎵 ${escapeHtml(item.cue_music)}</div>` : '<span style="color:var(--text-muted); font-size:0.8rem;">(Tidak ada audio khusus)</span>'}
                 </td>
-                <td>
-                    ${item.pic ? `<div style="font-weight:600; font-size:0.85rem; color:#A78BFA;">👤 ${escapeHtml(item.pic)}</div>` : '<span style="color:var(--text-muted); font-size:0.8rem;">-</span>'}
+                <td style="padding: 1rem 0.5rem; vertical-align: top; white-space: nowrap; min-width: 150px;">
+                    ${item.pic ? `<div style="font-weight:600; font-size:0.85rem; color:#A78BFA; background:rgba(167,139,250,0.1); padding:0.3rem 0.6rem; border-radius:4px; display:inline-block;">👤 ${escapeHtml(item.pic)}</div>` : '<span style="color:var(--text-muted); font-size:0.8rem;">-</span>'}
                 </td>
             </tr>
             `;
@@ -2310,13 +2321,13 @@ async function renderWardrobe() {
                         });
                     }
                     html += '<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">' +
-                        '<td style="padding:1rem 0.5rem;">' + (item.imgUrl ? '<img src="'+escapeHtml(item.imgUrl)+'" style="width:48px; height:48px; border-radius:8px; object-fit:cover; border:1px solid rgba(255,255,255,0.1);">' : '<div style="width:48px; height:48px; border-radius:8px; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; font-size:1.5rem;">👔</div>') + '</td>' +
-                        '<td style="padding:1rem 0.5rem;"><div style="font-weight:700; font-size:1.05rem; color:var(--adm-gold, #D4AF37);">' + escapeHtml(item.name || '-') + '</div><div style="font-size:0.75rem; color:var(--adm-text-muted); margin-top:4px;">ID: '+escapeHtml(item.db_id||item.id)+'</div></td>' +
-                        '<td style="padding:1rem 0.5rem; max-width:250px; line-height:1.4; color:rgba(255,255,255,0.8);">' + escapeHtml(item.desc || '-') + '</td>' +
-                        '<td style="padding:1rem 0.5rem;"><span style="display:inline-block; padding:0.4rem 0.8rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:20px; font-size:0.8rem; font-weight:600;">' + escapeHtml(item.colorName || '-') + '</span></td>' +
-                        '<td style="padding:1rem 0.5rem;"><span style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; font-weight:600;">' + (item.colorHex && item.colorHex.startsWith('#') ? '<span style="display:inline-block; width:16px; height:16px; border-radius:50%; background:'+escapeHtml(item.colorHex)+'; border:1px solid rgba(255,255,255,0.2);"></span>' : '') + escapeHtml(item.colorHex || '-') + '</span></td>' +
-                        '<td style="padding:1rem 0.5rem;"><span class="badge" style="background:'+ (item.status === 'Siap Pakai' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)') + '; color:' + (item.status === 'Siap Pakai' ? '#34d399' : '#f87171') + '; border:1px solid '+ (item.status === 'Siap Pakai' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)') +'; padding:0.4rem 0.8rem; border-radius:6px; font-weight:700; letter-spacing:0.5px;">' + escapeHtml(item.status || 'Tersedia') + '</span></td>' +
-                        '<td style="padding:1rem 0.5rem; text-align:center;"><div style="font-size:1.2rem; font-weight:800; color:#fff;">' + freq + 'x</div><div style="font-size:0.7rem; color:var(--adm-text-muted); text-transform:uppercase;">Dipakai</div></td>' +
+                        '<td style="padding:1rem 0.5rem; min-width:70px;">' + (item.imgUrl ? '<img src="'+escapeHtml(item.imgUrl)+'" style="width:48px; height:48px; border-radius:8px; object-fit:cover; border:1px solid rgba(255,255,255,0.1);">' : '<div style="width:48px; height:48px; border-radius:8px; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; font-size:1.5rem;">👔</div>') + '</td>' +
+                        '<td style="padding:1rem 0.5rem; min-width:180px; white-space:nowrap;"><div style="font-weight:700; font-size:1.05rem; color:var(--adm-gold, #D4AF37);">' + escapeHtml(item.name || '-') + '</div><div style="font-size:0.75rem; color:var(--adm-text-muted); margin-top:4px;">ID: '+escapeHtml(item.db_id||item.id)+'</div></td>' +
+                        '<td style="padding:1rem 0.5rem; min-width:250px; max-width:300px; line-height:1.5; color:rgba(255,255,255,0.8); white-space:normal; word-wrap:break-word;">' + escapeHtml(item.desc || '-') + '</td>' +
+                        '<td style="padding:1rem 0.5rem; min-width:140px; white-space:nowrap;"><span style="display:inline-block; padding:0.4rem 0.8rem; text-align:center; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:20px; font-size:0.8rem; font-weight:600;">' + escapeHtml(item.colorName || '-') + '</span></td>' +
+                        '<td style="padding:1rem 0.5rem; min-width:120px; white-space:nowrap;"><span style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; font-weight:600;">' + (item.colorHex && item.colorHex.startsWith('#') ? '<span style="display:inline-block; width:16px; height:16px; border-radius:50%; background:'+escapeHtml(item.colorHex)+'; border:1px solid rgba(255,255,255,0.2);"></span>' : '') + escapeHtml(item.colorHex || '-') + '</span></td>' +
+                        '<td style="padding:1rem 0.5rem; min-width:140px; white-space:nowrap; text-align:center;"><span class="badge" style="background:'+ (item.status === 'Siap Pakai' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)') + '; color:' + (item.status === 'Siap Pakai' ? '#34d399' : '#f87171') + '; border:1px solid '+ (item.status === 'Siap Pakai' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)') +'; padding:0.4rem 0.8rem; border-radius:6px; font-weight:700; letter-spacing:0.5px;">' + escapeHtml(item.status || 'Tersedia') + '</span></td>' +
+                        '<td style="padding:1rem 0.5rem; text-align:center; min-width:120px; white-space:nowrap;"><div style="font-size:1.2rem; font-weight:800; color:#fff;">' + freq + 'x</div><div style="font-size:0.7rem; color:var(--adm-text-muted); text-transform:uppercase;">Dipakai</div></td>' +
                         '<td style="padding:1rem 0.5rem; text-align:right;">' +
                             `<button class="btn btn-secondary btn-sm" style="margin-right:0.5rem; background:rgba(255,255,255,0.1); border-color:transparent;" onclick="promptAddGlobalWardrobe('${encodeURIComponent(JSON.stringify(item))}')"><i class="fas fa-edit"></i> Edit</button>` +
                             `<button class="btn btn-secondary btn-sm" style="background:rgba(239, 68, 68, 0.1); color:#f87171; border-color:transparent;" onclick="deleteWardrobeItem('${item.db_id || item.id}')"><i class="fas fa-trash"></i> Hapus</button>` +
@@ -4701,7 +4712,7 @@ window.selectBankItem = function(idx) {
     }
 };
 
-window.openAddMusicModal = async function(editIndex = -1) {
+window.openAddMusicModal = async function(editIndex = -1) { window._fullBankOptionsMusic = null;
     let ev = _getEv();
     if (!ev) {
         if (typeof window.uiAlert === 'function') window.uiAlert('Pilih acara terlebih dahulu!');
@@ -4831,14 +4842,28 @@ window.saveEventMusicForm = async function() {
         category: category
     };
     
+    // Check if modifying an existing mapped segment to remove the old mapping
     if (idxStr !== '') {
+        const oldItem = ev.musicList[parseInt(idxStr)];
+        if (oldItem.segment_idx !== null && oldItem.segment_idx !== undefined && oldItem.segment_idx !== newItem.segment_idx) {
+            if (ev.rundown && ev.rundown[oldItem.segment_idx]) {
+                ev.rundown[oldItem.segment_idx].cue_music = ''; // clear old mapping
+            }
+        }
         ev.musicList[parseInt(idxStr)] = newItem;
     } else {
         ev.musicList.push(newItem);
     }
     
+    // Update the Rundown segment with the new mapping
+    if (newItem.segment_idx !== null && ev.rundown && ev.rundown[newItem.segment_idx]) {
+        ev.rundown[newItem.segment_idx].cue_music = newItem.title;
+    }
+    
     ev.metadata = ev.metadata || {};
     ev.metadata.musicList = ev.musicList;
+    ev.music = ev.musicList; // Sync top-level field just in case
+    
     _setEv(ev);
     if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
     
@@ -4846,17 +4871,31 @@ window.saveEventMusicForm = async function() {
     document.getElementById('modalEventMusicForm').classList.remove('active');
     
     if (typeof window.renderAdminMusicListWrapper === 'function') window.renderAdminMusicListWrapper(ev);
+    
+    // Force re-render of rundown tab so we see the new cue text instantly
+    if (typeof window.renderAdminRundown === 'function') window.renderAdminRundown();
 };
-
 
 window.deleteMusic = async function(index) {
     let ev = _getEv();
     if (!ev || !ev.musicList || !ev.musicList[index]) return;
     if (!(await window.uiConfirm(`Hapus lagu: "${ev.musicList[index].title}" dari playlist?`))) return;
+    
+    // Check if it was mapped to a segment, and if so, clear the segment's cue_music
+    const oldItem = ev.musicList[index];
+    if (oldItem.segment_idx !== null && oldItem.segment_idx !== undefined && ev.rundown && ev.rundown[oldItem.segment_idx]) {
+        ev.rundown[oldItem.segment_idx].cue_music = '';
+    }
+    
     ev.musicList.splice(index, 1);
+    
     if (!ev.metadata) ev.metadata = {};
     ev.metadata.musicList = ev.musicList;
+    ev.music = ev.musicList;
+    
     if (typeof window.renderAdminMusicListWrapper === 'function') window.renderAdminMusicListWrapper(ev);
+    if (typeof window.renderAdminRundown === 'function') window.renderAdminRundown();
+    
     if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
 };
 
@@ -5027,7 +5066,12 @@ window.toggleLandingMusic = function(index) {
 
 // --- SOUNDBOARD MODULE ---
 window.checkAndGenerateDummySoundboard = function(currentEv) {
+    if (currentEv.metadata) {
+        if (currentEv.metadata.soundboard) currentEv.soundboard = currentEv.metadata.soundboard;
+        if (currentEv.metadata.landingMusic) currentEv.landingMusic = currentEv.metadata.landingMusic;
+    }
     if (!currentEv.soundboard) currentEv.soundboard = [];
+    if (!currentEv.landingMusic) currentEv.landingMusic = [];
 };
 window.renderAdminSoundboardList = function(currentEv) {
     if (!currentEv) return;
@@ -5043,7 +5087,11 @@ window.renderAdminSoundboardList = function(currentEv) {
     const kpiTotal = document.getElementById('sbMetricTotal');
     if (kpiTotal) kpiTotal.textContent = sbList.length + ' Sound';
     
-    const kpiActive = document.getElementById('sbMetricActive'); // Assuming this exists or similar
+    const kpiActive = document.getElementById('sbMetricActive');
+    if (kpiActive) {
+        const activeCount = sbList.filter(item => item.is_brought).length;
+        kpiActive.textContent = activeCount + ' Sound';
+    }
     
     // 1. Render Grid Preview
     const gridContainer = document.getElementById('adminSoundboardGridPreview');
@@ -5102,7 +5150,7 @@ window.renderAdminSoundboardList = function(currentEv) {
     }
 };
 
-window.openAddSoundboardModal = async function(editIndex = -1) {
+window.openAddSoundboardModal = async function(editIndex = -1) { window._fullBankOptionsSb = null;
     let ev = _getEv();
     if (!ev) {
         if (typeof window.uiAlert === 'function') window.uiAlert('Pilih acara terlebih dahulu!');
@@ -5149,6 +5197,23 @@ window.openAddSoundboardModal = async function(editIndex = -1) {
                 
                 <div class="form-group" style="padding:1rem; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.05); border-radius:8px; margin-bottom:1.5rem;">
                     <label class="form-label" style="color:var(--adm-gold); font-size:1.1rem; margin-bottom:0.8rem;">Pilih Sound Effect dari Master Bank *</label>
+                    <input type="text" id="sbFormBankSearch" class="form-input" placeholder="🔍 Ketik untuk mencari efek suara..." style="margin-bottom:0.5rem;" oninput="
+                        const filter = this.value.toLowerCase();
+                        const select = document.getElementById('sbFormBankSelect');
+                        if (!window._fullBankOptionsSb) {
+                            window._fullBankOptionsSb = Array.from(select.options).map(o => ({val: o.value, text: o.text, selected: o.selected}));
+                        }
+                        select.innerHTML = '';
+                        window._fullBankOptionsSb.forEach(o => {
+                            if (o.val === '' || o.text.toLowerCase().includes(filter)) {
+                                const opt = document.createElement('option');
+                                opt.value = o.val;
+                                opt.textContent = o.text;
+                                if (o.selected) opt.selected = true;
+                                select.appendChild(opt);
+                            }
+                        });
+">
                     <select class="form-select" id="sbFormBankSelect" style="font-size:1.05rem; padding:0.6rem;">
                         <option value="">-- Pilih Efek Suara --</option>
                         ${bankOptionsHtml}
@@ -5765,6 +5830,23 @@ window.openAddMusicModal = async function(editIndex = -1) {
                 
                 <div class="form-group" style="padding:1rem; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.05); border-radius:8px; margin-bottom:1.5rem;">
                     <label class="form-label" style="color:var(--adm-gold); font-size:1.1rem; margin-bottom:0.8rem;">Pilih Lagu dari Master Bank *</label>
+                    <input type="text" id="evmFormBankSearch" class="form-input" placeholder="🔍 Ketik untuk mencari judul lagu..." style="margin-bottom:0.5rem;" oninput="
+                        const filter = this.value.toLowerCase();
+                        const select = document.getElementById('evmFormBankSelect');
+                        if (!window._fullBankOptionsMusic) {
+                            window._fullBankOptionsMusic = Array.from(select.options).map(o => ({val: o.value, text: o.text, selected: o.selected}));
+                        }
+                        select.innerHTML = '';
+                        window._fullBankOptionsMusic.forEach(o => {
+                            if (o.val === '' || o.text.toLowerCase().includes(filter)) {
+                                const opt = document.createElement('option');
+                                opt.value = o.val;
+                                opt.textContent = o.text;
+                                if (o.selected) opt.selected = true;
+                                select.appendChild(opt);
+                            }
+                        });
+">
                     <select class="form-select" id="evmFormBankSelect" style="font-size:1.05rem; padding:0.6rem;">
                         <option value="">-- Pilih Lagu --</option>
                         ${bankOptionsHtml}
@@ -5994,9 +6076,12 @@ if (typeof ev !== 'undefined' && ev) {
 // ==========================================
 window.renderMusicBankSection = async function() {
     window.memoryAudioFiles = window.memoryAudioFiles || {};
-    if (fileInput && fileInput.files && fileInput.files.length > 0) {
-        window.memoryAudioFiles[fileInput.files[0].name] = URL.createObjectURL(fileInput.files[0]);
-    }
+    try {
+        const fInput = document.getElementById('mbFormFile');
+        if (fInput && fInput.files && fInput.files.length > 0) {
+            window.memoryAudioFiles[fInput.files[0].name] = URL.createObjectURL(fInput.files[0]);
+        }
+    } catch(e) {}
     
     const bank = window.getGlobalMusicBank();
     let html = '<div style="width:100%; overflow-x:auto;">';
@@ -6328,3 +6413,9 @@ window.playMasterMusic = function(idx) {
     overlay.classList.add('active');
 };
 
+
+if (!window.syncEngine) {
+    window.syncEngine = { pushEventsToServer: pushEventsToServer };
+} else {
+    window.syncEngine.pushEventsToServer = pushEventsToServer;
+}
