@@ -4924,14 +4924,7 @@ window.deleteMusic = async function(index) {
     
     if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
 };
-    ev.metadata.musicList = ev.musicList;
-    ev.music = ev.musicList;
-    
-    if (typeof window.renderAdminMusicListWrapper === 'function') window.renderAdminMusicListWrapper(ev);
-    if (typeof window.renderAdminRundown === 'function') window.renderAdminRundown();
-    
-    if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
-};
+
 
 
 
