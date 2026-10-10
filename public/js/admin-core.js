@@ -356,7 +356,7 @@ async function loadUnifiedEventsDatabase() {
             musicList: (ev.metadata && Array.isArray(ev.metadata.music)) ? ev.metadata.music : (Array.isArray(ev.musicList) ? ev.musicList : []),
             soundboard: (ev.metadata && Array.isArray(ev.metadata.soundboard)) ? ev.metadata.soundboard : (Array.isArray(ev.soundboard) ? ev.soundboard : []),
             landingMusic: (ev.metadata && Array.isArray(ev.metadata.landingMusic)) ? ev.metadata.landingMusic : (Array.isArray(ev.landingMusic) ? ev.landingMusic : []),
-            rundown: Array.isArray(ev.rundown) ? ev.rundown : [],
+            rundown: Array.isArray(ev.rundown) ? ev.rundown : ((ev.metadata && Array.isArray(ev.metadata.rundown)) ? ev.metadata.rundown : []),
             created_at: ev.created_at || null
         }));
 
@@ -554,8 +554,8 @@ window.syncEventMetadata = async function(ev) {
     if (!ev) return;
     try {
         const payload = {
-            rundown: ev.rundown || [],
             metadata: {
+                rundown: ev.rundown || [],
                 checklist: ev.checklist || [],
                 expenses: ev.expenses || [],
                 vipNotes: ev.vipNotes || '',
@@ -564,7 +564,7 @@ window.syncEventMetadata = async function(ev) {
                 wardrobeIds: ev.wardrobeIds || [],
                 soundboard: ev.soundboard || [],
                 landingMusic: ev.landingMusic || [],
-                music: ev.music || []
+                music: ev.musicList || []
             }
         };
         const actualId = ev.db_id || String(ev.id).replace('e_', '');
@@ -1337,6 +1337,8 @@ function loadActiveEventInCommandCenter(eventId) {
     // 9. Tab 3 - Stage & Rundown Management (Dynamic Per Customer Event)
     if (typeof renderAdminRundownList === 'function') {
         renderAdminRundownList(ev);
+        // Refresh music table juga agar terintegrasi 2 arah
+        if (typeof window.renderAdminMusicListWrapper === 'function') window.renderAdminMusicListWrapper(ev);
     }
 
     // 9b. Tab 6 - Music Playlist & Audio Cue Sheet Management
@@ -1366,7 +1368,17 @@ function loadActiveEventInCommandCenter(eventId) {
     // 10. Tab 5 - Post-Event Review & Loyalty Sync
     const postReviewArea = document.getElementById('postEventReviewTemplate');
     if (postReviewArea) {
-        postReviewArea.value = `Halo Kak ${clientName}, salam hangat dari Vanya Arsyad & Tim MC-Connect.\n\nTerima kasih banyak atas kepercayaan luar biasa yang telah diberikan kepada kami untuk memandu agenda istimewa "${ev.title}". Merupakan suatu kehormatan dan kebahagiaan tak terhingga dapat menjadi bagian dari momen indah Anda!\n\nJika Kak ${clientName} berkenan, kami akan sangat berterima kasih atas ulasan bintang 5 dan testimoni singkat melalui tautan berikut:\n⭐ https://vanyaarsyad.com/review?id=${ev.id}\n\nUlasan dan feedback Kak ${clientName} sangat berharga bagi peningkatan standar performa panggung kami di masa depan. Sukses dan bahagia selalu!\n\nSalam hormat,\nVanya Arsyad, S.I.Kom`;
+        postReviewArea.value = `Halo Kak ${clientName}, salam hangat dari Vanya Arsyad & Tim MC-Connect.
+
+Terima kasih banyak atas kepercayaan luar biasa yang telah diberikan kepada kami untuk memandu agenda istimewa "${ev.title}". Merupakan suatu kehormatan dan kebahagiaan tak terhingga dapat menjadi bagian dari momen indah Anda!
+
+Jika Kak ${clientName} berkenan, kami akan sangat berterima kasih atas ulasan bintang 5 dan testimoni singkat melalui tautan berikut:
+⭐ https://vanyaarsyad.com/review?id=${ev.id}
+
+Ulasan dan feedback Kak ${clientName} sangat berharga bagi peningkatan standar performa panggung kami di masa depan. Sukses dan bahagia selalu!
+
+Salam hormat,
+Vanya Arsyad, S.I.Kom`;
     }
     const postReviewSub = document.getElementById('tabReviewSubtitle');
     if (postReviewSub) {
@@ -1917,9 +1929,48 @@ function renderAdminRundownList(ev) {
             <div style="padding:1rem; border-left:3px solid var(--adm-gold); background:rgba(0,0,0,0.2);">
                 <div style="font-size:0.75rem; font-weight:700; color:var(--adm-gold); margin-bottom:0.4rem; letter-spacing:0.5px;">🎤 PANDUAN NASKAH / PROMPTER MC:</div>
                 <div style="font-size:0.9rem; color:var(--adm-text-secondary); line-height:1.5; margin-bottom:1rem; white-space:pre-wrap;">${escapeHtml(item.prompter || 'Tidak ada naskah khusus untuk segmen ini.')}</div>
-                <div style="display:flex; gap:1rem; flex-wrap:wrap;">
-                    ${item.cue_music ? `<div style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); border-radius:6px; padding:0.3rem 0.6rem; font-size:0.8rem; color:#38BDF8; font-weight:600; display:flex; align-items:center; gap:0.4rem;">🎵 Cue Audio: ${escapeHtml(item.cue_music)}</div>` : ''}
-                    ${item.pic ? `<div style="background:rgba(167,139,250,0.1); border:1px solid rgba(167,139,250,0.3); border-radius:6px; padding:0.3rem 0.6rem; font-size:0.8rem; color:#A78BFA; font-weight:600; display:flex; align-items:center; gap:0.4rem;">👤 PIC: ${escapeHtml(item.pic)}</div>` : ''}
+                <div style="display:flex; gap:1rem; flex-wrap:wrap; flex-direction:column;">
+                    ${(function(){
+                        let connectedMusic = [];
+                        if (ev && ev.musicList && Array.isArray(ev.musicList)) {
+                            connectedMusic = ev.musicList.filter(m => {
+                                if (m.segment_idxs && m.segment_idxs.includes(i)) return true;
+                                if (m.segment_idx === i || m.segment_idx === String(i)) return true;
+                                if (item.cue_music && m.title === item.cue_music) return true;
+                                return false;
+                            });
+                        }
+                        let musicHtml = '';
+                        if (connectedMusic.length > 0) {
+                            connectedMusic.forEach(m => {
+                                musicHtml += `<div style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); border-radius:6px; padding:0.3rem 0.6rem; font-size:0.8rem; color:#38BDF8; font-weight:600; display:flex; flex-direction:column; gap:0.3rem; margin-bottom:0.5rem; max-width: fit-content;">`;
+                                musicHtml += `<div>🎵 Cue Audio: ${escapeHtml(m.title)}</div>`;
+                                if (m.cue_instruction) {
+                                    musicHtml += `<div style="color: rgba(255,255,255,0.7); font-weight: normal;">📝 Intruksi Musik: ${escapeHtml(m.cue_instruction)}</div>`;
+                                }
+                                musicHtml += `</div>`;
+                            });
+                        } else if (item.cue_music || item.cue_instruction) {
+                            musicHtml = `<div style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); border-radius:6px; padding:0.3rem 0.6rem; font-size:0.8rem; color:#38BDF8; font-weight:600; display:flex; flex-direction:column; gap:0.3rem; margin-bottom:0.5rem; max-width: fit-content;">`;
+                            if (item.cue_music) {
+                                musicHtml += `<div>🎵 Cue Audio: ${escapeHtml(item.cue_music)}</div>`;
+                            }
+                            if (item.cue_instruction) {
+                                musicHtml += `<div style="color: rgba(255,255,255,0.7); font-weight: normal;">📝 Intruksi Musik: ${escapeHtml(item.cue_instruction)}</div>`;
+                            }
+                            musicHtml += `</div>`;
+                        }
+                        
+                        // If there is connectedMusic, we also want to append the segment specific instruction if any
+                        if (connectedMusic.length > 0 && item.cue_instruction) {
+                            musicHtml += `<div style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); border-radius:6px; padding:0.3rem 0.6rem; font-size:0.8rem; color:#38BDF8; font-weight:600; display:flex; flex-direction:column; gap:0.3rem; margin-bottom:0.5rem; max-width: fit-content;">`;
+                            musicHtml += `<div style="color: rgba(255,255,255,0.7); font-weight: normal;">📝 Intruksi Khusus Segmen: ${escapeHtml(item.cue_instruction)}</div>`;
+                            musicHtml += `</div>`;
+                        }
+                        
+                        return musicHtml;
+                    })()}
+                    ${item.pic ? `<div style="background:rgba(167,139,250,0.1); border:1px solid rgba(167,139,250,0.3); border-radius:6px; padding:0.3rem 0.6rem; font-size:0.8rem; color:#A78BFA; font-weight:600; display:flex; align-items:center; gap:0.4rem; max-width: fit-content;">👤 PIC: ${escapeHtml(item.pic)}</div>` : ''}
                 </div>
             </div>
         </div>
@@ -1927,6 +1978,46 @@ function renderAdminRundownList(ev) {
     }).join('');
 }
 window.renderAdminRundownList = renderAdminRundownList;
+
+window.applyDefaultRundown = async function() {
+    const ev = window.activeCommandCenterEvent;
+    if (!ev) {
+        if (typeof uiAlert === 'function') uiAlert('Pilih acara terlebih dahulu di kalender.');
+        else alert('Pilih acara terlebih dahulu di kalender.');
+        return;
+    }
+    
+    if (ev.rundown && ev.rundown.length > 0) {
+        if (!confirm('Rundown sudah ada. Apakah Anda yakin ingin menimpanya dengan template default?')) {
+            return;
+        }
+    }
+
+    const defaultRundown = [
+        { start_time: '18:30', end_time: '19:00', time: '18:30 - 19:00', title: 'Open Gate & Welcoming', prompter: 'Selamat datang para tamu undangan yang berbahagia, silakan menempati kursi yang telah disediakan.', status: 'STANDBY', pic: 'Tim WO' },
+        { start_time: '19:00', end_time: '19:15', time: '19:00 - 19:15', title: 'Grand Entrance', prompter: 'Hadirin sekalian, mari kita sambut kehadiran bintang utama kita malam ini...', status: 'STANDBY', pic: 'MC & Tim WO' },
+        { start_time: '19:15', end_time: '19:30', time: '19:15 - 19:30', title: 'Opening & Doa', prompter: 'Assalamualaikum wr.wb. Puji syukur kita panjatkan ke hadirat Tuhan YME. Untuk memberkati acara kita, mari kita menundukkan kepala sejenak untuk berdoa.', status: 'STANDBY', pic: 'MC & Tokoh Agama' },
+        { start_time: '19:30', end_time: '19:45', time: '19:30 - 19:45', title: 'Sambutan-Sambutan', prompter: 'Acara selanjutnya adalah sambutan. Kepada perwakilan keluarga dipersilakan naik ke atas panggung.', status: 'STANDBY', pic: 'Keluarga' },
+        { start_time: '19:45', end_time: '20:45', time: '19:45 - 20:45', title: 'Ramah Tamah & Dinner', prompter: 'Dipersilakan kepada seluruh tamu undangan untuk menikmati hidangan makan malam yang telah disajikan.', status: 'STANDBY', pic: 'Katering & Band' },
+        { start_time: '20:45', end_time: '21:30', time: '20:45 - 21:30', title: 'Games / Entertainment', prompter: 'Sambil menikmati hidangan, mari kita cairkan suasana dengan permainan yang telah kami siapkan!', status: 'STANDBY', pic: 'MC' },
+        { start_time: '21:30', end_time: '22:00', time: '21:30 - 22:00', title: 'Closing & Photo Session', prompter: 'Tiba saatnya di penghujung acara. Terima kasih atas kehadiran bapak/ibu sekalian. Sesi selanjutnya adalah foto bersama.', status: 'STANDBY', pic: 'Fotografer & MC' }
+    ];
+
+    ev.rundown = defaultRundown;
+    ev.agenda = defaultRundown;
+    
+    if (typeof window.renderAdminRundownList === 'function') {
+        window.renderAdminRundownList(ev);
+    }
+    
+    if (typeof window.pushEventsToServer === 'function') {
+        await window.pushEventsToServer();
+        if (typeof uiToast === 'function') uiToast('Template rundown berhasil diterapkan!');
+    } else if (typeof pushEventsToServer === 'function') {
+        await pushEventsToServer();
+        if (typeof uiToast === 'function') uiToast('Template rundown berhasil diterapkan!');
+    }
+};
 
 window.openAddRundownModal = async function(editIndex = -1) {
     const ev = window.activeCommandCenterEvent;
@@ -1956,11 +2047,9 @@ window.openAddRundownModal = async function(editIndex = -1) {
             { id: 'title', label: 'Nama / Judul Segmen Acara *', type: 'text', value: editItem ? editItem.title : '' },
             { id: 'prompter', label: 'Naskah Panduan MC (Prompter & Cue)', type: 'textarea', value: editItem ? editItem.prompter : '' },
             { id: 'cue_music', label: 'Cue Musik / Sound FX / Lighting', type: 'select', options: musicOpts, value: editItem ? editItem.cue_music : '' },
+            { id: 'cue_instruction', label: 'Intruksi Musik Spesifik Segmen (Opsional)', type: 'text', value: editItem ? editItem.cue_instruction : '' },
             { id: 'pic', label: 'PIC / Koordinator Lapangan', type: 'text', value: editItem ? editItem.pic : '' }
-        ], {
-            title: editItem ? `Edit Segmen Rundown (${ev.title || 'Acara'})` : `➕ Tambah Segmen Rundown Baru (${ev.title || 'Acara'})`,
-            okText: 'Simpan Segmen Rundown'
-        });
+                ], editItem ? 'Edit Segmen' : '➕ Tambah Segmen Rundown Baru');
 
         if (!formData.title || !formData.start_time || !formData.end_time) {
             uiAlert('Judul Segmen dan Waktu (Mulai - Selesai) harus diisi!');
@@ -1974,6 +2063,7 @@ window.openAddRundownModal = async function(editIndex = -1) {
             time: `${formData.start_time} - ${formData.end_time}`,
             prompter: formData.prompter || '',
             cue_music: formData.cue_music || '',
+            cue_instruction: formData.cue_instruction || '',
             pic: formData.pic || ''
         };
 
@@ -1991,6 +2081,11 @@ window.openAddRundownModal = async function(editIndex = -1) {
         // Save to backend metadata if possible
         if (!ev.metadata) ev.metadata = {};
         ev.metadata.rundown = ev.rundown;
+        
+        // 2-way sync: update musicList dari rundown yang baru disimpan
+        if (typeof window.syncMusicToRundown === 'function') window.syncMusicToRundown(ev);
+        ev.metadata.musicList = ev.musicList;
+    ev.metadata.rundown = ev.rundown;
         
         const tm = document.querySelector('meta[name="csrf-token"]');
         const tk = tm ? tm.getAttribute('content') : '';
@@ -2239,7 +2334,47 @@ function renderAdminVendorCollab(ev) {
                     <div style="font-size:0.85rem; color:var(--text-secondary); line-height:1.6;">${escapeHtml(item.prompter || '')}</div>
                 </td>
                 <td style="padding: 1rem 0.5rem; vertical-align: top; white-space: normal; min-width: 180px;">
-                    ${item.cue_music ? `<div style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); padding:0.4rem 0.8rem; border-radius:4px; font-size:0.8rem; color:#38BDF8; font-weight:600; display:inline-block; word-wrap:break-word;">🎵 ${escapeHtml(item.cue_music)}</div>` : '<span style="color:var(--text-muted); font-size:0.8rem;">(Tidak ada audio khusus)</span>'}
+                    ${(function(){
+                        let connectedMusic = [];
+                        if (ev && ev.musicList && Array.isArray(ev.musicList)) {
+                            connectedMusic = ev.musicList.filter(m => {
+                                if (m.segment_idxs && m.segment_idxs.includes(i)) return true;
+                                if (m.segment_idx === i || m.segment_idx === String(i)) return true;
+                                if (item.cue_music && m.title === item.cue_music) return true;
+                                return false;
+                            });
+                        }
+                        let musicHtml = '';
+                        if (connectedMusic.length > 0) {
+                            connectedMusic.forEach(m => {
+                                musicHtml += `<div style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); padding:0.4rem 0.8rem; border-radius:4px; font-size:0.8rem; color:#38BDF8; font-weight:600; display:inline-block; word-wrap:break-word; margin-bottom:0.4rem;">`;
+                                musicHtml += `<div>🎵 ${escapeHtml(m.title)}</div>`;
+                                if (m.cue_instruction) {
+                                    musicHtml += `<div style="color:rgba(255,255,255,0.7); font-weight:normal; margin-top:0.2rem;">📝 Intruksi: ${escapeHtml(m.cue_instruction)}</div>`;
+                                }
+                                musicHtml += `</div><br>`;
+                            });
+                        } else if (item.cue_music || item.cue_instruction) {
+                            musicHtml = `<div style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); padding:0.4rem 0.8rem; border-radius:4px; font-size:0.8rem; color:#38BDF8; font-weight:600; display:inline-block; word-wrap:break-word;">`;
+                            if (item.cue_music) {
+                                musicHtml += `<div>🎵 ${escapeHtml(item.cue_music)}</div>`;
+                            }
+                            if (item.cue_instruction) {
+                                musicHtml += `<div style="color:rgba(255,255,255,0.7); font-weight:normal; margin-top:0.2rem;">📝 Intruksi Khusus: ${escapeHtml(item.cue_instruction)}</div>`;
+                            }
+                            musicHtml += `</div>`;
+                        } else {
+                            musicHtml = `<span style="color:var(--text-muted); font-size:0.8rem;">(Tidak ada audio khusus)</span>`;
+                        }
+                        
+                        if (connectedMusic.length > 0 && item.cue_instruction) {
+                            musicHtml += `<div style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); padding:0.4rem 0.8rem; border-radius:4px; font-size:0.8rem; color:#38BDF8; font-weight:600; display:inline-block; word-wrap:break-word; margin-top:0.4rem;">`;
+                            musicHtml += `<div style="color:rgba(255,255,255,0.7); font-weight:normal; margin-top:0.2rem;">📝 Intruksi Khusus Segmen: ${escapeHtml(item.cue_instruction)}</div>`;
+                            musicHtml += `</div>`;
+                        }
+                        
+                        return musicHtml;
+                    })()}
                 </td>
                 <td style="padding: 1rem 0.5rem; vertical-align: top; white-space: nowrap; min-width: 150px;">
                     ${item.pic ? `<div style="font-weight:600; font-size:0.85rem; color:#A78BFA; background:rgba(167,139,250,0.1); padding:0.3rem 0.6rem; border-radius:4px; display:inline-block;">👤 ${escapeHtml(item.pic)}</div>` : '<span style="color:var(--text-muted); font-size:0.8rem;">-</span>'}
@@ -2480,10 +2615,7 @@ window.openWaPreviewModal = async function(type) {
     try {
         const formData = await window.uiCustomForm([
             { id: 'msg_content', label: 'Isi Pesan WhatsApp', type: 'textarea', value: currentText }
-        ], {
-            title: title,
-            okText: 'Simpan Perubahan'
-        });
+        ], title);
         
         if (formData && formData.msg_content) {
             textareaEl.value = formData.msg_content;
@@ -4793,7 +4925,7 @@ window.openAddMusicModal = async function(editIndex = -1) { window._fullBankOpti
                     <textarea class="form-input" id="evmFormCue" rows="2" placeholder="Contoh: Putar dari menit 1:15 saat MC memanggil nama"> ${editItem ? (editItem.cue_instruction || '') : ''}</textarea>
                 </div>
                 
-                <div class="form-group">
+                <!-- <div class="form-group">
                     <label class="form-label">Kategori Momen</label>
                     <select class="form-select" id="evmFormCategory">
                         <option value="BGM" ${editItem && editItem.category==='BGM'?'selected':''}>General Background BGM</option>
@@ -4805,7 +4937,7 @@ window.openAddMusicModal = async function(editIndex = -1) { window._fullBankOpti
                         <option value="Games" ${editItem && editItem.category==='Games'?'selected':''}>Games & Bouquet Toss</option>
                         <option value="Closing" ${editItem && editItem.category==='Closing'?'selected':''}>Closing & Photo Session</option>
                     </select>
-                </div>
+                </div> -->
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="document.getElementById('${modalId}').style.display='none'; document.getElementById('${modalId}').classList.remove('active');">Batal</button>
@@ -4822,24 +4954,60 @@ window.openAddMusicModal = async function(editIndex = -1) { window._fullBankOpti
 
 window.syncMusicToRundown = function(ev) {
     if (!ev || !ev.rundown) return;
-    // Bersihkan semua cue_music bawaan/dummy
-    ev.rundown.forEach(r => r.cue_music = '');
+    if (!ev.musicList) ev.musicList = [];
     
-    if (ev.musicList) {
-        ev.musicList.forEach(m => {
-            let idxs = Array.isArray(m.segment_idxs) ? m.segment_idxs : (m.segment_idx !== null && m.segment_idx !== undefined ? [m.segment_idx] : []);
-            idxs.forEach(idx => {
-                if (ev.rundown[idx]) {
-                    // Jika ada lebih dari 1 lagu di segmen yg sama, gabungkan (meskipun idealnya 1 segmen 1 BGM utama)
-                    if (ev.rundown[idx].cue_music) {
-                        ev.rundown[idx].cue_music += ' & ' + m.title;
-                    } else {
-                        ev.rundown[idx].cue_music = m.title;
-                    }
+    // === STEP 1: RUNDOWN → MUSICLIST (baca data cue_music dari rundown ke musicList) ===
+    ev.rundown.forEach((seg, idx) => {
+        if (!seg.cue_music) return;
+        // Cue music bisa berisi beberapa judul dipisahkan ' & '
+        const titles = seg.cue_music.split(' & ').map(t => t.trim()).filter(Boolean);
+        titles.forEach(title => {
+            const matchingMusic = ev.musicList.find(m => 
+                (m.title || '').trim().toLowerCase() === title.toLowerCase()
+            );
+            if (matchingMusic) {
+                // Pastikan segment_idxs ada dan berisi index segmen ini
+                if (!Array.isArray(matchingMusic.segment_idxs)) {
+                    matchingMusic.segment_idxs = [];
                 }
-            });
+                if (!matchingMusic.segment_idxs.includes(idx)) {
+                    matchingMusic.segment_idxs.push(idx);
+                }
+                // Update segment_idx jika belum ada
+                if (matchingMusic.segment_idx === null || matchingMusic.segment_idx === undefined || matchingMusic.segment_idx === '') {
+                    matchingMusic.segment_idx = idx;
+                }
+                // Sinkronkan cue_instruction dari rundown ke musicList
+                if (seg.cue_instruction) {
+                    matchingMusic.cue_instruction = seg.cue_instruction;
+                }
+            }
         });
-    }
+    });
+    
+    // === STEP 2: MUSICLIST → RUNDOWN (rebuild cue_music dari musicList) ===
+    ev.rundown.forEach(r => {
+        r.cue_music = '';
+        // Jangan hapus cue_instruction yang sudah ada dari form segmen
+    });
+    
+    ev.musicList.forEach(m => {
+        let idxs = Array.isArray(m.segment_idxs) ? m.segment_idxs : 
+                   (m.segment_idx !== null && m.segment_idx !== undefined && m.segment_idx !== '' ? [m.segment_idx] : []);
+        idxs.forEach(idx => {
+            if (ev.rundown[idx]) {
+                if (ev.rundown[idx].cue_music) {
+                    ev.rundown[idx].cue_music += ' & ' + m.title;
+                } else {
+                    ev.rundown[idx].cue_music = m.title;
+                }
+                // Sync cue_instruction dari musicList ke rundown
+                if (m.cue_instruction) {
+                    ev.rundown[idx].cue_instruction = m.cue_instruction;
+                }
+            }
+        });
+    });
 };
 
 window.saveEventMusicForm = async function() {
@@ -4894,9 +5062,18 @@ window.saveEventMusicForm = async function() {
     
     ev.metadata = ev.metadata || {};
     ev.metadata.musicList = ev.musicList;
+    ev.metadata.rundown = ev.rundown;
     ev.music = ev.musicList; 
     
     if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
+    // Push langsung ke server via PUT
+    const __tm = document.querySelector('meta[name="csrf-token"]');
+    const __tk = __tm ? __tm.getAttribute('content') : '';
+    fetch('/api/cms/events/' + ev.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': __tk },
+        body: JSON.stringify({ metadata: ev.metadata })
+    }).catch(e => console.error('Silent save error', e));
     
     document.getElementById('modalEventMusicForm').style.display = 'none';
     document.getElementById('modalEventMusicForm').classList.remove('active');
@@ -4917,12 +5094,21 @@ window.deleteMusic = async function(index) {
     
     if (!ev.metadata) ev.metadata = {};
     ev.metadata.musicList = ev.musicList;
+    ev.metadata.rundown = ev.rundown;
     ev.music = ev.musicList;
     
     if (typeof window.renderAdminMusicListWrapper === 'function') window.renderAdminMusicListWrapper(ev);
     if (typeof window.renderAdminRundown === 'function') window.renderAdminRundown();
     
     if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
+    // Push langsung ke server via PUT
+    const __tm = document.querySelector('meta[name="csrf-token"]');
+    const __tk = __tm ? __tm.getAttribute('content') : '';
+    fetch('/api/cms/events/' + ev.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': __tk },
+        body: JSON.stringify({ metadata: ev.metadata })
+    }).catch(e => console.error('Silent save error', e));
 };
 
 
@@ -4936,6 +5122,14 @@ window.resetCurrentEventMusic = async function() {
         if (ev.metadata) ev.metadata.musicList = [];
         if (typeof window.renderAdminMusicListWrapper === 'function') window.renderAdminMusicListWrapper(ev);
         if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
+    // Push langsung ke server via PUT
+    const __tm = document.querySelector('meta[name="csrf-token"]');
+    const __tk = __tm ? __tm.getAttribute('content') : '';
+    fetch('/api/cms/events/' + ev.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': __tk },
+        body: JSON.stringify({ metadata: ev.metadata })
+    }).catch(e => console.error('Silent save error', e));
         if (typeof window.showToast === 'function') window.showToast('Playlist berhasil direset ke Default Master.');
     }
 };
@@ -5054,6 +5248,14 @@ window.saveLandingMusicForm = async function() {
     ev.metadata.landingMusic = ev.landingMusic;
     // _setEv(ev);
     if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
+    // Push langsung ke server via PUT
+    const __tm = document.querySelector('meta[name="csrf-token"]');
+    const __tk = __tm ? __tm.getAttribute('content') : '';
+    fetch('/api/cms/events/' + ev.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': __tk },
+        body: JSON.stringify({ metadata: ev.metadata })
+    }).catch(e => console.error('Silent save error', e));
     
     document.getElementById('modalLandingMusicForm').style.display = 'none';
     document.getElementById('modalLandingMusicForm').classList.remove('active');
@@ -5075,6 +5277,14 @@ window.deleteLandingMusic = async function(index) {
     ev.metadata.landingMusic = ev.landingMusic;
     if (typeof window.renderAdminLandingMusicList === 'function') window.renderAdminLandingMusicList(ev);
     if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
+    // Push langsung ke server via PUT
+    const __tm = document.querySelector('meta[name="csrf-token"]');
+    const __tk = __tm ? __tm.getAttribute('content') : '';
+    fetch('/api/cms/events/' + ev.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': __tk },
+        body: JSON.stringify({ metadata: ev.metadata })
+    }).catch(e => console.error('Silent save error', e));
 };
 
 window.toggleLandingMusic = function(index) {
@@ -5091,6 +5301,14 @@ window.toggleLandingMusic = function(index) {
     ev.metadata.landingMusic = ev.landingMusic;
     if (typeof window.renderAdminLandingMusicList === 'function') window.renderAdminLandingMusicList(ev);
     if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
+    // Push langsung ke server via PUT
+    const __tm = document.querySelector('meta[name="csrf-token"]');
+    const __tk = __tm ? __tm.getAttribute('content') : '';
+    fetch('/api/cms/events/' + ev.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': __tk },
+        body: JSON.stringify({ metadata: ev.metadata })
+    }).catch(e => console.error('Silent save error', e));
 };
 
 // --- SOUNDBOARD MODULE ---
@@ -5306,6 +5524,14 @@ window.saveSoundboardForm = async function() {
     ev.metadata = ev.metadata || {};
     ev.metadata.soundboard = ev.soundboard;
     if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
+    // Push langsung ke server via PUT
+    const __tm = document.querySelector('meta[name="csrf-token"]');
+    const __tk = __tm ? __tm.getAttribute('content') : '';
+    fetch('/api/cms/events/' + ev.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': __tk },
+        body: JSON.stringify({ metadata: ev.metadata })
+    }).catch(e => console.error('Silent save error', e));
     
     document.getElementById('modalSoundboardForm').style.display = 'none';
     document.getElementById('modalSoundboardForm').classList.remove('active');
@@ -5324,6 +5550,14 @@ window.deleteSoundboard = async function(index) {
     ev.metadata.soundboard = ev.soundboard;
     window.renderAdminSoundboardList(ev);
     if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
+    // Push langsung ke server via PUT
+    const __tm = document.querySelector('meta[name="csrf-token"]');
+    const __tk = __tm ? __tm.getAttribute('content') : '';
+    fetch('/api/cms/events/' + ev.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': __tk },
+        body: JSON.stringify({ metadata: ev.metadata })
+    }).catch(e => console.error('Silent save error', e));
 };
 
 window.toggleSoundboardIsBrought = function(index) {
@@ -5335,6 +5569,14 @@ window.toggleSoundboardIsBrought = function(index) {
     ev.metadata.soundboard = ev.soundboard;
     window.renderAdminSoundboardList(ev);
     if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
+    // Push langsung ke server via PUT
+    const __tm = document.querySelector('meta[name="csrf-token"]');
+    const __tk = __tm ? __tm.getAttribute('content') : '';
+    fetch('/api/cms/events/' + ev.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': __tk },
+        body: JSON.stringify({ metadata: ev.metadata })
+    }).catch(e => console.error('Silent save error', e));
 };
 
 window.resetCurrentEventSoundboard = async function() {
@@ -5345,6 +5587,14 @@ window.resetCurrentEventSoundboard = async function() {
         window.renderAdminSoundboardList(ev);
         if (typeof window.showToast === 'function') window.showToast('Soundboard dikembalikan ke standar.');
         if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
+    // Push langsung ke server via PUT
+    const __tm = document.querySelector('meta[name="csrf-token"]');
+    const __tk = __tm ? __tm.getAttribute('content') : '';
+    fetch('/api/cms/events/' + ev.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': __tk },
+        body: JSON.stringify({ metadata: ev.metadata })
+    }).catch(e => console.error('Silent save error', e));
     }
 };
 
@@ -5695,10 +5945,10 @@ window.saveMasterBankForm = async function() {
         bank[parseInt(idxStr)] = item;
 
         // --- SYNC TO ALL EVENTS ---
-        const allEventsRaw = localStorage.getItem('mc_events_data');
+        const allEventsRaw = 'dummy';
         if (allEventsRaw) {
-            let allEvents = [];
-            try { allEvents = JSON.parse(allEventsRaw); } catch(e){}
+            let allEvents = window.adminEventsDb || [];
+            // Removed json parse
             let updatedAny = false;
             
             allEvents.forEach(ev => {
@@ -5716,7 +5966,7 @@ window.saveMasterBankForm = async function() {
             });
             
             if (updatedAny) {
-                localStorage.setItem('mc_events_data', JSON.stringify(allEvents));
+                // Removed localStorage.setItem
                 if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) {
                     window.syncEngine.pushEventsToServer();
                 }
@@ -5955,19 +6205,7 @@ window.openAddMusicModal = async function(editIndex = -1) {
                     <textarea class="form-input" id="evmFormCue" rows="2" placeholder="Contoh: Putar dari menit 1:15 saat MC memanggil nama"> ${editItem ? (editItem.cue_instruction || '') : ''}</textarea>
                 </div>
                 
-                <div class="form-group">
-                    <label class="form-label">Kategori Momen</label>
-                    <select class="form-select" id="evmFormCategory">
-                        <option value="BGM" ${editItem && editItem.category==='BGM'?'selected':''}>General Background BGM</option>
-                        <option value="Opening" ${editItem && editItem.category==='Opening'?'selected':''}>Opening & Welcoming</option>
-                        <option value="Entrance" ${editItem && editItem.category==='Entrance'?'selected':''}>Grand Entrance</option>
-                        <option value="Ceremony" ${editItem && editItem.category==='Ceremony'?'selected':''}>Ceremony & Sambutan</option>
-                        <option value="Toast" ${editItem && editItem.category==='Toast'?'selected':''}>Toast & Cake Cutting</option>
-                        <option value="Dinner" ${editItem && editItem.category==='Dinner'?'selected':''}>Dinner & Entertainment</option>
-                        <option value="Games" ${editItem && editItem.category==='Games'?'selected':''}>Games & Bouquet Toss</option>
-                        <option value="Closing" ${editItem && editItem.category==='Closing'?'selected':''}>Closing & Photo Session</option>
-                    </select>
-                </div>
+
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="document.getElementById('${modalId}').style.display='none'; document.getElementById('${modalId}').classList.remove('active');">Batal</button>
@@ -5990,8 +6228,8 @@ window.saveEventMusicForm = async function() {
     const segment_idxs = checkedBoxes.map(cb => parseInt(cb.value));
     const segment_idx = segment_idxs.length > 0 ? segment_idxs[0] : null; 
     
-    const category = document.getElementById('evmFormCategory').value;
-    
+    const catEl = document.getElementById('evmFormCategory');
+    const category = catEl ? catEl.value : 'BGM';
     if (bankIdxStr === '') return window.uiAlert('Pilih lagu dari Master Bank terlebih dahulu!');
     
     let ev = _getEv();
@@ -6033,9 +6271,18 @@ window.saveEventMusicForm = async function() {
     
     ev.metadata = ev.metadata || {};
     ev.metadata.musicList = ev.musicList;
+    ev.metadata.rundown = ev.rundown;
     ev.music = ev.musicList; 
     
     if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
+    // Push langsung ke server via PUT
+    const __tm = document.querySelector('meta[name="csrf-token"]');
+    const __tk = __tm ? __tm.getAttribute('content') : '';
+    fetch('/api/cms/events/' + ev.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': __tk },
+        body: JSON.stringify({ metadata: ev.metadata })
+    }).catch(e => console.error('Silent save error', e));
     
     document.getElementById('modalEventMusicForm').style.display = 'none';
     document.getElementById('modalEventMusicForm').classList.remove('active');
@@ -6056,12 +6303,21 @@ window.deleteMusic = async function(index) {
     
     if (!ev.metadata) ev.metadata = {};
     ev.metadata.musicList = ev.musicList;
+    ev.metadata.rundown = ev.rundown;
     ev.music = ev.musicList;
     
     if (typeof window.renderAdminMusicListWrapper === 'function') window.renderAdminMusicListWrapper(ev);
     if (typeof window.renderAdminRundown === 'function') window.renderAdminRundown();
     
     if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) window.syncEngine.pushEventsToServer();
+    // Push langsung ke server via PUT
+    const __tm = document.querySelector('meta[name="csrf-token"]');
+    const __tk = __tm ? __tm.getAttribute('content') : '';
+    fetch('/api/cms/events/' + ev.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': __tk },
+        body: JSON.stringify({ metadata: ev.metadata })
+    }).catch(e => console.error('Silent save error', e));
 };
 
 
@@ -6138,7 +6394,13 @@ window.renderAdminMusicListWrapper = function(currentEv) {
     }
     
     if (metricTotal) metricTotal.textContent = currentEv.musicList.length + ' Trek';
-    const linkedCount = currentEv.musicList.filter(m => m.segment_idx !== null && m.segment_idx !== undefined && m.segment_idx !== '').length;
+    const linkedCount = currentEv.musicList.filter(m => {
+        let isLinked = (Array.isArray(m.segment_idxs) && m.segment_idxs.length > 0) || (m.segment_idx !== null && m.segment_idx !== undefined && m.segment_idx !== '');
+        if (!isLinked && currentEv.rundown) {
+            isLinked = currentEv.rundown.some(seg => seg.cue_music === m.title);
+        }
+        return isLinked;
+    }).length;
     const rundownCount = currentEv.rundown ? currentEv.rundown.length : 0;
     if (metricLinked) metricLinked.textContent = linkedCount + ' / ' + rundownCount + ' Segmen';
 
@@ -6148,7 +6410,7 @@ window.renderAdminMusicListWrapper = function(currentEv) {
     }
 
     let html = '<table class="ecc-table" style="width:100%; text-align:left; border-collapse:collapse;">';
-    html += '<thead><tr style="border-bottom:1px solid rgba(255,255,255,0.1);"><th style="padding:1rem;">Judul & Artis</th><th style="padding:1rem;">Instruksi Cue (FOH/DJ)</th><th style="padding:1rem;">Terhubung Segmen Rundown</th><th style="padding:1rem; text-align:right;">Aksi</th></tr></thead>';
+    html += '<thead><tr style="border-bottom:1px solid rgba(255,255,255,0.1);"><th style="padding:1rem;">Judul & Artis</th><th style="padding:1rem;">Intruksi Musik</th><th style="padding:1rem;">Terhubung Segmen Rundown</th><th style="padding:1rem; text-align:right;">Aksi</th></tr></thead>';
     html += '<tbody>';
     
     filteredList.forEach(item => {
@@ -6160,7 +6422,21 @@ window.renderAdminMusicListWrapper = function(currentEv) {
         if (Array.isArray(item.segment_idxs) && item.segment_idxs.length > 0) activeIdxs = item.segment_idxs;
         else if (item.segment_idx !== null && item.segment_idx !== undefined && item.segment_idx !== '') activeIdxs = [item.segment_idx];
         
-        if (activeIdxs.length > 0 && currentEv.rundown) {
+        let dynamicCueInstruction = item.cue_instruction || '';
+        
+        // Dynamically compute from rundown to ensure integration is always synced
+        if (currentEv.rundown) {
+            currentEv.rundown.forEach((seg, s_idx) => {
+                if ((seg.cue_music || '').trim().toLowerCase() === (item.title || '').trim().toLowerCase()) {
+                    if (!activeIdxs.includes(s_idx)) activeIdxs.push(s_idx);
+                    if (seg.cue_instruction) {
+                        dynamicCueInstruction = seg.cue_instruction;
+                        item.cue_instruction = dynamicCueInstruction; // sync back to item so it opens in modal
+                    }
+                }
+            });
+        }
+if (activeIdxs.length > 0 && currentEv.rundown) {
             segmentText = activeIdxs.map(s_idx => {
                 if (currentEv.rundown[s_idx]) {
                     return '<div style="color:#38BDF8; font-weight:600; font-size:0.85rem; margin-bottom:0.3rem;"><span style="background:rgba(56,189,248,0.15); padding:0.15rem 0.4rem; border-radius:4px; margin-right:0.4rem;">Segmen ' + (s_idx + 1) + '</span>' + escapeHtml(currentEv.rundown[s_idx].title || '') + '</div>';
@@ -6179,9 +6455,10 @@ window.renderAdminMusicListWrapper = function(currentEv) {
         html += '<div style="font-weight:700; font-size:1.05rem; color:#FFF; margin-bottom:0.3rem;">' + escapeHtml(item.title || 'Untitled') + '</div>';
         html += '<div style="font-size:0.85rem; color:var(--adm-gold);">' + escapeHtml(item.artist || 'Unknown Artist') + ' <span style="color:var(--adm-text-secondary); margin:0 0.4rem;">&bull;</span> <span style="background:rgba(212,175,55,0.1); padding:0.15rem 0.4rem; border-radius:4px;">' + escapeHtml(item.category || 'BGM') + '</span></div>';
         html += '</td>';
-        html += '<td style="padding:1rem; max-width:250px; font-size:0.85rem; color:var(--adm-text-secondary); line-height:1.4;">' + (item.cue_instruction ? escapeHtml(item.cue_instruction) : '<i style="color:#555;">Tidak ada instruksi khusus</i>') + '</td>';
+        html += '<td style="padding:1rem; max-width:250px; font-size:0.85rem; color:var(--adm-text-secondary); line-height:1.4;">' + (dynamicCueInstruction ? escapeHtml(dynamicCueInstruction) : '<i style="color:#555;">Tidak ada instruksi khusus</i>') + '</td>';
         html += '<td style="padding:1rem;">' + segmentText + '</td>';
         html += '<td style="padding:1rem; text-align:right; white-space:nowrap;">';
+        html += '<button id="btn-preview-' + item.id + '" class="btn btn-secondary btn-sm btn-preview-music" onclick="window.previewMusic(\'' + item.id + '\')" style="margin-right:0.5rem; color:#38BDF8; border-color:rgba(56,189,248,0.3);" title="Putar Lagu">▶️ Preview</button>';
         html += '<button class="btn btn-secondary btn-sm" onclick="window.openAddMusicModal(' + realIdx + ')" style="margin-right:0.5rem; color:var(--adm-gold); border-color:rgba(212,175,55,0.3);" title="Edit / Ganti Segmen">✏️ </button>';
         html += '<button class="btn btn-secondary btn-sm" onclick="window.deleteMusic(' + realIdx + ')" style="color:#F87171; border-color:rgba(248,113,113,0.3);" title="Hapus Lagu">🗑️ </button>';
         html += '</td>';
@@ -6190,6 +6467,61 @@ window.renderAdminMusicListWrapper = function(currentEv) {
     
     html += '</tbody></table>';
     container.innerHTML = html;
+};
+
+window._currentPreviewAudio = null;
+window._lastPlayedMusicId = null;
+window.previewMusic = function(musicId) {
+    if (window._currentPreviewAudio) {
+        window._currentPreviewAudio.pause();
+        window._currentPreviewAudio = null;
+        document.querySelectorAll('.btn-preview-music').forEach(b => {
+            b.innerHTML = '▶️ Preview';
+            b.classList.remove('playing');
+        });
+    }
+    
+    if (window._lastPlayedMusicId === musicId) {
+        window._lastPlayedMusicId = null;
+        return; // already paused
+    }
+    
+    const ev = window.activeCommandCenterEvent;
+    if (!ev || !ev.musicList) return;
+    const item = ev.musicList.find(m => String(m.id) === String(musicId));
+    if (!item) return;
+
+    window._lastPlayedMusicId = musicId;
+    let src = item.url_link || '';
+    if (!src && item.file_upload) {
+        if (String(item.file_upload).startsWith('uploads/')) src = '/' + item.file_upload;
+        else if (String(item.file_upload).startsWith('/uploads/')) src = item.file_upload;
+        else src = '/uploads/music/' + item.file_upload;
+    }
+    
+    if (src) {
+        window._currentPreviewAudio = new Audio(src);
+        window._currentPreviewAudio.onended = () => {
+            window._currentPreviewAudio = null;
+            window._lastPlayedMusicId = null;
+            const btn = document.getElementById('btn-preview-' + musicId);
+            if (btn) { btn.innerHTML = '▶️ Preview'; btn.classList.remove('playing'); }
+        };
+        window._currentPreviewAudio.play().catch(e => {
+            if (typeof uiAlert === 'function') uiAlert('Gagal memutar audio. Format tidak didukung atau link rusak.');
+            else alert('Gagal memutar audio.');
+        });
+        
+        const btn = document.getElementById('btn-preview-' + musicId);
+        if (btn) {
+            btn.innerHTML = '⏹ Stop';
+            btn.classList.add('playing');
+        }
+    } else {
+        if (typeof uiAlert === 'function') uiAlert('File audio belum diunggah.');
+        else alert('File audio belum diunggah.');
+        window._lastPlayedMusicId = null;
+    }
 };
 
 // Override the original renderAdminMusicList to use our wrapper
@@ -6436,10 +6768,10 @@ window.saveMasterBankForm = async function() {
         bank[parseInt(idxStr)] = item;
 
         // --- SYNC TO ALL EVENTS ---
-        const allEventsRaw = localStorage.getItem('mc_events_data');
+        const allEventsRaw = 'dummy';
         if (allEventsRaw) {
-            let allEvents = [];
-            try { allEvents = JSON.parse(allEventsRaw); } catch(e){}
+            let allEvents = window.adminEventsDb || [];
+            // removed json parse
             let updatedAny = false;
             
             allEvents.forEach(ev => {
@@ -6457,7 +6789,7 @@ window.saveMasterBankForm = async function() {
             });
             
             if (updatedAny) {
-                localStorage.setItem('mc_events_data', JSON.stringify(allEvents));
+                // removed setItem
                 if (typeof window.syncEngine !== 'undefined' && window.syncEngine.pushEventsToServer) {
                     window.syncEngine.pushEventsToServer();
                 }

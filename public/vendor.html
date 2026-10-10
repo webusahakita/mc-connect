@@ -169,7 +169,7 @@
             </div>
 
             <div style="background:rgba(0,0,0,0.45); padding:1rem 1.5rem; border-radius:var(--radius-md); border-left:4px solid #38BDF8;">
-                <span style="font-size:0.82rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Instruksi Musik / Audio Cue Operator:</span>
+                <span style="font-size:0.82rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Intruksi Musik / Audio Cue Operator:</span>
                 <div id="activeLiveCue" style="font-size:1.35rem; font-weight:700; color:#38BDF8; margin-top:0.25rem;">
                     Fade-in Orchestral Romance Theme, volume 30%
                 </div>
@@ -190,7 +190,7 @@
                         <th style="width:130px;">Waktu</th>
                         <th style="width:230px;">Nama Segmen Acara</th>
                         <th style="width:220px;">Musik Acara Melekat</th>
-                        <th>Instruksi Cue & Sound Effects</th>
+                        <th>Intruksi Musik & Sound Effects</th>
                         <th style="width:120px; text-align:center;">Status</th>
                         <th style="width:145px; text-align:center;">Kontrol Audio</th>
                     </tr>
@@ -314,16 +314,19 @@
     if (m) picName = m[1].trim();
     if (metaEl) metaEl.textContent = `Venue: ${ev.venue || '-'} · PIC: ${picName}`;
     
-    // Load Rundown
-    vendorRundown = ev.rundown && Array.isArray(ev.rundown) ? ev.rundown : [];
+    // Load Rundown (check both direct property and metadata)
+    vendorRundown = (ev.rundown && Array.isArray(ev.rundown) && ev.rundown.length > 0) ? ev.rundown : 
+                    ((ev.metadata && Array.isArray(ev.metadata.rundown)) ? ev.metadata.rundown : []);
     if (!vendorRundown || vendorRundown.length === 0) {
         vendorRundown = [
             { start_time: '18:30', end_time: '19:00', title: 'Belum ada segmen', cue_music: '-', pic: '-' }
         ];
     }
     
-    // Load Music List
-    vendorMusicList = (ev.metadata && ev.metadata.music) ? ev.metadata.music : [];
+    // Load Music List (check both metadata.musicList and metadata.music)
+    vendorMusicList = (ev.metadata && Array.isArray(ev.metadata.musicList) && ev.metadata.musicList.length > 0) ? ev.metadata.musicList : 
+                      ((ev.metadata && Array.isArray(ev.metadata.music)) ? ev.metadata.music : 
+                      (Array.isArray(ev.musicList) ? ev.musicList : []));
     
     renderVendorRundown();
     
@@ -349,6 +352,13 @@ function renderVendorRundown() {
         const pic = item.pic || '—';
         const isPlaying = (currentPlayingRowIdx === idx);
         
+        // Match the song with the master bank to get the actual instruction
+        const matchedMusic = vendorMusicList.find(m => m.title === item.cue_music) || {};
+        let instruksiCue = '';
+        if (matchedMusic.cue_instruction) instruksiCue += matchedMusic.cue_instruction;
+        if (item.cue_instruction) instruksiCue += (instruksiCue ? ' | Khusus Segmen: ' : '') + item.cue_instruction;
+        if (!instruksiCue) instruksiCue = item.cue || '— Background audio normal —';
+        
         return `
         <tr id="row-segment-${segNum}" class="${isLive ? 'active-live' : ''} ${isPlaying ? 'playing' : ''}">
             <td style="font-weight:800; font-size:1.1rem; color:var(--gold-primary); text-align:center;">
@@ -369,7 +379,7 @@ function renderVendorRundown() {
             </td>
             <td>
                 <div style="color:#FBBF24; font-weight:600; font-size:0.88rem; line-height:1.4;">
-                    ${escapeHtml(item.cue_music || '— Background audio normal —')}
+                    ${escapeHtml(instruksiCue)}
                 </div>
             </td>
             <td style="text-align:center;">
@@ -395,7 +405,15 @@ function renderVendorRundown() {
 function updateLiveBanner(segmentIndex, segmentTitle, musicCue, mTitle, mArtist) {
             const item = vendorRundown[segmentIndex - 1];
             const title = segmentTitle || (item ? item.title : `Segmen ${segmentIndex}`);
-            const cue = musicCue || (item ? item.cue : '— Background audio normal —');
+            let actualCue = musicCue;
+            if (vendorMusicList) {
+                const matchedMusic = vendorMusicList.find(m => m.title === (musicCue || (item ? item.cue_music : ''))) || {};
+                let baseCue = matchedMusic.cue_instruction || '';
+                let segCue = (item && item.cue_instruction) ? item.cue_instruction : '';
+                actualCue = baseCue + (baseCue && segCue ? ' | Khusus Segmen: ' : '') + segCue;
+                if (!actualCue) actualCue = musicCue || (item ? item.cue : null);
+            }
+            const cue = actualCue || '— Background audio normal —';
             const track = mTitle || (item ? item.musicTitle : (item && item.music ? item.music.title : ''));
             const artist = mArtist || (item ? item.musicArtist : (item && item.music ? item.music.artist : ''));
 

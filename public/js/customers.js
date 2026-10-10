@@ -650,11 +650,6 @@
         let allEvents = [];
         if (typeof adminEventsDb !== 'undefined' && Array.isArray(adminEventsDb) && adminEventsDb.length > 0) {
             allEvents = adminEventsDb;
-        } else {
-            try {
-                const stored = AdminDB.getItem('mc_events_db_v1');
-                if (stored) allEvents = JSON.parse(stored);
-            } catch(e) {}
         }
 
         const conflicting = allEvents.filter(e => e.date === dateStr);
