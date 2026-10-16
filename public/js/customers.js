@@ -30,6 +30,7 @@
             console.warn("Gagal mengambil data dari server", e);
         }
         renderCustomersTable();
+        renderDashboardCustomers();
         if (typeof window.renderDashboardPies === 'function') window.renderDashboardPies();
         updateCustomerMetrics();
         renderSidebarCustomerList();
@@ -316,20 +317,33 @@
         if (!tbody) return;
         tbody.innerHTML = '';
 
-        if (mcCustomers.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">Belum ada data pelanggan aktif.</td></tr>';
+        if (!mcCustomers || mcCustomers.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:2rem; color:var(--text-muted);">Belum ada data pelanggan aktif di database server.</td></tr>';
             return;
         }
 
-        // Show top 3 recent customers
-        const recent = mcCustomers.slice(-3).reverse();
+        // Show all recent customers or up to 10
+        const recent = [...mcCustomers].reverse();
         recent.forEach(c => {
             const row = document.createElement('tr');
             
             let bgGradient = c.category === 'Wedding' ? 'linear-gradient(135deg,#EC4899,#F43F5E)' : (c.category === 'Corporate' ? 'linear-gradient(135deg,#3B82F6,#0EA5E9)' : 'linear-gradient(135deg,#D4AF37,#F59E0B)');
-            let badgeClass = c.category === 'Wedding' ? 'badge-review' : 'badge-review';
-            let badgeStyle = c.category === 'Wedding' ? 'background:rgba(236,72,153,0.12); color:#F472B6; border-color:rgba(236,72,153,0.3);' : '';
+            let badgeStyle = c.category === 'Wedding' ? 'background:rgba(236,72,153,0.12); color:#F472B6; border-color:rgba(236,72,153,0.3);' : (c.category === 'Corporate' ? 'background:rgba(59,130,246,0.12); color:#60A5FA; border-color:rgba(59,130,246,0.3);' : 'background:rgba(212,175,55,0.12); color:var(--adm-gold); border-color:rgba(212,175,55,0.3);');
             
+            let payBadgeClass = 'badge-tentative';
+            if (c.paymentStatus && (c.paymentStatus.includes('Lunas') || c.paymentStatus.includes('100%') || c.paymentStatus.toLowerCase().includes('paid'))) {
+                payBadgeClass = 'badge-available';
+            } else if (c.paymentStatus && (c.paymentStatus.includes('Hold') || c.paymentStatus.includes('Review'))) {
+                payBadgeClass = 'badge-review';
+            } else if (c.paymentStatus && c.paymentStatus.includes('Belum')) {
+                payBadgeClass = 'badge-locked';
+            }
+
+            let calBadgeClass = 'badge-review';
+            if (c.calendarStatus === 'Terkunci' || c.calendarStatus === 'Locked') calBadgeClass = 'badge-locked';
+            else if (c.calendarStatus === 'Tentative') calBadgeClass = 'badge-tentative';
+            else if (c.calendarStatus === 'Selesai') calBadgeClass = 'badge-available';
+
             let newBadge = '';
             if (c.created_at) {
                 const createdDate = new Date(c.created_at);
@@ -341,25 +355,27 @@
                 }
             }
 
+            let clientCatBadge = c.client_category ? `<span class="badge badge-tier-pro">${c.client_category}</span>` : `<span style="color:var(--adm-text-muted);">-</span>`;
+
             row.innerHTML = `
                 <td>
                     <div style="display:flex; align-items:center; gap:0.65rem;">
-                        <div style="width:34px; height:34px; border-radius:50%; background:${bgGradient}; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.8rem;">${c.initials || 'MC'}</div>
+                        <div style="width:34px; height:34px; border-radius:50%; background:${c.initialsBg || bgGradient}; color:${c.initialsColor || '#fff'}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.8rem;">${c.initials || 'MC'}</div>
                         <div>
                             <div style="font-weight:700; color:var(--adm-text-primary);">${c.name}${newBadge}</div>
                             <div style="font-size:0.75rem; color:var(--adm-text-muted);">📞 ${c.wa || '-'}</div>
                         </div>
                     </div>
                 </td>
-                <td><span class="badge ${badgeClass}" style="${badgeStyle}">${c.categoryIcon || '✨'} ${c.categoryLabel || c.category}</span></td>
-                <td>${c.client_category || 'Reguler'}</td>
+                <td><span class="badge" style="${badgeStyle}">${c.categoryIcon || '✨'} ${c.categoryLabel || c.category || '-'}</span></td>
+                <td>${clientCatBadge}</td>
                 <td>
                     <div style="font-weight:600; color:var(--adm-text-primary);">${c.event || '-'}</div>
                     <div style="font-size:0.75rem; color:var(--adm-text-muted);">${c.formattedDate || c.date || '-'}</div>
                 </td>
                 <td style="font-weight:700; color:var(--adm-text-primary);">Rp ${Number(c.price || 0).toLocaleString('id-ID')}</td>
-                <td><span class="badge badge-tentative">${c.paymentStatus || 'Pending'}</span></td>
-                <td><span class="badge badge-review">${c.calendarStatus || 'Review'}</span></td>
+                <td><span class="badge ${payBadgeClass}">${c.paymentStatus || 'Belum Bayar'}</span></td>
+                <td><span class="badge ${calBadgeClass}">${c.calendarStatus || 'Review'}</span></td>
                 <td style="text-align:right;">
                     <button class="btn btn-secondary btn-sm" style="padding:0.3rem 0.55rem; font-size:0.75rem;" onclick="window.viewCustomerDetail(${c.id})" title="Lihat Detail">👁️ Detail</button>
                 </td>

@@ -1386,4 +1386,26 @@ class CmsApiController extends Controller
         }
         return response()->json(['success' => false, 'message' => 'No file uploaded']);
     }
+
+    public function uploadExpenseProof(Request $request)
+    {
+        if ($request->hasFile('file') || $request->hasFile('proof')) {
+            $file = $request->file('file') ?? $request->file('proof');
+            $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $file->getClientOriginalName());
+            
+            $dest = public_path('uploads/expenses');
+            if (!file_exists($dest)) {
+                @mkdir($dest, 0777, true);
+            }
+            
+            $file->move($dest, $filename);
+            return response()->json([
+                'success' => true,
+                'url' => '/uploads/expenses/' . $filename,
+                'file_name' => $filename
+            ]);
+        }
+        return response()->json(['success' => false, 'message' => 'No file uploaded']);
+    }
 }
+

@@ -135,3 +135,6 @@ Route::post('/cms/event-categories', [CmsApiController::class, 'saveEventCategor
 Route::get('/cms/music-bank', [CmsApiController::class, 'getMusicBank']);
 Route::post('/cms/music-bank', [CmsApiController::class, 'saveMusicBank']);
 Route::post('/cms/music-bank/upload', [CmsApiController::class, 'uploadMusicBankFile']);
+
+// 13. Expense Proof Upload
+Route::post('/cms/events/upload-expense-proof', [CmsApiController::class, 'uploadExpenseProof']);

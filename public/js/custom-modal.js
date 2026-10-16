@@ -112,11 +112,20 @@ function buildFormFields(formContainer, fields) {
             } else {
                 input = document.createElement('input');
                 input.type = field.type || 'text';
+                if (field.accept) {
+                    input.accept = field.accept;
+                }
+                if (field.type === 'file') {
+                    input.style.cursor = 'pointer';
+                    input.style.padding = '0.5rem';
+                }
             }
             input.id = 'cm_field_' + field.id;
             input.className = 'custom-modal-input';
             input.style.marginBottom = '0';
-            input.value = field.value !== undefined ? field.value : '';
+            if (field.type !== 'file') {
+                input.value = field.value !== undefined ? field.value : '';
+            }
             if (field.readonly) {
                 input.readOnly = true;
                 input.style.backgroundColor = 'rgba(0,0,0,0.2)';

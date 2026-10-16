@@ -835,178 +835,28 @@
                             <button class="btn btn-primary btn-sm active" id="btnFilterAllEvents"
                                 style="padding:0.35rem 0.8rem; font-size:0.8rem;"
                                 onclick="filterDashEvents('all', this)">
-                                Semu</button>
+                                Semua</button>
                             <button class="btn btn-secondary btn-sm" id="btnFilterLockedEvents"
                                 style="padding:0.35rem 0.8rem; font-size:0.8rem;"
                                 onclick="filterDashEvents('locked', this)">
-                                🔒
+                                🔒 Terkunci
                             </button>
                             <button class="btn btn-secondary btn-sm" id="btnFilterTentativeEvents"
                                 style="padding:0.35rem 0.8rem; font-size:0.8rem;"
                                 onclick="filterDashEvents('tentative', this)">
-                                Tentative
+                                ⏳ Tentative
                             </button>
                             <button class="btn btn-secondary btn-sm" id="btnFilterReviewEvents"
                                 style="padding:0.35rem 0.8rem; font-size:0.8rem;"
                                 onclick="filterDashEvents('review', this)">
-                                Review
+                                📝 Review
                             </button>
                         </div>
                     </div>
 
                     <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(360px, 1fr)); gap:1.75rem;"
                         id="dashEventsGrid">
-                        <!-- Event 1: Terkunci -->
-                        <div class="ecc-card dash-event-card" data-status="locked"
-                            style="display:flex; flex-direction:column; justify-content:space-between;">
-                            <div>
-                                <div style="display:flex; justify-content:space-between; margin-bottom:1rem;">
-                                    <span class="badge badge-locked">🔒</span>
-                                    <span
-                                        style="font-family:var(--font-mono); font-size:0.85rem; color:var(--adm-gold); font-weight:700;">18
-                                        Sep 2026</span>
-                                </div>
-                                <h3 style="font-size:1.25rem; font-weight:700; margin-bottom:0.4rem;">Wedding Reception
-                                    Farhan & Natasha</h3>
-                                <div style="font-size:0.88rem; color:var(--adm-text-secondary); margin-bottom:1rem;">
-                                    Grand Ballroom Hotel MuliSenayan, Jakart</div>
-                                <div
-                                    style="background:rgba(255,255,255,0.03); padding:0.75rem 1rem; border-radius:var(--adm-radius-sm); font-size:0.85rem; margin-bottom:1.25rem; border:1px solid var(--adm-border);">
-                                    <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
-                                        <span style="color:var(--adm-text-muted)">Klien PIC:</span>
-                                        <strong>NatashHendrawan (Personal)</strong>
-                                    </div>
-                                    <div style="display:flex; justify-content:space-between;">
-                                        <span style="color:var(--adm-text-muted)">Waktu:</span>
-                                        <span>19:00 - 22:00 WIB</span>
-                                    </div>
-                                </div>
-                                <div style="margin-bottom:1rem;">
-                                    <div
-                                        style="display:flex; justify-content:space-between; font-size:0.78rem; color:var(--adm-text-muted); margin-bottom:0.35rem;">
-                                        <span>Kesiapan Acar(Checklist)</span>
-                                        <span style="color:var(--adm-success); font-weight:700;">80%</span>
-                                    </div>
-                                    <div class="checklist-progress-bar"
-                                        style="margin:0; background:rgba(255,255,255,0.08);">
-                                        <div class="checklist-progress-fill"
-                                            style="width:80%; background:linear-gradient(90deg, #10B981, #34D399);">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div
-                                style="display:flex; gap:0.5rem; padding-top:1rem; border-top:1px solid var(--adm-border);">
-                                <button class="btn btn-primary btn-sm" style="flex: 1;"
-                                    onclick="navigateToSection('sec-command-center', document.getElementById('menu-command-center'))">
-                                    Command Center
-                                </button>
-                                <a href="stage.html" target="_blank" class="btn btn-secondary btn-sm"
-                                    title="BBuka Stage Mode">tage
-                                </a>
-                            </div>
-                        </div>
-
-                        <!-- Event 2: Tentative -->
-                        <div class="ecc-card dash-event-card" data-status="tentative"
-                            style="display:flex; flex-direction:column; justify-content:space-between;">
-                            <div>
-                                <div style="display:flex; justify-content:space-between; margin-bottom:1rem;">
-                                    <span class="badge badge-tentative"> Tentative</span>
-                                    <span
-                                        style="font-family:var(--font-mono); font-size:0.85rem; color:var(--adm-gold); font-weight:700;">24
-                                        Sep 2026</span>
-                                </div>
-                                <h3 style="font-size:1.25rem; font-weight:700; margin-bottom:0.4rem;">Telkomsel
-                                    Enterprise GalNight 2026</h3>
-                                <div style="font-size:0.88rem; color:var(--adm-text-secondary); margin-bottom:1rem;">
-                                    The Ritz-Carlton Pacific Place, Jakart</div>
-                                <div
-                                    style="background:rgba(255,255,255,0.03); padding:0.75rem 1rem; border-radius:var(--adm-radius-sm); font-size:0.85rem; margin-bottom:1.25rem; border:1px solid var(--adm-border);">
-                                    <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
-                                        <span style="color:var(--adm-text-muted)">Klien PIC:</span>
-                                        <strong>Budi Santoso (Corporate)</strong>
-                                    </div>
-                                    <div style="display:flex; justify-content:space-between;">
-                                        <span style="color:var(--adm-text-muted)">Waktu:</span>
-                                        <span>18:30 - 21:30 WIB</span>
-                                    </div>
-                                </div>
-                                <div style="margin-bottom:1rem;">
-                                    <div
-                                        style="display:flex; justify-content:space-between; font-size:0.78rem; color:var(--adm-text-muted); margin-bottom:0.35rem;">
-                                        <span>Kesiapan Acar(Checklist)</span>
-                                        <span style="color:#FBBF24; font-weight:700;">40%</span>
-                                    </div>
-                                    <div class="checklist-progress-bar"
-                                        style="margin:0; background:rgba(255,255,255,0.08);">
-                                        <div class="checklist-progress-fill"
-                                            style="width:40%; background:linear-gradient(90deg, #F59E0B, #FBBF24);">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div
-                                style="display:flex; gap:0.5rem; padding-top:1rem; border-top:1px solid var(--adm-border);">
-                                <button class="btn btn-primary btn-sm" style="flex: 1;"
-                                    onclick="navigateToSection('sec-command-center', document.getElementById('menu-command-center'))">
-                                    Command Center
-                                </button>
-                                <a href="stage.html" target="_blank" class="btn btn-secondary btn-sm">tage
-                                </a>
-                            </div>
-                        </div>
-
-                        <!-- Event 3: Review -->
-                        <div class="ecc-card dash-event-card" data-status="review"
-                            style="display:flex; flex-direction:column; justify-content:space-between;">
-                            <div>
-                                <div style="display:flex; justify-content:space-between; margin-bottom:1rem;">
-                                    <span class="badge badge-review">Review</span>
-                                    <span
-                                        style="font-family:var(--font-mono); font-size:0.85rem; color:var(--adm-gold); font-weight:700;">05
-                                        Okt 2026</span>
-                                </div>
-                                <h3 style="font-size:1.25rem; font-weight:700; margin-bottom:0.4rem;">The Grand Wedding
-                                    of Kevin & Stephanie</h3>
-                                <div style="font-size:0.88rem; color:var(--adm-text-secondary); margin-bottom:1rem;">
-                                    JW Marriott Ballroom Surabay</div>
-                                <div
-                                    style="background:rgba(255,255,255,0.03); padding:0.75rem 1rem; border-radius:var(--adm-radius-sm); font-size:0.85rem; margin-bottom:1.25rem; border:1px solid var(--adm-border);">
-                                    <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
-                                        <span style="color:var(--adm-text-muted)">Klien PIC:</span>
-                                        <strong>Kevin Tandiono (Personal)</strong>
-                                    </div>
-                                    <div style="display:flex; justify-content:space-between;">
-                                        <span style="color:var(--adm-text-muted)">Waktu:</span>
-                                        <span>18:00 - 21:30 WIB</span>
-                                    </div>
-                                </div>
-                                <div style="margin-bottom:1rem;">
-                                    <div
-                                        style="display:flex; justify-content:space-between; font-size:0.78rem; color:var(--adm-text-muted); margin-bottom:0.35rem;">
-                                        <span>Kesiapan Acar(Checklist)</span>
-                                        <span style="color:#38BDF8; font-weight:700;">20%</span>
-                                    </div>
-                                    <div class="checklist-progress-bar"
-                                        style="margin:0; background:rgba(255,255,255,0.08);">
-                                        <div class="checklist-progress-fill"
-                                            style="width:20%; background:linear-gradient(90deg, #38BDF8, #818CF8);">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div
-                                style="display:flex; gap:0.5rem; padding-top:1rem; border-top:1px solid var(--adm-border);">
-                                <button class="btn btn-primary btn-sm" style="flex: 1;"
-                                    onclick="navigateToSection('sec-command-center', document.getElementById('menu-command-center'))">
-                                    Command Center
-                                </button>
-                                <a href="stage.html" target="_blank" class="btn btn-secondary btn-sm"
-                                    title="BBuka Stage Mode">tage
-                                </a>
-                            </div>
-                        </div>
+                        <!-- Events loaded dynamically from database -->
                     </div>
 
                     <!-- Customer CRM Highlights on Dashboard -->
@@ -1316,7 +1166,7 @@
                                 <select class="form-select"
                                     style="font-size:0.85rem; padding:0.45rem 0.85rem; width:auto;" id="cfFilterSelect"
                                     onchange="filterCashFlowTable(this.value)">
-                                    <option>Semua Transaksi</option>
+                                    <option value="all">Semua Transaksi</option>
                                     <option value="in">Hanya Kas Masuk (+)</option>
                                     <option value="out">Hanya Kas Keluar (-)</option>
                                 </select>
@@ -2236,10 +2086,14 @@ Kebutuhan Hospitality:
                                 
                                 <!-- Row 2: Main Actions -->
                                 <div style="display:flex; gap:0.75rem; flex-wrap:wrap; justify-content:flex-end;">
-                                    <a href="stage.html" target="_blank" class="btn btn-primary btn-sm" style="padding:0.75rem 1.5rem; font-size:0.95rem; font-weight:900; border-radius:12px; box-shadow:0 6px 20px rgba(212,175,55,0.4); text-transform:uppercase; letter-spacing:0.5px;">
+                                    <a href="stage.html" target="_blank" class="btn btn-primary btn-sm"
+                                        onclick="this.href='stage.html?eventId=' + (window.activeCommandCenterEventId || 1);"
+                                        style="padding:0.75rem 1.5rem; font-size:0.95rem; font-weight:900; border-radius:12px; box-shadow:0 6px 20px rgba(212,175,55,0.4); text-transform:uppercase; letter-spacing:0.5px;">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: text-bottom; margin-right:6px;"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg> Masuk Stage Mode
                                     </a>
-                                    <a href="vendor.html" target="_blank" class="btn btn-secondary btn-sm" style="padding:0.75rem 1.25rem; font-size:0.9rem; font-weight:800; border-radius:12px; border-color:rgba(255,255,255,0.25); background:rgba(255,255,255,0.06);" title="Layar Khusus Operator Suara/ DJ">
+                                    <a href="vendor.html" target="_blank" class="btn btn-secondary btn-sm"
+                                        onclick="this.href='vendor.html?eventId=' + (window.activeCommandCenterEventId || 1);"
+                                        style="padding:0.75rem 1.25rem; font-size:0.9rem; font-weight:800; border-radius:12px; border-color:rgba(255,255,255,0.25); background:rgba(255,255,255,0.06);" title="Layar Khusus Operator Suara/ DJ">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: text-bottom; margin-right:6px;"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg> Vendor Musik
                                     </a>
                                     <button class="btn btn-outline-gold btn-sm" style="padding:0.75rem 1.25rem; font-size:0.9rem; font-weight:800; border-radius:12px;" onclick="window.openEditEventScheduleModal(activeCommandCenterEventId)" title="Edit Venue & Jam Acara">
@@ -2512,9 +2366,12 @@ Kebutuhan Hospitality:
                                     <div class="finance-stat-value red" id="adminSisaVal">Rp 6.250.000</div>
                                 </div>
                                 <div class="finance-stat-card">
+                                    <div class="finance-stat-label">Total Pengeluaran</div>
+                                    <div class="finance-stat-value" style="color:#F87171;" id="adminStatExpenseVal">Rp 0</div>
+                                </div>
+                                <div class="finance-stat-card">
                                     <div class="finance-stat-label">Estimasi Net Profit MC</div>
-                                    <div class="finance-stat-value" style="color:#38BDF8;" id="adminProfitVal">Rp
-                                        10.550.000</div>
+                                    <div class="finance-stat-value" style="color:#38BDF8;" id="adminProfitVal">Rp 10.550.000</div>
                                 </div>
                             </div>
 
@@ -2668,6 +2525,7 @@ Kebutuhan Hospitality:
                                             ⬇️ Unduh Audio Pack (.wav)
                                         </button>
                                         <a href="vendor.html" target="_blank" class="btn btn-primary btn-sm"
+                                            onclick="this.href='vendor.html?eventId=' + (window.activeCommandCenterEventId || 1);"
                                             style="background:linear-gradient(135deg, #0284C7, #0EA5E9); border:none;">
                                             💻 Buka Layar Operator
                                         </a>
@@ -5205,16 +5063,16 @@ Terimkasih banyak, Kak!</textarea>
     </div>
 
     <!-- Scripts -->
-    <script src="js/custom-modal.js?v=8.8" defer></script>
+    <script src="js/custom-modal.js?v=8.9" defer></script>
     <script src="js/sync-engine.js?v=2.3" defer></script>
     <script src="js/audio-storage.js?v=8.7" defer></script>
     <script src="js/soundboard.js?v=8.7" defer></script>
     <script src="js/teleprompter.js?v=8.7" defer></script>
     <script src="js/live-sync.js?v=8.7" defer></script>
     <script src="js/calendar.js?v=8.14" defer></script>
-    <script src="js/customers.js?v=8.9" defer></script>
+    <script src="js/customers.js?v=8.10" defer></script>
     <script src="js/app.js?v=8.11" defer></script>
-    <script src="js/admin-core.js?v=8.66" defer></script>
+    <script src="js/admin-core.js?v=8.68" defer></script>
     <script src="js/invoice-modal.js?v=1.20" defer></script>
     <script src="js/cms-overrides.js?v=8.7" defer></script>
     </div>
@@ -5224,7 +5082,7 @@ Terimkasih banyak, Kak!</textarea>
                 window.SyncEngine.pullAll().then(() => {
                     if (typeof initAdminCms === 'function') initAdminCms();
                     if (typeof loadUnifiedEventsDatabase === 'function') loadUnifiedEventsDatabase();
-                    if (typeof loadCrmCustomersDatabase === 'function') loadCrmCustomersDatabase();
+                    if (typeof loadCustomersData === 'function') loadCustomersData();
                 });
             }
         });

@@ -1,1 +1,10 @@
 node_modules
+*.cjs
+*.py
+scratch/
+vite.config.js.timestamp*
+public/uploads/music/*
+!public/uploads/music/.gitkeep
+public/uploads/expenses/*
+!public/uploads/expenses/.gitkeep
+

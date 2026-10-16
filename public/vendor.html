@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,6 +21,7 @@
             font-size: 0.85rem;
             font-weight: 700;
         }
+
         .sync-dot {
             width: 10px;
             height: 10px;
@@ -27,10 +29,21 @@
             background: #10B981;
             animation: pulseDot 1.2s infinite;
         }
+
         @keyframes pulseDot {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.4); opacity: 0.5; }
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.4);
+                opacity: 0.5;
+            }
         }
+
         .vendor-table th {
             background: rgba(15, 23, 42, 0.95);
             color: var(--text-secondary);
@@ -39,16 +52,19 @@
             border-bottom: 2px solid var(--border-subtle);
             text-align: left;
         }
+
         .vendor-table td {
             padding: 0.85rem 1rem;
             border-bottom: 1px solid var(--border-subtle);
             vertical-align: middle;
         }
+
         .vendor-table tr.active-live td {
             background: rgba(212, 175, 55, 0.08);
             border-top: 1px solid rgba(212, 175, 55, 0.4);
             border-bottom: 1px solid rgba(212, 175, 55, 0.4);
         }
+
         .vendor-btn-play {
             background: linear-gradient(135deg, #0284C7, #0369A1);
             color: #FFFFFF;
@@ -63,16 +79,19 @@
             gap: 0.35rem;
             transition: all 0.2s ease;
         }
+
         .vendor-btn-play:hover {
             background: #0284C7;
             transform: translateY(-1px);
             box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
         }
+
         .vendor-btn-play.playing {
             background: linear-gradient(135deg, #DC2626, #B91C1C);
             border-color: #F87171;
             color: #FFFFFF;
         }
+
         .vendor-btn-stop {
             background: rgba(239, 68, 68, 0.15);
             color: #F87171;
@@ -84,18 +103,22 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
+
         .vendor-btn-stop:hover {
             background: rgba(239, 68, 68, 0.25);
             color: #FFFFFF;
         }
     </style>
 </head>
+
 <body class="vendor-screen">
     <div class="container" style="max-width:1150px; padding:2rem 1.5rem;">
         <!-- Top Bar -->
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-subtle); padding-bottom:1.5rem; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+        <div
+            style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-subtle); padding-bottom:1.5rem; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
             <div>
-                <div style="color:var(--gold-primary); font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.25rem;">
+                <div
+                    style="color:var(--gold-primary); font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.25rem;">
                     🎛️ Layar Kolaborasi Vendor Musik & Soundman (FOH / DJ Live Console)
                 </div>
                 <h1 style="font-size:1.8rem; font-weight:800; margin:0.2rem 0;" id="vendorEventTitle">
@@ -107,9 +130,13 @@
             </div>
 
             <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
-                <div style="display:flex; align-items:center; gap:0.4rem; background:rgba(212,175,55,0.08); padding:0.35rem 0.65rem; border-radius:var(--radius-sm); border:1px solid rgba(212,175,55,0.3);">
-                    <label for="vendorEventSelect" style="font-size:0.75rem; font-weight:800; color:var(--gold-primary);">⚡ Acara:</label>
-                    <select id="vendorEventSelect" class="form-select" style="max-width:240px; padding:0.25rem 0.5rem; font-size:0.8rem; background:#0B0F19; color:#FFFFFF; border-color:var(--gold-primary);" onchange="onVendorEventChange(this.value)">
+                <div
+                    style="display:flex; align-items:center; gap:0.4rem; background:rgba(212,175,55,0.08); padding:0.35rem 0.65rem; border-radius:var(--radius-sm); border:1px solid rgba(212,175,55,0.3);">
+                    <label for="vendorEventSelect"
+                        style="font-size:0.75rem; font-weight:800; color:var(--gold-primary);">⚡ Acara:</label>
+                    <select id="vendorEventSelect" class="form-select"
+                        style="max-width:240px; padding:0.25rem 0.5rem; font-size:0.8rem; background:#0B0F19; color:#FFFFFF; border-color:var(--gold-primary);"
+                        onchange="onVendorEventChange(this.value)">
                         <!-- Populated dynamically -->
                     </select>
                 </div>
@@ -117,7 +144,9 @@
                     <span class="sync-dot"></span>
                     <span id="syncStatusLabel">Tersinkronisasi Real-Time</span>
                 </div>
-                <button class="btn btn-secondary btn-sm" onclick="downloadAllAudioPackVendor()" title="Download seluruh audio cue (.wav) ke memori laptop/HP untuk jaminan 100% offline tanpa internet" style="border-color:#38BDF8; color:#38BDF8; font-weight:700;">
+                <button class="btn btn-secondary btn-sm" onclick="downloadAllAudioPackVendor()"
+                    title="Download seluruh audio cue (.wav) ke memori laptop/HP untuk jaminan 100% offline tanpa internet"
+                    style="border-color:#38BDF8; color:#38BDF8; font-weight:700;">
                     ⬇️ Unduh Audio Pack (.wav)
                 </button>
                 <a href="admin.html" class="btn btn-secondary btn-sm">
@@ -127,49 +156,62 @@
         </div>
 
         <!-- Offline & Web Audio Notice Banner -->
-        <div style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.3); border-radius:var(--radius-md); padding:0.85rem 1.25rem; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+        <div
+            style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.3); border-radius:var(--radius-md); padding:0.85rem 1.25rem; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
             <div style="display:flex; align-items:center; gap:0.75rem;">
                 <span style="font-size:1.5rem;">🎧</span>
                 <div>
-                    <div style="font-size:0.85rem; font-weight:800; color:#38BDF8;">Pemutar Audio FOH / DJ Siap Pakai di Web (100% Offline)</div>
+                    <div style="font-size:0.85rem; font-weight:800; color:#38BDF8;">Pemutar Audio FOH / DJ Siap Pakai di
+                        Web (100% Offline)</div>
                     <div style="font-size:0.78rem; color:var(--text-secondary);">
-                        Operator dapat memutar/menghentikan cue suara langsung dari tombol <strong>Play</strong> di bawah tanpa perlu internet. Anda juga bisa mengunduh file WAV ke gadget.
+                        Operator dapat memutar/menghentikan cue suara langsung dari tombol <strong>Play</strong> di
+                        bawah tanpa perlu internet. Anda juga bisa mengunduh file WAV ke gadget.
                     </div>
                 </div>
             </div>
             <div style="display:flex; align-items:center; gap:0.5rem;">
-                <button class="btn btn-secondary btn-sm" onclick="stopAllVendorAudio()" style="font-size:0.75rem; color:#EF4444; border-color:rgba(239,68,68,0.4);">
+                <button class="btn btn-secondary btn-sm" onclick="stopAllVendorAudio()"
+                    style="font-size:0.75rem; color:#EF4444; border-color:rgba(239,68,68,0.4);">
                     ⏹ Stop Semua Audio
                 </button>
             </div>
         </div>
 
         <!-- Active Live Segment Banner -->
-        <div style="background:linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(56, 189, 248, 0.15)); border:2px solid var(--gold-primary); border-radius:var(--radius-lg); padding:1.75rem 2rem; margin-bottom:2rem; box-shadow:var(--shadow-gold);">
+        <div
+            style="background:linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(56, 189, 248, 0.15)); border:2px solid var(--gold-primary); border-radius:var(--radius-lg); padding:1.75rem 2rem; margin-bottom:2rem; box-shadow:var(--shadow-gold);">
             <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem;">
                 <div style="flex:1;">
-                    <div style="font-size:0.85rem; font-weight:800; color:var(--gold-primary); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.4rem;">
+                    <div
+                        style="font-size:0.85rem; font-weight:800; color:var(--gold-primary); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.4rem;">
                         🔥 SEGMEN PANGGUNG AKTIF SAAT INI (LIVE ON STAGE):
                     </div>
                     <h2 id="activeLiveTitle" style="font-size:1.9rem; font-weight:800; margin-bottom:0.5rem;">
                         Segmen 1: Opening Greeting & Welcoming VIP
                     </h2>
-                    <div style="font-size:0.92rem; color:var(--text-secondary); margin-bottom:1rem;" id="activeLiveTrackName">
-                        🎵 Trek Terkait: <strong>Acoustic Lounge & Jazz Classics</strong> · Artis: <em>Vanya Acoustic Trio</em>
+                    <div style="font-size:0.92rem; color:var(--text-secondary); margin-bottom:1rem;"
+                        id="activeLiveTrackName">
+                        🎵 Trek Terkait: <strong>Acoustic Lounge & Jazz Classics</strong> · Artis: <em>Vanya Acoustic
+                            Trio</em>
                     </div>
                 </div>
                 <div style="display:flex; gap:0.6rem; align-items:center;">
-                    <button class="vendor-btn-play" id="btnLivePlay" onclick="playActiveLiveCue()" style="padding:0.6rem 1.25rem; font-size:0.95rem;">
+                    <button class="vendor-btn-play" id="btnLivePlay" onclick="playActiveLiveCue()"
+                        style="padding:0.6rem 1.25rem; font-size:0.95rem;">
                         ▶ Putar Musik Segmen Ini (Live)
                     </button>
-                    <button class="vendor-btn-stop" id="btnLiveStop" onclick="stopAllVendorAudio()" style="padding:0.6rem 1rem; font-size:0.95rem;">
+                    <button class="vendor-btn-stop" id="btnLiveStop" onclick="stopAllVendorAudio()"
+                        style="padding:0.6rem 1rem; font-size:0.95rem;">
                         ⏹ Stop
                     </button>
                 </div>
             </div>
 
-            <div style="background:rgba(0,0,0,0.45); padding:1rem 1.5rem; border-radius:var(--radius-md); border-left:4px solid #38BDF8;">
-                <span style="font-size:0.82rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Intruksi Musik / Audio Cue Operator:</span>
+            <div
+                style="background:rgba(0,0,0,0.45); padding:1rem 1.5rem; border-radius:var(--radius-md); border-left:4px solid #38BDF8;">
+                <span
+                    style="font-size:0.82rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Intruksi
+                    Musik / Audio Cue Operator:</span>
                 <div id="activeLiveCue" style="font-size:1.35rem; font-weight:700; color:#38BDF8; margin-top:0.25rem;">
                     Fade-in Orchestral Romance Theme, volume 30%
                 </div>
@@ -177,12 +219,16 @@
         </div>
 
         <!-- Full Rundown Cue Matrix -->
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
-            <h3 style="font-size:1.25rem; font-weight:800; margin:0;">📋 Matriks Rundown Panggung & Cue Musik Lengkap:</h3>
-            <span style="font-size:0.8rem; color:var(--text-secondary);" id="vendorRundownCountLabel">7 Segmen Terdaftar</span>
+        <div
+            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+            <h3 style="font-size:1.25rem; font-weight:800; margin:0;">📋 Matriks Rundown Panggung & Cue Musik Lengkap:
+            </h3>
+            <span style="font-size:0.8rem; color:var(--text-secondary);" id="vendorRundownCountLabel">7 Segmen
+                Terdaftar</span>
         </div>
 
-        <div style="overflow-x:auto; background:var(--bg-surface); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+        <div
+            style="overflow-x:auto; background:var(--bg-surface); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
             <table class="vendor-table" style="width:100%; border-collapse:collapse;">
                 <thead>
                     <tr>
@@ -221,11 +267,18 @@
         });
 
         function initVendorScreen() {
-            // Read active event ID from localStorage or fallback
+            // Read active event ID from URL parameter, localStorage or fallback
             try {
-                const storedId = localStorage.getItem('activeCommandCenterEventId');
-                if (storedId) activeEventId = storedId;
-            } catch(e) {}
+                const urlParams = new URLSearchParams(window.location.search);
+                const paramId = urlParams.get('eventId') || urlParams.get('event_id') || urlParams.get('id');
+                if (paramId) {
+                    activeEventId = paramId;
+                    localStorage.setItem('activeCommandCenterEventId', paramId);
+                } else {
+                    const storedId = localStorage.getItem('activeCommandCenterEventId');
+                    if (storedId) activeEventId = storedId;
+                }
+            } catch (e) { }
 
             populateEventSelector();
             loadActiveEventData();
@@ -254,22 +307,22 @@
         }
 
         async function populateEventSelector() {
-    let events = [];
-    try {
-        const res = await fetch('/api/cms/events');
-        const json = await res.json();
-        if (json.success && json.data) events = json.data;
-    } catch(e) {
-        console.error('Gagal fetch event dari server', e);
-    }
+            let events = [];
+            try {
+                const res = await fetch('/api/cms/events');
+                const json = await res.json();
+                if (json.success && json.data) events = json.data;
+            } catch (e) {
+                console.error('Gagal fetch event dari server', e);
+            }
 
-    if (!events || events.length === 0) {
-        events = [
-            { id: 1, title: 'Menunggu koneksi server...', venue: '-' }
-        ];
-    }
+            if (!events || events.length === 0) {
+                events = [
+                    { id: 1, title: 'Menunggu koneksi server...', venue: '-' }
+                ];
+            }
 
-    const sel = document.getElementById('vendorEventSelect');
+            const sel = document.getElementById('vendorEventSelect');
             if (sel) {
                 sel.innerHTML = events.map(e => `<option value="${e.id}" ${String(e.id) === String(activeEventId) ? 'selected' : ''}>${e.title}</option>`).join('');
             }
@@ -279,87 +332,87 @@
             activeEventId = newId;
             try {
                 localStorage.setItem('activeCommandCenterEventId', newId);
-            } catch(e) {}
+            } catch (e) { }
             loadActiveEventData();
         }
 
         async function loadActiveEventData() {
-    let ev = null;
-    try {
-        const res = await fetch('/api/cms/events');
-        const json = await res.json();
-        if (json.success && json.data) {
-            ev = json.data.find(e => String(e.id) === String(activeEventId));
-            if (!ev && json.data.length > 0) ev = json.data[0];
-        }
-    } catch(e) {
-        console.error('Failed to fetch events from DB', e);
-    }
-    
-    if (!ev) {
-        ev = {
-            id: 1,
-            title: 'Database Terputus',
-            venue: 'Gagal memuat data server',
-            pic: '-'
-        };
-    }
-    
-    const titleEl = document.getElementById('vendorEventTitle');
-    if (titleEl) titleEl.textContent = ev.title;
-    
-    const metaEl = document.getElementById('vendorEventMeta');
-    let picName = ev.pic || '';
-    const m = picName.match(/(.*?)\s*\(/);
-    if (m) picName = m[1].trim();
-    if (metaEl) metaEl.textContent = `Venue: ${ev.venue || '-'} · PIC: ${picName}`;
-    
-    // Load Rundown (check both direct property and metadata)
-    vendorRundown = (ev.rundown && Array.isArray(ev.rundown) && ev.rundown.length > 0) ? ev.rundown : 
-                    ((ev.metadata && Array.isArray(ev.metadata.rundown)) ? ev.metadata.rundown : []);
-    if (!vendorRundown || vendorRundown.length === 0) {
-        vendorRundown = [
-            { start_time: '18:30', end_time: '19:00', title: 'Belum ada segmen', cue_music: '-', pic: '-' }
-        ];
-    }
-    
-    // Load Music List (check both metadata.musicList and metadata.music)
-    vendorMusicList = (ev.metadata && Array.isArray(ev.metadata.musicList) && ev.metadata.musicList.length > 0) ? ev.metadata.musicList : 
-                      ((ev.metadata && Array.isArray(ev.metadata.music)) ? ev.metadata.music : 
-                      (Array.isArray(ev.musicList) ? ev.musicList : []));
-    
-    renderVendorRundown();
-    
-    // Set initial active segment
-    const firstItem = vendorRundown[0];
-    if (firstItem) {
-        updateLiveBanner(1, firstItem.title, firstItem.cue_music, '', '');
-        highlightActiveRow(1);
-    }
-}
+            let ev = null;
+            try {
+                const res = await fetch('/api/cms/events');
+                const json = await res.json();
+                if (json.success && json.data) {
+                    ev = json.data.find(e => String(e.id) === String(activeEventId));
+                    if (!ev && json.data.length > 0) ev = json.data[0];
+                }
+            } catch (e) {
+                console.error('Failed to fetch events from DB', e);
+            }
 
-function renderVendorRundown() {
-    const tbody = document.getElementById('vendorRundownTableBody');
-    if (!tbody) return;
-    
-    const countLabel = document.getElementById('vendorRundownCountLabel');
-    if (countLabel) countLabel.textContent = `${vendorRundown.length} Segmen Terdaftar`;
-    
-    tbody.innerHTML = vendorRundown.map((item, idx) => {
-        const segNum = idx + 1;
-        const isLive = (segNum === activeSegmentIndex);
-        const musicTitle = item.cue_music || '—';
-        const pic = item.pic || '—';
-        const isPlaying = (currentPlayingRowIdx === idx);
-        
-        // Match the song with the master bank to get the actual instruction
-        const matchedMusic = vendorMusicList.find(m => m.title === item.cue_music) || {};
-        let instruksiCue = '';
-        if (matchedMusic.cue_instruction) instruksiCue += matchedMusic.cue_instruction;
-        if (item.cue_instruction) instruksiCue += (instruksiCue ? ' | Khusus Segmen: ' : '') + item.cue_instruction;
-        if (!instruksiCue) instruksiCue = item.cue || '— Background audio normal —';
-        
-        return `
+            if (!ev) {
+                ev = {
+                    id: 1,
+                    title: 'Database Terputus',
+                    venue: 'Gagal memuat data server',
+                    pic: '-'
+                };
+            }
+
+            const titleEl = document.getElementById('vendorEventTitle');
+            if (titleEl) titleEl.textContent = ev.title;
+
+            const metaEl = document.getElementById('vendorEventMeta');
+            let picName = ev.pic || '';
+            const m = picName.match(/(.*?)\s*\(/);
+            if (m) picName = m[1].trim();
+            if (metaEl) metaEl.textContent = `Venue: ${ev.venue || '-'} · PIC: ${picName}`;
+
+            // Load Rundown (check both direct property and metadata)
+            vendorRundown = (ev.rundown && Array.isArray(ev.rundown) && ev.rundown.length > 0) ? ev.rundown :
+                ((ev.metadata && Array.isArray(ev.metadata.rundown)) ? ev.metadata.rundown : []);
+            if (!vendorRundown || vendorRundown.length === 0) {
+                vendorRundown = [
+                    { start_time: '18:30', end_time: '19:00', title: 'Belum ada segmen', cue_music: '-', pic: '-' }
+                ];
+            }
+
+            // Load Music List (check both metadata.musicList and metadata.music)
+            vendorMusicList = (ev.metadata && Array.isArray(ev.metadata.musicList) && ev.metadata.musicList.length > 0) ? ev.metadata.musicList :
+                ((ev.metadata && Array.isArray(ev.metadata.music)) ? ev.metadata.music :
+                    (Array.isArray(ev.musicList) ? ev.musicList : []));
+
+            renderVendorRundown();
+
+            // Set initial active segment
+            const firstItem = vendorRundown[0];
+            if (firstItem) {
+                updateLiveBanner(1, firstItem.title, firstItem.cue_music, '', '');
+                highlightActiveRow(1);
+            }
+        }
+
+        function renderVendorRundown() {
+            const tbody = document.getElementById('vendorRundownTableBody');
+            if (!tbody) return;
+
+            const countLabel = document.getElementById('vendorRundownCountLabel');
+            if (countLabel) countLabel.textContent = `${vendorRundown.length} Segmen Terdaftar`;
+
+            tbody.innerHTML = vendorRundown.map((item, idx) => {
+                const segNum = idx + 1;
+                const isLive = (segNum === activeSegmentIndex);
+                const musicTitle = item.cue_music || '—';
+                const pic = item.pic || '—';
+                const isPlaying = (currentPlayingRowIdx === idx);
+
+                // Match the song with the master bank to get the actual instruction
+                const matchedMusic = vendorMusicList.find(m => m.title === item.cue_music) || {};
+                let instruksiCue = '';
+                if (matchedMusic.cue_instruction) instruksiCue += matchedMusic.cue_instruction;
+                if (item.cue_instruction) instruksiCue += (instruksiCue ? ' | Khusus Segmen: ' : '') + item.cue_instruction;
+                if (!instruksiCue) instruksiCue = item.cue || '— Background audio normal —';
+
+                return `
         <tr id="row-segment-${segNum}" class="${isLive ? 'active-live' : ''} ${isPlaying ? 'playing' : ''}">
             <td style="font-weight:800; font-size:1.1rem; color:var(--gold-primary); text-align:center;">
                 #${segNum}
@@ -399,10 +452,10 @@ function renderVendorRundown() {
             </td>
         </tr>
         `;
-    }).join('');
-}
+            }).join('');
+        }
 
-function updateLiveBanner(segmentIndex, segmentTitle, musicCue, mTitle, mArtist) {
+        function updateLiveBanner(segmentIndex, segmentTitle, musicCue, mTitle, mArtist) {
             const item = vendorRundown[segmentIndex - 1];
             const title = segmentTitle || (item ? item.title : `Segmen ${segmentIndex}`);
             let actualCue = musicCue;
@@ -458,12 +511,12 @@ function updateLiveBanner(segmentIndex, segmentTitle, musicCue, mTitle, mArtist)
             }
             if (vendorActiveOscillators && vendorActiveOscillators.length > 0) {
                 vendorActiveOscillators.forEach(osc => {
-                    try { osc.stop(); osc.disconnect(); } catch(e) {}
+                    try { osc.stop(); osc.disconnect(); } catch (e) { }
                 });
                 vendorActiveOscillators = [];
             }
             if (vendorAudioCtx && vendorAudioCtx.state !== 'closed') {
-                try { vendorAudioCtx.close(); } catch(e) {}
+                try { vendorAudioCtx.close(); } catch (e) { }
             }
             vendorAudioCtx = null;
 
@@ -500,35 +553,63 @@ function updateLiveBanner(segmentIndex, segmentTitle, musicCue, mTitle, mArtist)
             const row = document.getElementById(`row-segment-${rowIdx + 1}`);
             if (row) row.classList.add('playing');
 
-            
+
             const musicItem = vendorMusicList.find(m => m.title === item.cue_music || m.cue_instruction === item.cue_music);
+            let src = '';
             if (musicItem) {
-                let src = musicItem.url_link || '';
-                if (!src && musicItem.file_upload) {
+                if (musicItem.file_upload) {
                     if (String(musicItem.file_upload).startsWith('uploads/')) src = '/' + musicItem.file_upload;
                     else if (String(musicItem.file_upload).startsWith('/uploads/')) src = musicItem.file_upload;
                     else src = '/uploads/music/' + musicItem.file_upload;
-                }
-                if (src) {
-                    window._vendorAudioPlayer = new Audio(src);
-                    window._vendorAudioPlayer.onended = () => { stopAllVendorAudio(); };
-                    window._vendorAudioPlayer.play().catch(e => console.error('Gagal memutar audio vendor:', e));
-                    return;
+                } else if (musicItem.url_link) {
+                    // Check if it's not a streaming website like YouTube that cannot be played directly via new Audio()
+                    const link = musicItem.url_link.toLowerCase();
+                    const isDirectAudio = link.endsWith('.mp3') || link.endsWith('.wav') || link.endsWith('.ogg') || link.endsWith('.m4a') || link.endsWith('.aac');
+                    if (isDirectAudio) {
+                        src = musicItem.url_link;
+                    }
                 }
             }
 
-            // Fallback
-            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-            vendorAudioCtx = new AudioContextClass();
+            if (src) {
+                const audio = new Audio(src);
+                window._vendorAudioPlayer = audio;
+                audio.onended = () => { stopAllVendorAudio(); };
+                audio.onerror = () => {
+                    // If file source fails or not supported, fallback to synthesizer smoothly
+                    playVendorSynthFallback(item);
+                };
+                audio.play().catch(e => {
+                    console.warn('Direct audio play failed, falling back to synthesizer:', e.message);
+                    playVendorSynthFallback(item);
+                });
+                return;
+            }
 
-            const genre = item.musicGenre || (item.music ? item.music.genre : 'Romance');
-            const preset = genre === 'Fanfare' ? 'royal_fanfare' : (genre === 'Upbeat' ? 'upbeat_beat' : 'romantic_piano');
-
-            synthesizeVendorMelody(vendorAudioCtx, preset, () => {
-                stopAllVendorAudio();
-            });
+            // Fallback synthesizer
+            playVendorSynthFallback(item);
         }
-        
+
+        function playVendorSynthFallback(item) {
+            try {
+                if (window._vendorAudioPlayer) {
+                    try { window._vendorAudioPlayer.pause(); } catch(e){}
+                    window._vendorAudioPlayer = null;
+                }
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContextClass) return;
+                vendorAudioCtx = new AudioContextClass();
+                const genre = (item && item.musicGenre) || (item && item.music ? item.music.genre : 'Romance');
+                const preset = genre === 'Fanfare' ? 'royal_fanfare' : (genre === 'Upbeat' ? 'upbeat_beat' : 'romantic_piano');
+                synthesizeVendorMelody(vendorAudioCtx, preset, () => {
+                    stopAllVendorAudio();
+                });
+            } catch(err) {
+                console.error('Audio synthesizer error:', err);
+                stopAllVendorAudio();
+            }
+        }
+
         function playActiveLiveCue() {
             const idx = activeSegmentIndex - 1;
             const btn = document.querySelector(`#row-segment-${activeSegmentIndex} .vendor-btn-play`);
@@ -715,4 +796,5 @@ function updateLiveBanner(segmentIndex, segmentTitle, musicCue, mTitle, mArtist)
         }
     </script>
 </body>
+
 </html>
