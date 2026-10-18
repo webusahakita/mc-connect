@@ -153,7 +153,7 @@ async function initPublicCms() {
                 const ts = Date.now();
                 try {
                     const [evs, bioRes] = await Promise.all([
-                        fetch('/api/cms/events?t=' + ts).then(r=>r.json()),
+                        fetch('/api/calendar/availability?t=' + ts).then(r=>r.json()),
                         fetch('/api/cms/biodata?t=' + ts).then(r=>r.json()).catch(()=>({}))
                     ]);
                     
@@ -177,8 +177,8 @@ async function initPublicCms() {
                         }
                     }
                     
-                    if (window.calendarApp && evs.success) {
-                        window.calendarApp.events = evs.data;
+                    if (window.calendarApp && Array.isArray(evs)) {
+                        window.calendarApp.events = evs;
                         window.calendarApp.render();
                     }
                 } catch (e) {

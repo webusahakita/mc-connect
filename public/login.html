@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+    <script src="/js/session-client.js?v=1.0"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Admin MC - MC-Connect</title>
@@ -83,20 +84,10 @@
                 Email atau kata sandi tidak cocok.
             </div>
 
-            <div class="quick-demo-pill">
-                <div>
-                    <strong style="color:var(--gold-primary);">Demo Kredensial:</strong><br>
-                    <code>vanya@mcconnect.id</code> / <code>password123</code>
-                </div>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="quickFillCredentials()" style="padding:0.3rem 0.6rem; font-size:0.78rem;">
-                    Isi Cepat
-                </button>
-            </div>
-
             <form onsubmit="handleAuthSubmit(event)">
                 <div class="form-group">
                     <label class="form-label">Email Master of Ceremony *</label>
-                    <input type="email" class="form-input" id="authEmail" value="vanya@mcconnect.id" required autofocus>
+                    <input type="email" class="form-input" id="authEmail" autocomplete="username" required autofocus>
                 </div>
 
                 <div class="form-group">
@@ -104,7 +95,7 @@
                         <label class="form-label" style="margin-bottom:0;">Kata Sandi *</label>
                     </div>
                     <div style="position: relative;">
-                        <input type="password" class="form-input" id="authPassword" value="password123" required style="padding-right: 40px;">
+                        <input type="password" class="form-input" id="authPassword" autocomplete="current-password" required style="padding-right: 40px;">
                         <button type="button" id="togglePassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center;">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         </button>
@@ -145,12 +136,6 @@
             }
         });
 
-        function quickFillCredentials() {
-            document.getElementById('authEmail').value = 'vanya@mcconnect.id';
-            document.getElementById('authPassword').value = 'password123';
-            showToast('Kredensial demo diisikan!', 'gold');
-        }
-
         async function handleAuthSubmit(e) {
             e.preventDefault();
             const email = document.getElementById('authEmail').value.trim();
@@ -172,15 +157,18 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    // Set session auth token (simulated for static html)
-                    sessionStorage.setItem('mc_auth_token', 'auth_token_' + data.user.id);
+                    window.MCSession.setToken(data.csrf_token);
+                    sessionStorage.removeItem('mc_auth_token');
                     sessionStorage.setItem('mc_auth_user', JSON.stringify(data.user));
 
                     showToast('Login berhasil! Mengalihkan ke Admin Dashboard...', 'gold');
                     
                     // Ambil target redirect jika ada
                     const urlParams = new URLSearchParams(window.location.search);
-                    const redirectTo = urlParams.get('redirect') || 'admin.html';
+                    const candidate = new URL(urlParams.get('redirect') || '/admin', window.location.origin);
+                    const redirectTo = candidate.origin === window.location.origin &&
+                        /^\/(admin|stage|vendor)(\.html)?$/.test(candidate.pathname)
+                        ? candidate.pathname + candidate.search : '/admin';
 
                     setTimeout(() => {
                         window.location.href = redirectTo;

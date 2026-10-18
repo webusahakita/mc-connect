@@ -18,16 +18,26 @@ use Illuminate\Support\Str;
 class CmsApiController extends Controller
 {
     /**
-     * Helper: Ambil MC pertama (ID=1) — untuk fase single-tenant.
-     * Di multi-tenant production: gunakan auth()->user() atau session.
+     * Admin requests use the MC verified by session middleware.
+     * Public website requests fall back to the default MC.
      */
     private function getMC(): UserMC
     {
-        $mc = UserMC::first();
+        $mc = request()->attributes->get('mc') ?? UserMC::first();
         if (!$mc) {
             abort(404, 'MC tidak ditemukan di database.');
         }
         return $mc;
+    }
+
+    private function normalizeEventMetadata($metadata): array
+    {
+        // Older records may still contain a JSON string after Eloquent's array cast.
+        if (is_string($metadata)) {
+            $metadata = json_decode($metadata, true);
+        }
+
+        return is_array($metadata) ? $metadata : [];
     }
 
     // ============================================================
@@ -231,14 +241,14 @@ class CmsApiController extends Controller
 
     public function updateGalleryCaption(Request $request, $id)
     {
-        $item = CmsGallery::findOrFail($id);
+        $item = CmsGallery::where('mc_id', $this->getMC()->id)->findOrFail($id);
         $item->update(['caption' => $request->input('caption', '')]);
         return response()->json(['success' => true]);
     }
 
     public function deleteGallery($id)
     {
-        $item = CmsGallery::findOrFail($id);
+        $item = CmsGallery::where('mc_id', $this->getMC()->id)->findOrFail($id);
         $item->delete(); // booted() handles file deletion
         return response()->json(['success' => true, 'message' => 'Foto dihapus.']);
     }
@@ -470,7 +480,7 @@ class CmsApiController extends Controller
         ];
 
         if ($dbId) {
-            $rider = CmsRider::findOrFail($dbId);
+            $rider = CmsRider::where('mc_id', $this->getMC()->id)->findOrFail($dbId);
             $rider->update($data);
         } else {
             $maxOrder = CmsRider::where('mc_id', $mc->id)->max('urutan') ?? 0;
@@ -488,7 +498,7 @@ class CmsApiController extends Controller
 
     public function deleteRider($id)
     {
-        CmsRider::findOrFail($id)->delete();
+        CmsRider::where('mc_id', $this->getMC()->id)->findOrFail($id)->delete();
         return response()->json(['success' => true, 'message' => 'Rider dihapus.']);
     }
 
@@ -570,7 +580,7 @@ class CmsApiController extends Controller
 
     public function deleteWardrobeCatalogItem($id)
     {
-        CmsWardrobeCatalog::findOrFail($id)->delete();
+        CmsWardrobeCatalog::where('mc_id', $this->getMC()->id)->findOrFail($id)->delete();
         return response()->json(['success' => true, 'message' => 'Item wardrobe dihapus.']);
     }
 
@@ -697,7 +707,7 @@ class CmsApiController extends Controller
         $paymentStatus = 'Belum Bayar';
         $event = $id ? Event::where('client_id', $id)->first() : null;
         if ($event && $event->metadata) {
-            $metadata = json_decode($event->metadata, true);
+            $metadata = $this->normalizeEventMetadata($event->metadata);
             if (isset($metadata['nominal_dp'])) {
                 $dp = (int)$metadata['nominal_dp'];
                 $totalForSync = $request->input('price') !== null ? (int)$request->input('price') : (int)$event->nilai_kontrak;
@@ -737,7 +747,7 @@ class CmsApiController extends Controller
             'catatan_khusus'           => $request->input('notes', '') ?: '',
         ];
         if ($id) {
-            $client = Client::findOrFail($id);
+            $client = Client::where('mc_id', $this->getMC()->id)->findOrFail($id);
             $client->update($data);
         } else {
             $client = Client::create($data);
@@ -781,7 +791,7 @@ class CmsApiController extends Controller
 
     public function deleteCustomer($id)
     {
-        $client = Client::findOrFail($id);
+        $client = Client::where('mc_id', $this->getMC()->id)->findOrFail($id);
         // Cascade: hapus event terkait juga
         Event::where('client_id', $client->id)->delete();
         $client->delete();
@@ -804,14 +814,6 @@ class CmsApiController extends Controller
     {
         $mc = $this->getMC();
         
-        try {
-            if (!\Illuminate\Support\Facades\Schema::hasColumn('cms_cashflow_transactions', 'bukti_file')) {
-                \Illuminate\Support\Facades\Schema::table('cms_cashflow_transactions', function ($table) {
-                    $table->string('bukti_file')->nullable();
-                });
-            }
-        } catch (\Exception $e) {}
-
         $transactions = \App\Models\CmsCashflowTransaction::where('mc_id', $mc->id)->orderBy('tanggal', 'desc')->orderBy('id', 'desc')->get();
         
         return response()->json([
@@ -918,7 +920,7 @@ class CmsApiController extends Controller
             ->get();
 
         return response()->json(['success' => true, 'data' => $events->map(function($e) {
-            $meta = $e->metadata ? (is_string($e->metadata) ? json_decode($e->metadata, true) : $e->metadata) : [];
+            $meta = $this->normalizeEventMetadata($e->metadata);
             $client = $e->client;
             $timeStr = substr($e->waktu_mulai, 0, 5) . ' - ' . substr($e->waktu_selesai, 0, 5) . ' WIB';
 
@@ -992,7 +994,7 @@ class CmsApiController extends Controller
             'catatan_khusus'    => $request->input('catatan_khusus', ''),
             'nilai_kontrak'     => $request->input('nilai_kontrak', 0),
             'status_pembayaran' => $request->input('status_pembayaran', 'Tentative (Hold)'),
-            'metadata'          => $request->input('metadata') ? json_encode($request->input('metadata')) : null,
+            'metadata'          => $request->has('metadata') ? $this->normalizeEventMetadata($request->input('metadata')) : null,
         ]);
 
         return response()->json([
@@ -1015,7 +1017,7 @@ class CmsApiController extends Controller
     {
         if (str_starts_with($id, 'v_')) {
             $clientId = str_replace('v_', '', $id);
-            $client = Client::findOrFail($clientId);
+            $client = Client::where('mc_id', $this->getMC()->id)->findOrFail($clientId);
             $event = Event::create([
                 'client_id'         => $client->id,
                 'nama_acara'        => $client->nama_acara ?? ('Event ' . $client->nama_pic),
@@ -1030,7 +1032,7 @@ class CmsApiController extends Controller
                 'metadata'          => null,
             ]);
         } else {
-            $event = Event::findOrFail($id);
+            $event = Event::whereHas('client', fn ($query) => $query->where('mc_id', $this->getMC()->id))->findOrFail($id);
         }
 
         $allowedStatuses = ['Review', 'Tentative', 'Terkunci', 'Selesai'];
@@ -1057,23 +1059,17 @@ class CmsApiController extends Controller
         }
         if ($request->has('status_pembayaran')) $data['status_pembayaran'] = $request->input('status_pembayaran');
         if ($request->has('metadata')) {
-            $incomingMeta = $request->input('metadata');
-            $existingMeta = $event->metadata ? json_decode($event->metadata, true) : [];
-            if (!is_array($existingMeta)) $existingMeta = [];
-            if (is_array($incomingMeta)) {
-                $mergedMeta = array_merge($existingMeta, $incomingMeta);
-                $data['metadata'] = json_encode($mergedMeta);
-            } else {
-                $data['metadata'] = json_encode($incomingMeta);
-            }
+            $incomingMeta = $this->normalizeEventMetadata($request->input('metadata'));
+            $existingMeta = $this->normalizeEventMetadata($event->metadata);
+            $data['metadata'] = array_merge($existingMeta, $incomingMeta);
         }
 
         // Tentukan prioritas status_pembayaran berdasarkan nominal_dp di invoice (kasir)
         $totalForSync = isset($data['nilai_kontrak']) ? (int)$data['nilai_kontrak'] : (int)$event->nilai_kontrak;
-        if ($request->has('metadata') && isset($request->input('metadata')['nominal_dp'])) {
-            $inputMeta = $request->input('metadata');
+        if (isset($incomingMeta['nominal_dp'])) {
+            $inputMeta = $incomingMeta;
             $newDp = (int)$inputMeta['nominal_dp'];
-            $oldMeta = $event->metadata ? json_decode($event->metadata, true) : [];
+            $oldMeta = $existingMeta;
             
             $oldDp = 0;
             if (isset($oldMeta['payment_history']) && is_array($oldMeta['payment_history'])) {
@@ -1107,9 +1103,9 @@ class CmsApiController extends Controller
                 ];
                 
                 // Fix: Merge into the already merged metadata, not just the input meta
-                $mergedForPayment = json_decode($data['metadata'], true) ?: [];
+                $mergedForPayment = $data['metadata'];
                 $mergedForPayment['payment_history'] = $history;
-                $data['metadata'] = json_encode($mergedForPayment);
+                $data['metadata'] = $mergedForPayment;
             }
 
             $dp = $newDp;
@@ -1170,7 +1166,7 @@ class CmsApiController extends Controller
 
     public function deleteEvent($id)
     {
-        $event = Event::findOrFail($id);
+        $event = Event::whereHas('client', fn ($query) => $query->where('mc_id', $this->getMC()->id))->findOrFail($id);
         $event->delete();
         return response()->json(['success' => true, 'message' => 'Acara berhasil dihapus dari database.']);
     }
@@ -1183,7 +1179,7 @@ class CmsApiController extends Controller
     {
         // Handle public access via host or authenticated admin
         $host = $request->getHost();
-        if (auth()->check()) {
+        if ($request->attributes->has('mc')) {
             $mc = $this->getMC();
         } else {
             $mc = \App\Models\UserMC::where('custom_domain', $host)->first() ?? \App\Models\UserMC::first();
@@ -1239,7 +1235,7 @@ class CmsApiController extends Controller
     public function getClientCategories(Request $request)
     {
         $host = $request->getHost();
-        if (auth()->check()) {
+        if ($request->attributes->has('mc')) {
             $mc = $this->getMC();
         } else {
             $mc = \App\Models\UserMC::where('custom_domain', $host)->first() ?? \App\Models\UserMC::first();
@@ -1296,7 +1292,7 @@ class CmsApiController extends Controller
     public function getWaTemplates(Request $request)
     {
         $host = $request->getHost();
-        if (auth()->check()) {
+        if ($request->attributes->has('mc')) {
             $mc = $this->getMC();
         } else {
             $mc = \App\Models\UserMC::where('custom_domain', $host)->first() ?? \App\Models\UserMC::first();
@@ -1348,7 +1344,7 @@ class CmsApiController extends Controller
     public function getMusicBank(Request $request)
     {
         $host = $request->getHost();
-        if (auth()->check()) {
+        if ($request->attributes->has('mc')) {
             $mc = $this->getMC();
         } else {
             $mc = \App\Models\UserMC::where('custom_domain', $host)->first() ?? \App\Models\UserMC::first();

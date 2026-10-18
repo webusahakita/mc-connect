@@ -10,7 +10,9 @@ class AiCoPilotController extends Controller
 {
     public function generateScript(Request $request, $eventId)
     {
-        $event = Event::with('client.mc')->findOrFail($eventId);
+        $event = Event::with('client.mc')
+            ->whereHas('client', fn ($query) => $query->where('mc_id', $request->attributes->get('mc')->id))
+            ->findOrFail($eventId);
         $mc = $event->client->mc;
 
         // Validasi kuota token AI

@@ -26,8 +26,8 @@ class AuthController extends Controller
 
         $mc = UserMC::where('email', $validated['email'])->first();
 
-        // Validasi password hash atau default password dev
-        if ($mc && (Hash::check($validated['password'], $mc->password_hash) || $validated['password'] === 'password123')) {
+        if ($mc && Hash::check($validated['password'], $mc->password_hash)) {
+            $request->session()->regenerate();
             session([
                 'mc_user_id' => $mc->id,
                 'mc_name' => $mc->nama_panggung,
@@ -47,8 +47,8 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        session()->forget(['mc_user_id', 'mc_name', 'mc_email', 'mc_tier', 'is_admin']);
-        session()->flush();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return redirect()->route('login')->with('info', 'Anda telah keluar dari ruang kerja MC.');
     }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mc-connect-v8-cache';
+const CACHE_NAME = 'mc-connect-v9-session-cache';
 const ASSETS_TO_CACHE = [
   '/',
   '/css/app.css',
@@ -37,6 +37,11 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  if (event.request.method !== 'GET' || url.pathname.startsWith('/api/') ||
+      /^\/(admin|stage|vendor|login)(\.html)?\/?$/.test(url.pathname)) {
+    return; // Session responses must always come from the server.
+  }
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       return cachedResponse || fetch(event.request).catch(() => caches.match('/'));

@@ -1,0 +1,6 @@
+Options -Indexes
+
+# Uploaded media must never be executed as server-side scripts.
+<FilesMatch "(?i)\.(php[0-9]?|phtml|phar|cgi|pl|py|sh)(\.|$)">
+    Require all denied
+</FilesMatch>

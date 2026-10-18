@@ -1,0 +1,76 @@
+name: Test and deploy Hostinger
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea # v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_sqlite, pdo_mysql, fileinfo
+          coverage: none
+          tools: composer:v2
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '22'
+      - run: composer install --prefer-dist --no-interaction
+      - run: php vendor/bin/phpunit
+      - run: node --test tests/JavaScript/*.test.mjs
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: hostinger-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '22'
+      - name: Build release archive
+        id: release
+        shell: bash
+        run: |
+          archive=$(node deployment/hostinger/build-release.mjs --revision "$GITHUB_SHA" --output "$RUNNER_TEMP/releases")
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+      - name: Upload and deploy through restricted SSH key
+        shell: bash
+        env:
+          HOSTINGER_HOST: ${{ vars.HOSTINGER_HOST }}
+          HOSTINGER_USER: ${{ vars.HOSTINGER_USER }}
+          HOSTINGER_PORT: ${{ vars.HOSTINGER_PORT }}
+          SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.HOSTINGER_KNOWN_HOSTS }}
+          ARCHIVE: ${{ steps.release.outputs.archive }}
+        run: |
+          set -euo pipefail
+          umask 077
+          key="$RUNNER_TEMP/hostinger-key"
+          known="$RUNNER_TEMP/hostinger-known-hosts"
+          trap 'rm -f -- "$key" "$known"' EXIT
+          test -n "$SSH_KEY" && test -n "$KNOWN_HOSTS"
+          printf '%s\n' "$SSH_KEY" > "$key"
+          printf '%s\n' "$KNOWN_HOSTS" > "$known"
+          unset SSH_KEY KNOWN_HOSTS
+          options=(-i "$key" -p "$HOSTINGER_PORT" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$known" -o ConnectTimeout=20 -o ServerAliveInterval=20 -o ServerAliveCountMax=6)
+          ssh "${options[@]}" "$HOSTINGER_USER@$HOSTINGER_HOST" "upload $GITHUB_SHA" < "$ARCHIVE"
+          ssh "${options[@]}" "$HOSTINGER_USER@$HOSTINGER_HOST" "deploy $GITHUB_SHA"

@@ -134,8 +134,8 @@ window.SyncEngine = {
                 body: JSON.stringify(data)
             });
             if (!res.ok) {
-                this.addToOfflineQueue(endpoint, data);
-                return { success: false, offline: true };
+                if (res.status >= 500) this.addToOfflineQueue(endpoint, data);
+                return { success: false, offline: res.status >= 500, status: res.status };
             }
             return await res.json();
         } catch(e) {
@@ -149,6 +149,8 @@ window.SyncEngine = {
     },
 
     addToOfflineQueue(endpoint, data) {
+        const ownerId = window.MCSession?.user?.id;
+        if (!ownerId) return;
         const queueRaw = localStorage.getItem('mc_offline_queue');
         let queue = [];
         if (queueRaw) {
@@ -156,13 +158,16 @@ window.SyncEngine = {
         }
         
         // Hapus duplikat endpoint agar hanya data terbaru yang tersimpan
-        queue = queue.filter(item => item.endpoint !== endpoint);
+        queue = queue.filter(item => item.endpoint !== endpoint || item.ownerId !== ownerId);
         
-        queue.push({ endpoint, data, timestamp: new Date().getTime() });
+        queue.push({ endpoint, data, ownerId, timestamp: new Date().getTime() });
         localStorage.setItem('mc_offline_queue', JSON.stringify(queue));
     },
 
     async flushOfflineQueue() {
+        if (window.MCSession) await window.MCSession.ready;
+        const ownerId = window.MCSession?.user?.id;
+        if (!ownerId) return;
         const queueRaw = localStorage.getItem('mc_offline_queue');
         if (!queueRaw) return;
         
@@ -176,6 +181,11 @@ window.SyncEngine = {
         let newQueue = [];
         
         for (const item of queue) {
+            // Keep older/unowned entries, but never replay another account's changes.
+            if (item.ownerId !== ownerId) {
+                newQueue.push(item);
+                continue;
+            }
             try {
                 const res = await fetch(item.endpoint, {
                     method: 'POST',

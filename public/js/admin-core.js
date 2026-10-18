@@ -40,7 +40,7 @@ async function apiGet(endpoint) {
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const json = await res.json();
-        return json.dat?? json;
+        return json.data ?? json;
     } catch (e) {
         console.warn('[API] GET', endpoint, 'failed:', e.message);
         return null;
@@ -83,7 +83,8 @@ async function apiUpload(endpoint, formData) {
                 'X-CSRF-TOKEN': token,
                 'X-Requested-With': 'XMLHttpRequest'
             },
-            body: formDat});
+            body: formData
+        });
         return await res.json();
     } catch (e) {
         console.warn('[API] UPLOAD', endpoint, 'failed:', e.message);
@@ -118,7 +119,7 @@ async function apiDelete(endpoint) {
 (function injectCsrfMeta() {
     if (!document.querySelector('meta[name="csrf-token"]')) {
         fetch('/api/csrf-token').then(r => r.json()).then(d => {
-            const met= document.createElement('meta');
+            const meta = document.createElement('meta');
             meta.name = 'csrf-token';
             meta.content = d.token || '';
             document.head.appendChild(meta);
@@ -151,7 +152,7 @@ initTheme();
 
 function initAdminWorkspace() {
     // Integrate with Database (Sync Engine)
-    if (typeof window.SyncEngine !== 'undefined' && typeof window.SyncEngine.pullAll === 'async function') {
+    if (typeof window.SyncEngine !== 'undefined' && typeof window.SyncEngine.pullAll === 'function') {
         window.SyncEngine.pullAll();
     }
 
@@ -161,13 +162,20 @@ function initAdminWorkspace() {
 // 1. Session & Auth
 async function handleAdminLogout() {
     if (await uiConfirm('Apakah Anda yakin ingin keluar dari ruang kerja Admin MC?')) {
+        try {
+            const response = await fetch('/api/mc/logout', { method: 'POST' });
+            if (!response.ok && response.status !== 401) throw new Error('Logout gagal.');
+        } catch (error) {
+            if (typeof showToast === 'function') showToast('Logout belum berhasil. Periksa koneksi lalu coba lagi.', 'red');
+            return;
+        }
         sessionStorage.removeItem('mc_auth_token');
         sessionStorage.removeItem('mc_auth_user');
         if (typeof showToast === 'function') {
             showToast('Andtelah logout.', 'gold');
         }
         setTimeout(() => {
-            window.location.href = 'login.html';
+            window.location.href = '/login';
         }, 400);
     }
 }

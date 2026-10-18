@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <script src="/js/session-client.js?v=1.0"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stage Mode (Tablet/HP) - MC-Connect</title>
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/stage-mode.css?v=8.4">
+
+    <style>
+        .giant-nav-zone {
+            display: flex;
+            flex-direction: row;
+            background: #0B0F19;
+            z-index: 100;
+        }
+        
+        .giant-nav-btn {
+            border: none;
+            outline: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            padding: 1rem 0;
+            letter-spacing: 2px;
+        }
+
+        .giant-btn-prev {
+            background: #1E293B;
+            color: #94A3B8;
+            width: 80px;
+            border-right: 1px solid #334155;
+            border-left: 1px solid #334155;
+        }
+        .giant-btn-prev:hover:not(:disabled) { background: #334155; color: #fff; }
+        .giant-btn-prev:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .giant-btn-next {
+            background: var(--gold-primary);
+            color: #000;
+            width: 80px;
+        }
+        .giant-btn-next:hover:not(:disabled) { filter: brightness(1.1); }
+        .giant-btn-next:disabled { background: #475569; color: #94A3B8; cursor: not-allowed; }
+    </style>
+
+</head>
+<body class="stage-body">
+    <div class="stage-container" id="stageLayoutContainer" data-nav-layout="right">
+            
+            <div id="giantNavLeft" class="giant-nav-zone"></div>
+            
+            <div class="stage-center-wrapper" style="display:flex; flex:1; width:100%; overflow:hidden;">
+        <!-- 70% Prompter Section -->
+        <div class="stage-prompter-pane">
+            <!-- Top Bar Navigation & Controls -->
+            <div class="prompter-top-bar">
+                
+                <!-- Group 1: Navigation -->
+                <div style="display:flex; align-items:center; gap:0.6rem;">
+                    <a href="admin.html" class="prompter-ctrl-btn" title="Kembali ke Admin Portal">
+                        🚪 Keluar Stage
+                    </a>
+                    
+                </div>
+
+                <!-- Group 2: Center Info -->
+                <div style="display:flex; align-items:center; gap:0.5rem; justify-content:center; flex:1; min-width:0;">
+                    <span class="prompter-segment-badge" id="currentSegmentBadge" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:350px;">
+                        Segmen 1/7: Open Gate & Welcoming
+                    </span>
+                    
+                </div>
+
+                <div class="prompter-controls">
+                    <button class="prompter-ctrl-btn" onclick="window.teleprompter.decreaseFont()" title="Kecilkan Font">A-</button>
+                    <button class="prompter-ctrl-btn" onclick="window.teleprompter.increaseFont()" title="Besarkan Font">A+</button>
+                    <button class="prompter-ctrl-btn" id="btnNavLayout" onclick="cycleNavLayout()" title="Ubah Posisi Tombol Navigasi">🎛️ Navigasi: Split</button>
+                    <button class="prompter-ctrl-btn" id="btnMirrorToggle" onclick="toggleMirrorMode()">🪞 Mirror</button>
+                    <button class="prompter-ctrl-btn" id="btnVoiceToggle" onclick="toggleVoiceMode()">🎙️ Voice Auto-Advance</button>
+                    <button class="prompter-ctrl-btn" id="btnScrollToggle" onclick="toggleAutoScroll()" style="background:var(--gold-primary); color:#000;">
+                        ▶ Auto-Scroll
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dual Stage Anticipation Bar: Sebelum & Sesudah Segmen -->
+            <div class="stage-anticipation-bar" id="stageAnticipationBar">
+                <!-- Sebelum Segmen Box -->
+                <div class="anticipation-box prev-box" id="boxPrevSegment" onclick="prevSegment()" title="Klik untuk kembali ke segmen sebelumnya (Hotkeys: ←)">
+                    <div class="anticipation-label">
+                        <span>⏮ SEBELUMNYA</span>
+                        <span id="prevSegmentTime" style="font-family:monospace; opacity:0.85;">--:--</span>
+                    </div>
+                    <div class="anticipation-title" id="prevSegmentTitle">— Awal Acara —</div>
+                    <div class="anticipation-cue" id="prevSegmentCue" style="opacity:0.75;">Tidak ada segmen sebelumnya</div>
+                </div>
+
+                <!-- Sesudah / Antisipasi Segmen Box -->
+                <div class="anticipation-box next-box" id="boxNextSegment" onclick="nextSegment()" title="Klik untuk antisipasi & langsung beralih ke segmen ini (Hotkeys: →)">
+                    <div class="anticipation-label">
+                        <span style="color:var(--gold-primary); display:flex; align-items:center; gap:0.35rem;">
+                            <span>⏭</span>
+                            <span>ANTISIPASI SEGMEN BERIKUTNYA</span>
+                        </span>
+                        <span id="nextSegmentTime" style="font-family:monospace; color:var(--gold-primary); font-weight:700;">19:00 - 19:20</span>
+                    </div>
+                    <div class="anticipation-title" id="nextSegmentTitle">Segmen 2/7: Opening MC & Grand Entrance Kedua Mempelai</div>
+                    <div class="anticipation-cue" id="nextSegmentCue">🎺 Music Music Cue: Royal Entrance Fanfare & Romantic Symphony</div>
+                    <div class="anticipation-peek-script" id="nextSegmentPeek">"Hadirin yang kami muliakan, marilah kita sambut..."</div>
+                </div>
+            </div>
+
+            <!-- Prompter Viewport -->
+            <div class="prompter-viewport" id="prompterViewport">
+                <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem;">
+                    <div id="prompterMusicHint" class="prompter-music-hint" style="margin-bottom:0; flex-grow:0;">
+                        🎵 Music Cue: Fade-in Orchestral Romance Theme, volume 30%
+                    </div>
+                    <button id="prompterPlayMusicBtn" onclick="playSegmentMusic()" style="display:none; padding:0.4rem 1rem; border-radius:8px; font-weight:700; background:linear-gradient(135deg, #10B981, #059669); border:none; color:#fff; cursor:pointer; align-items:center; gap:0.4rem; font-size:0.9rem; box-shadow:0 4px 12px rgba(16,185,129,0.3);">
+                        ▶ Putar Lagu
+                    </button>
+                    <audio id="segmentAudioPlayer" style="display:none;" onended="document.getElementById('prompterPlayMusicBtn').innerHTML = '▶ Putar Lagu'"></audio>
+                </div>
+                <div id="prompterPicHint" class="prompter-pic-hint" style="display:none; color:#A855F7; font-size:1.15rem; font-weight:600; letter-spacing:1px; margin-bottom:1.5rem; border-left:3px solid #A855F7; padding-left:0.75rem;">
+                    👤 PIC: Greeter Team
+                </div>
+
+                <div class="prompter-text" id="prompterTextContainer">
+                    <p id="prompterActiveScript">
+                        Selamat malam dan selamat datang kepada seluruh keluarga besar serta tamu undangan yang terhormat. Silakan menikmati welcoming cocktail dan jamuan selamat datang sembari menanti dimulainya prosesi resepsi agung pernikahan.
+                    </p>
+                </div>
+
+                </div>
+
+            <!-- Hotkey & Gesture Hint Bar -->
+            <div class="hotkey-hint-bar">
+                <span>Navigasi Cepat MC: <kbd>←</kbd> Segmen Sebelumnya &bull; <kbd>→</kbd> Segmen Berikutnya &bull; <kbd>Space</kbd> Auto-Scroll &bull; Geser Layar Sentuh Aktif</span>
+            </div>
+
+            <div class="speech-active-indicator" id="speechIndicator">
+                <span>●</span> Suara MC Terdeteksi (Prompter Bergulir Otomatis)
+            </div>
+        </div>
+
+        <!-- 30% Soundboard & Digital Timer Section -->
+        <div class="stage-sidebar-pane">
+            <!-- Stage Clock & Stopwatch -->
+            <div class="stage-timer-card">
+                
+                <div id="stageEventTitleInfo" style="font-size:1.05rem; color:var(--gold-primary); font-weight:800; text-align:center; padding-bottom:0.75rem; border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:0.75rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:0.5px;">
+                    Memuat Acara...
+                </div>
+                <div class="stage-clock" id="stageDigitalClock">19:00:00</div>
+                <div class="stage-stopwatch-label">Durasi Segmen Berjalan</div>
+                <div class="stage-stopwatch" id="stageStopwatchDisplay">00:00:00</div>
+
+                <div class="stage-timer-controls">
+                    <button class="btn btn-secondary btn-sm" onclick="startStopwatch()">Start</button>
+                    <button class="btn btn-secondary btn-sm" onclick="pauseStopwatch()">Pause</button>
+                    <button class="btn btn-secondary btn-sm" onclick="resetStopwatch()">Reset</button>
+                </div>
+                <!-- Segment Progress -->
+                <div style="margin-top:1.25rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; gap:0.5rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-muted); font-weight:700;">
+                        <span style="letter-spacing:0.5px;">PROGRES SEGMEN</span>
+                        <span id="stageNavProgress" style="color:var(--gold-primary); font-family:monospace; font-weight:800; font-size:0.8rem;">1 / 7 (14%)</span>
+                    </div>
+                    <div style="background:#1E293B; height:8px; border-radius:4px; overflow:hidden; box-shadow:inset 0 1px 3px rgba(0,0,0,0.5);">
+                        <div id="stageProgressBar" style="background:linear-gradient(90deg, var(--gold-primary), #FDE047); height:100%; width:14%; transition:width 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow:0 0 8px rgba(250,204,21,0.4);"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Built-in Soundboard Module (Dynamically Configured per Event) -->
+            <div class="soundboard-card">
+                <div class="soundboard-header">
+                    <div class="soundboard-title">⚡ Stage Soundboard</div>
+                    <span style="font-size:0.75rem; color:var(--text-muted);" id="stageSoundboardEventBadge">Web Audio API</span>
+                </div>
+
+                <div class="soundboard-grid" id="stageSoundboardGrid">
+                    <!-- Populated dynamically via renderStageSoundboard() -->
+                </div>
+            </div>
+
+            <!-- Sidebar anticipation fully removed -->
+            </div>
+        </div>
+        <div id="giantNavRight" class="giant-nav-zone"></div>
+    </div>
+
+    <script src="js/audio-storage.js"></script>
+    <script src="js/soundboard.js"></script>
+    <script src="js/teleprompter.js"></script>
+    <script src="js/live-sync.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        let activeEventId = null;
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            activeEventId = urlParams.get('eventId') || urlParams.get('event_id') || urlParams.get('id');
+            if (activeEventId) {
+                localStorage.setItem('activeCommandCenterEventId', activeEventId);
+            } else {
+                const stored = localStorage.getItem('activeCommandCenterEventId');
+                if (stored) activeEventId = stored;
+            }
+        } catch(e) {}
+
+        let rundownItems = [];
+        let currentEventData = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (window.teleprompter && typeof window.teleprompter.init === 'function') {
+                window.teleprompter.init('prompterViewport', 'prompterTextContainer');
+            }
+            startClock();
+            
+            await fetchEventData();
+            
+            loadStageSoundboard();
+            loadSegment(0);
+            setupTouchGestures();
+        });
+
+        let stageAudioCtx = null;
+        let stageActiveOscillators = [];
+
+        function stopStageSynth() {
+            if (stageActiveOscillators && stageActiveOscillators.length > 0) {
+                stageActiveOscillators.forEach(osc => {
+                    try { osc.stop(); osc.disconnect(); } catch (e) { }
+                });
+                stageActiveOscillators = [];
+            }
+            if (stageAudioCtx && stageAudioCtx.state !== 'closed') {
+                try { stageAudioCtx.close(); } catch (e) { }
+            }
+            stageAudioCtx = null;
+        }
+
+        function playStageSynth(genre, onEnded) {
+            stopStageSynth();
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) return;
+            stageAudioCtx = new AudioContextClass();
+            const ctx = stageAudioCtx;
+            const now = ctx.currentTime;
+            const masterGain = ctx.createGain();
+            masterGain.gain.setValueAtTime(0.4, now);
+            masterGain.connect(ctx.destination);
+
+            let notes = [];
+            let waveType = 'sine';
+
+            if (genre === 'Fanfare') {
+                waveType = 'triangle';
+                notes = [
+                    { freq: 261.63, time: 0, dur: 0.2 },
+                    { freq: 392.00, time: 0.22, dur: 0.2 },
+                    { freq: 523.25, time: 0.44, dur: 0.2 },
+                    { freq: 659.25, time: 0.66, dur: 0.3 },
+                    { freq: 783.99, time: 1.0, dur: 0.3 },
+                    { freq: 1046.50, time: 1.35, dur: 1.4 }
+                ];
+            } else if (genre === 'Upbeat') {
+                waveType = 'sawtooth';
+                notes = [
+                    { freq: 440.00, time: 0, dur: 0.18 },
+                    { freq: 554.37, time: 0.2, dur: 0.18 },
+                    { freq: 659.25, time: 0.4, dur: 0.25 },
+                    { freq: 880.00, time: 0.68, dur: 0.35 },
+                    { freq: 659.25, time: 1.05, dur: 0.2 },
+                    { freq: 880.00, time: 1.3, dur: 1.0 }
+                ];
+            } else {
+                waveType = 'sine';
+                notes = [
+                    { freq: 261.63, time: 0, dur: 0.4 },
+                    { freq: 329.63, time: 0.25, dur: 0.4 },
+                    { freq: 392.00, time: 0.5, dur: 0.4 },
+                    { freq: 493.88, time: 0.75, dur: 0.5 },
+                    { freq: 523.25, time: 1.1, dur: 1.6 }
+                ];
+            }
+
+            let maxTime = 0;
+            notes.forEach(n => {
+                const osc = ctx.createOscillator();
+                const noteGain = ctx.createGain();
+                osc.type = waveType;
+                osc.frequency.setValueAtTime(n.freq, now + n.time);
+                noteGain.gain.setValueAtTime(0.001, now + n.time);
+                noteGain.gain.linearRampToValueAtTime(0.35, now + n.time + 0.04);
+                noteGain.gain.exponentialRampToValueAtTime(0.001, now + n.time + n.dur);
+                osc.connect(noteGain);
+                noteGain.connect(masterGain);
+                osc.start(now + n.time);
+                osc.stop(now + n.time + n.dur + 0.05);
+                stageActiveOscillators.push(osc);
+                if (n.time + n.dur > maxTime) maxTime = n.time + n.dur;
+            });
+
+            if (typeof onEnded === 'function') {
+                setTimeout(onEnded, (maxTime + 0.2) * 1000);
+            }
+        }
+
+        window.playSegmentMusic = function() {
+            const btn = document.getElementById('prompterPlayMusicBtn');
+            const player = document.getElementById('segmentAudioPlayer');
+            
+            // Check if synthesizer is currently playing
+            if (stageAudioCtx) {
+                stopStageSynth();
+                if (btn) btn.innerHTML = '▶ Putar Lagu';
+                return;
+            }
+
+            // Check if audio element is playing
+            if (player && !player.paused) {
+                player.pause();
+                if (btn) btn.innerHTML = '▶ Putar Lagu';
+                return;
+            }
+
+            if (btn && btn.dataset.found === 'false') {
+                alert("Lagu tidak ditemukan di data acara. Pastikan lagu sudah ditambahkan ke Segmen Rundown ini melalui Command Center.");
+                return;
+            }
+
+            const currentItem = rundownItems[currentIndex];
+            const genre = (currentItem && currentItem.musicGenre) || 'Romance';
+
+            // Check if player has direct playable audio file
+            if (player && player.src && player.src !== window.location.href && !player.src.endsWith('/')) {
+                const isDirect = player.src.endsWith('.mp3') || player.src.endsWith('.wav') || player.src.endsWith('.ogg') || player.src.endsWith('.m4a') || player.src.endsWith('.aac') || player.src.includes('/uploads/');
+                if (isDirect) {
+                    player.play().then(() => {
+                        if (btn) btn.innerHTML = '⏸ Jeda Lagu';
+                    }).catch(err => {
+                        console.warn("Direct file play failed, using synthesizer fallback:", err);
+                        if (btn) btn.innerHTML = '⏸ Hentikan Melodi';
+                        playStageSynth(genre, () => {
+                            if (btn) btn.innerHTML = '▶ Putar Lagu';
+                            stopStageSynth();
+                        });
+                    });
+                    return;
+                }
+            }
+
+            // Fallback: If URL is YouTube or external link or synth cue, play synth cue melody directly
+            if (btn) btn.innerHTML = '⏸ Hentikan Melodi';
+            playStageSynth(genre, () => {
+                if (btn) btn.innerHTML = '▶ Putar Lagu';
+                stopStageSynth();
+            });
+        };
+
+        async function fetchEventData() {
+            try {
+                const res = await fetch('/api/cms/events');
+                const json = await res.json();
+                
+                if (json.success && json.data) {
+                    let ev = json.data.find(e => String(e.id) === String(activeEventId));
+                    if (!ev && json.data.length > 0) ev = json.data[0];
+                    if (ev) {
+                        window.currentEventData = ev;
+                        
+                        const titleEl = document.getElementById('stageEventTitleInfo');
+                        if (titleEl) {
+                            let eventName = ev.title || 'Acara';
+                            let picName = ev.pic || '';
+                            const m = picName.match(/(.*?)\s*\(/);
+                            if (m) picName = m[1].trim();
+                            titleEl.textContent = eventName + (picName ? ' | PIC: ' + picName : '');
+                        }
+                        
+                        const dbRundown = ev.rundown || (ev.metadata && ev.metadata.rundown) || [];
+                        if (dbRundown.length > 0) {
+                            rundownItems = dbRundown.map((item, i) => ({
+                                urutan: i + 1,
+                                judul_segmen: item.title,
+                                naskah_prompter: item.prompter || item.script,
+                                instruksi_musik: item.cue_music || item.musicTitle ? (item.cue_music || item.musicTitle) : '',
+                                startTime: item.start_time || item.startTime || '',
+                                endTime: item.end_time || item.endTime || '',
+                                duration: item.duration || '',
+                                pic: item.pic || ''
+                            }));
+                        } else {
+                            rundownItems = [];
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Gagal fetch database:', err);
+            }
+
+            if (rundownItems.length === 0) {
+                rundownItems = [{
+                    urutan: 1,
+                    judul_segmen: 'Belum Ada Rundown',
+                    naskah_prompter: 'Rundown belum diset di Command Center. Harap tambahkan segmen terlebih dahulu.',
+                    instruksi_musik: '',
+                    startTime: '', endTime: ''
+                }];
+            }
+        }
+
+        function loadSegment(index) {
+            if (index < 0 || index >= rundownItems.length) return;
+            currentIndex = index;
+            const item = rundownItems[index];
+
+            // 1. Current Active Segment
+            const badgeEl = document.getElementById('currentSegmentBadge');
+            if (badgeEl) {
+                badgeEl.textContent = `Segmen ${item.urutan}/${rundownItems.length}: ${item.judul_segmen}`;
+            }
+
+            const scriptEl = document.getElementById('prompterActiveScript');
+            if (scriptEl) {
+                scriptEl.textContent = item.naskah_prompter || '— Tanpa naskah prompter —';
+            }
+            
+            const picHint = document.getElementById('prompterPicHint');
+            if (picHint) {
+                if (item.pic) {
+                    picHint.style.display = 'block';
+                    picHint.textContent = '👤 PIC: ' + item.pic;
+                } else {
+                    picHint.style.display = 'none';
+                }
+            }
+
+            const musicHint = document.getElementById('prompterMusicHint');
+            const playBtn = document.getElementById('prompterPlayMusicBtn');
+            const audioPlayer = document.getElementById('segmentAudioPlayer');
+            
+            // Hentikan lagu sebelumnya jika pindah segmen
+            stopStageSynth();
+            if (audioPlayer) {
+                audioPlayer.pause();
+                audioPlayer.currentTime = 0;
+                if(playBtn) playBtn.innerHTML = '▶ Putar Lagu';
+            }
+
+            if (musicHint) {
+                if (item.instruksi_musik) {
+                    musicHint.style.display = 'block';
+                    const cueText = item.instruksi_musik.startsWith('🎵') || item.instruksi_musik.startsWith('🎺') || item.instruksi_musik.startsWith('🍾') || item.instruksi_musik.startsWith('🎸') || item.instruksi_musik.startsWith('🥁') || item.instruksi_musik.startsWith('🎻')
+                        ? item.instruksi_musik
+                        : '🎵 ' + item.instruksi_musik;
+                    musicHint.textContent = 'Music Cue: ' + cueText;
+                    
+                    // Selalu tampilkan tombol jika ada instruksi_musik
+                    if (playBtn) {
+                        playBtn.style.display = 'flex';
+                        playBtn.dataset.found = 'false';
+                        if (audioPlayer) audioPlayer.removeAttribute('src');
+                        
+                        if (window.currentEventData) {
+                            const mList = window.currentEventData.musicList || (window.currentEventData.metadata && window.currentEventData.metadata.musicList) || [];
+                            const trimName = (name) => name ? String(name).trim().toLowerCase() : '';
+                            const cleanCue = trimName(item.instruksi_musik).replace(/^[🎵🎺🍾🎸🥁🎻]\s*/, '');
+                            const musicFound = mList.find(m => trimName(m.title) === cleanCue || trimName(m.cue_instruction) === cleanCue);
+                            
+                            if (musicFound) {
+                                playBtn.dataset.found = 'true';
+                                
+                                let src = musicFound.url_link || '';
+                                if (!src && musicFound.file_upload) {
+                                    if (String(musicFound.file_upload).startsWith('uploads/')) src = '/' + musicFound.file_upload;
+                                    else if (String(musicFound.file_upload).startsWith('/uploads/')) src = musicFound.file_upload;
+                                    else src = '/uploads/music/' + musicFound.file_upload;
+                                }
+                                
+                                if (src && audioPlayer) {
+                                    audioPlayer.src = src;
+                                    playBtn.dataset.hasAudio = 'true';
+                                } else {
+                                    playBtn.dataset.hasAudio = 'false';
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    musicHint.style.display = 'none';
+                    if (playBtn) playBtn.style.display = 'none';
+                }
+            }
+
+            // 2. SEBELUM SEGMEN (Previous Segment Anticipation)
+            const prevItem = index > 0 ? rundownItems[index - 1] : null;
+            const boxPrev = document.getElementById('boxPrevSegment');
+            const prevTitleEl = document.getElementById('prevSegmentTitle');
+            const prevTimeEl = document.getElementById('prevSegmentTime');
+            const prevCueEl = document.getElementById('prevSegmentCue');
+            const btnTopPrev = document.getElementById('btnTopPrev');
+            const btnSidePrev = document.getElementById('btnSidePrev');
+
+            if (prevItem) {
+                if (boxPrev) {
+                    boxPrev.style.opacity = '1';
+                    boxPrev.style.cursor = 'pointer';
+                }
+                if (prevTitleEl) prevTitleEl.textContent = `Segmen ${prevItem.urutan}: ${prevItem.judul_segmen}`;
+                if (prevTimeEl) prevTimeEl.textContent = (prevItem.startTime && prevItem.endTime) ? `${prevItem.startTime} - ${prevItem.endTime}` : (prevItem.duration || 'Selesai');
+                if (prevCueEl) prevCueEl.textContent = prevItem.instruksi_musik || 'Segmen telah selesai';
+                if (btnTopPrev) btnTopPrev.disabled = false;
+                if (btnSidePrev) btnSidePrev.disabled = false;
+            } else {
+                if (boxPrev) {
+                    boxPrev.style.opacity = '0.5';
+                    boxPrev.style.cursor = 'default';
+                }
+                if (prevTitleEl) prevTitleEl.textContent = '— Awal Acara —';
+                if (prevTimeEl) prevTimeEl.textContent = item.startTime || 'Start';
+                if (prevCueEl) prevCueEl.textContent = 'Tidak ada segmen sebelumnya';
+                if (btnTopPrev) btnTopPrev.disabled = true;
+                if (btnSidePrev) btnSidePrev.disabled = true;
+            }
+
+            // 3. SESUDAH SEGMEN (Next Segment Anticipation)
+            const nextItem = index < rundownItems.length - 1 ? rundownItems[index + 1] : null;
+            const boxNext = document.getElementById('boxNextSegment');
+            const nextTitleEl = document.getElementById('nextSegmentTitle');
+            const nextTimeEl = document.getElementById('nextSegmentTime');
+            const nextCueEl = document.getElementById('nextSegmentCue');
+            const nextPeekEl = document.getElementById('nextSegmentPeek');
+            const btnTopNext = document.getElementById('btnTopNext');
+            const btnSideNext = document.getElementById('btnSideNext');
+
+            // In-Viewport Next Up Card Elements
+            const nextCard = document.getElementById('prompterNextUpCard');
+            const nextBadge = document.getElementById('prompterNextBadge');
+            const nextHeading = document.getElementById('prompterNextHeading');
+            const nextCardCue = document.getElementById('prompterNextCue');
+            const nextPreview = document.getElementById('prompterNextPreview');
+
+            // Sidebar Elements
+            const sideNextTitle = document.getElementById('sideNextTitle');
+            const sideNextCue = document.getElementById('sideNextCue');
+
+            if (nextItem) {
+                if (boxNext) {
+                    boxNext.style.opacity = '1';
+                    boxNext.style.cursor = 'pointer';
+                }
+                const timeStr = (nextItem.startTime && nextItem.endTime) ? `${nextItem.startTime} - ${nextItem.endTime}` : (nextItem.duration || 'Berikutnya');
+                if (nextTitleEl) nextTitleEl.textContent = `Segmen ${nextItem.urutan}/${rundownItems.length}: ${nextItem.judul_segmen}`;
+                if (nextTimeEl) nextTimeEl.textContent = timeStr;
+                if (nextCueEl) nextCueEl.textContent = nextItem.instruksi_musik ? `🎵 Music Cue: ${nextItem.instruksi_musik}` : '—';
+                
+                const peekText = nextItem.naskah_prompter 
+                    ? `"${nextItem.naskah_prompter.slice(0, 85)}${nextItem.naskah_prompter.length > 85 ? '...' : ''}"` 
+                    : '— Tanpa naskah —';
+                if (nextPeekEl) nextPeekEl.textContent = peekText;
+
+                if (btnTopNext) btnTopNext.disabled = false;
+                if (btnSideNext) btnSideNext.disabled = false;
+
+                // In-viewport Next Card
+                if (nextCard) {
+                    nextCard.style.display = 'block';
+                    nextCard.style.cursor = 'pointer';
+                }
+                if (nextBadge) nextBadge.textContent = `⚡ ANTISIPASI BERIKUTNYA: SEGMEN ${nextItem.urutan} DARI ${rundownItems.length}`;
+                if (nextHeading) nextHeading.textContent = nextItem.judul_segmen;
+                if (nextCardCue) nextCardCue.textContent = nextItem.instruksi_musik ? `Music Cue: ${nextItem.instruksi_musik}` : '';
+                if (nextPreview) nextPreview.textContent = peekText;
+
+                // Sidebar
+                if (sideNextTitle) sideNextTitle.textContent = nextItem.judul_segmen;
+                if (sideNextCue) sideNextCue.textContent = nextItem.instruksi_musik || 'Siap untuk segmen berikutnya';
+            } else {
+                // Finale Segment
+                if (boxNext) {
+                    boxNext.style.opacity = '0.75';
+                    boxNext.style.cursor = 'default';
+                }
+                if (nextTitleEl) nextTitleEl.textContent = '🏁 Segmen Terakhir (Grand Finale)';
+                if (nextTimeEl) nextTimeEl.textContent = 'Selesai';
+                if (nextCueEl) nextCueEl.textContent = 'Seluruh segmen acara tuntas';
+                if (nextPeekEl) nextPeekEl.textContent = 'Terima kasih atas penampilan luar biasa!';
+
+                if (btnTopNext) btnTopNext.disabled = true;
+                if (btnSideNext) btnSideNext.disabled = true;
+
+                // In-viewport Card Finale
+                if (nextCard) nextCard.style.cursor = 'default';
+                if (nextBadge) nextBadge.textContent = '🏁 SEGMEN PENUTUP';
+                if (nextHeading) nextHeading.textContent = 'Selamat! Anda Berada di Segmen Penutup Rundown';
+                if (nextCardCue) nextCardCue.textContent = '🎉 Grand Finale / Outro';
+                if (nextPreview) nextPreview.textContent = 'Seluruh rangkaian segmen rundown telah terlaksana dengan sukses.';
+
+                if (sideNextTitle) sideNextTitle.textContent = '🏁 Selesai (Grand Finale)';
+                if (sideNextCue) sideNextCue.textContent = 'Tidak ada segmen selanjutnya';
+            }
+
+            // 4. Update Sidebar Progress
+            const progPercent = Math.round(((index + 1) / rundownItems.length) * 100);
+            const stageNavProgress = document.getElementById('stageNavProgress');
+            if (stageNavProgress) stageNavProgress.textContent = `${index + 1} / ${rundownItems.length} (${progPercent}%)`;
+            const stageProgressBar = document.getElementById('stageProgressBar');
+            if (stageProgressBar) stageProgressBar.style.width = `${progPercent}%`;
+
+            // 5. Reset Prompter Scroll to Top
+            const vp = document.getElementById('prompterViewport');
+            if (vp) vp.scrollTop = 0;
+
+            // 6. Reset & Start Stopwatch
+            resetStopwatch();
+            startStopwatch();
+
+            // 7. Broadcast to Vendor Music Screen via LiveSync
+            if (window.liveSync && typeof window.liveSync.syncActiveSegment === 'function') {
+                window.liveSync.syncActiveSegment(activeEventId, index + 1, item.judul_segmen, item.instruksi_musik);
+            }
+        }
+
+        function nextSegment() {
+            if (currentIndex < rundownItems.length - 1) {
+                loadSegment(currentIndex + 1);
+            } else {
+                alert('Ini adalah segmen penutup terakhir dari rundown!');
+            }
+        }
+
+        function prevSegment() {
+            if (currentIndex > 0) {
+                loadSegment(currentIndex - 1);
+            }
+        }
+
+        function toggleAutoScroll() {
+            if (!window.teleprompter) return;
+            const isScrolling = window.teleprompter.toggleScroll();
+            const btn = document.getElementById('btnScrollToggle');
+            if (btn) {
+                if (isScrolling) {
+                    btn.textContent = '⏸ Pause Scroll';
+                    btn.style.background = '#EF4444';
+                    btn.style.color = '#FFF';
+                } else {
+                    btn.textContent = '▶ Auto-Scroll';
+                    btn.style.background = 'var(--gold-primary)';
+                    btn.style.color = '#000';
+                }
+            }
+        }
+
+        function toggleVoiceMode() {
+            if (!window.teleprompter) return;
+            const active = window.teleprompter.toggleVoiceMode();
+            const btn = document.getElementById('btnVoiceToggle');
+            if (btn) btn.classList.toggle('active', active);
+        }
+
+        function toggleMirrorMode() {
+            if (!window.teleprompter) return;
+            const isMirror = window.teleprompter.toggleMirror();
+            const btn = document.getElementById('btnMirrorToggle');
+            if (btn) btn.classList.toggle('active', isMirror);
+        }
+
+        let stageSoundboardList = [];
+
+        function loadStageSoundboard() {
+            try {
+                if (window.currentEventData && window.currentEventData.metadata && window.currentEventData.metadata.soundboard) {
+                    stageSoundboardList = window.currentEventData.metadata.soundboard;
+                } else {
+                    stageSoundboardList = [];
+                }
+            } catch(e) {}
+
+            renderStageSoundboard();
+        }
+
+        function renderStageSoundboard() {
+            const grid = document.getElementById('stageSoundboardGrid');
+            if (!grid) return;
+
+            const activePads = stageSoundboardList.filter(item => item.is_brought !== false);
+            if (activePads.length === 0) {
+                grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.85rem;">Belum ada efek suara.</div>';
+                return;
+            }
+
+            grid.innerHTML = activePads.map((item, idx) => {
+                const title = item.title || item.name || 'Untitled';
+                const shortcut = item.shortcut || item.key || '';
+                return `
+                    <button class="sound-pad" id="stage-pad-${idx}" onclick="triggerStageSound('${title.replace(/'/g, "\\'")}', this)" title="${title} ${shortcut ? '(Shortcut: ' + shortcut + ')' : ''}" style="position:relative;">
+                        ${shortcut ? `<span style="position:absolute; top:4px; right:6px; font-size:0.68rem; font-family:monospace; color:var(--gold-primary); font-weight:800; background:rgba(0,0,0,0.5); padding:1px 4px; border-radius:3px;">[${shortcut}]</span>` : ''}
+                        <span class="sound-pad-icon">🎵</span>
+                        <span style="font-size:0.82rem; font-weight:700; line-height:1.2; text-align:center;">${title}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        async function triggerStageSound(title, btn) {
+            // Retrieve master bank
+            let masterBank = [];
+            try {
+                const rawBank = localStorage.getItem('mc_music_bank_data');
+                if (rawBank) masterBank = JSON.parse(rawBank);
+            } catch(e) {}
+            
+            const item = masterBank.find(m => m.title === title);
+            if (!item) {
+                console.warn('Lagu tidak ditemukan di Master Bank:', title);
+                return;
+            }
+            
+            let src = item.url_link || '';
+            if (!src && item.file_upload) {
+                if (String(item.file_upload).startsWith('uploads/')) src = '/' + item.file_upload;
+                else if (String(item.file_upload).startsWith('/uploads/')) src = item.file_upload;
+                else src = '/uploads/music/' + item.file_upload;
+            }
+            
+            if (typeof window.playMasterMusic === 'function') {
+                window.playMasterMusic(item);
+            } else if (window.audioEngine && typeof window.audioEngine.playAudio === 'function') {
+                window.audioEngine.playAudio(src);
+            } else {
+                // Fallback basic native HTML5 Audio player
+                if (window._stageAudioPlayer) {
+                    window._stageAudioPlayer.pause();
+                    window._stageAudioPlayer.currentTime = 0;
+                }
+                window._stageAudioPlayer = new Audio(src);
+                window._stageAudioPlayer.play().catch(e => console.error('Gagal memutar audio:', e));
+            }
+
+            if (btn) {
+                btn.classList.add('triggered');
+                setTimeout(() => btn.classList.remove('triggered'), 220);
+            }
+        }
+
+        function startClock() {
+            setInterval(() => {
+                const now = new Date();
+                const timeStr = now.toTimeString().split(' ')[0];
+                const clock = document.getElementById('stageDigitalClock');
+                if (clock) clock.textContent = timeStr;
+            }, 1000);
+        }
+
+        let stopwatchSeconds = 0;
+        let stopwatchInterval = null;
+
+        function startStopwatch() {
+            if (stopwatchInterval) return;
+            stopwatchInterval = setInterval(() => {
+                stopwatchSeconds++;
+                const h = String(Math.floor(stopwatchSeconds / 3600)).padStart(2, '0');
+                const m = String(Math.floor((stopwatchSeconds % 3600) / 60)).padStart(2, '0');
+                const s = String(stopwatchSeconds % 60).padStart(2, '0');
+                const disp = document.getElementById('stageStopwatchDisplay');
+                if (disp) disp.textContent = `${h}:${m}:${s}`;
+            }, 1000);
+        }
+
+        function pauseStopwatch() {
+            clearInterval(stopwatchInterval);
+            stopwatchInterval = null;
+        }
+
+        function resetStopwatch() {
+            pauseStopwatch();
+            stopwatchSeconds = 0;
+            const disp = document.getElementById('stageStopwatchDisplay');
+            if (disp) disp.textContent = '00:00:00';
+        }
+
+        // Stage MC Keyboard Hotkeys
+        window.addEventListener('keydown', (e) => {
+            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+
+            if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                e.preventDefault();
+                prevSegment();
+            } else if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+                e.preventDefault();
+                nextSegment();
+            } else if (e.code === 'Space') {
+                if (document.activeElement?.tagName !== 'BUTTON') {
+                    e.preventDefault();
+                    toggleAutoScroll();
+                }
+            } else {
+                // Soundboard hotkey triggers (e.g. key 1-9)
+                if (stageSoundboardList && stageSoundboardList.length > 0) {
+                    const activePads = stageSoundboardList.filter(p => p.enabled !== false);
+                    const matchedPad = activePads.find(p => p.key && String(p.key).toUpperCase() === e.key.toUpperCase());
+                    if (matchedPad) {
+                        const padIdx = activePads.indexOf(matchedPad);
+                        const btn = document.getElementById(`stage-pad-${padIdx}`);
+                        triggerStageSound(padIdx, btn);
+                    }
+                }
+            }
+        });
+
+        // Touch Swipe Gestures for Mobile & Tablets
+        let touchStartX = 0;
+        let touchEndX = 0;
+        function setupTouchGestures() {
+            const vp = document.getElementById('prompterViewport');
+            if (!vp) return;
+
+            vp.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+
+            vp.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                const deltaX = touchEndX - touchStartX;
+                if (deltaX < -70) {
+                    // Swiped Left -> Advance to next segment
+                    nextSegment();
+                } else if (deltaX > 70) {
+                    // Swiped Right -> Return to prev segment
+                    prevSegment();
+                }
+            }, { passive: true });
+        }
+    
+        // === GIANT NAV LOGIC ===
+        let currentNavLayout = 'split'; 
+
+        function renderGiantNav() {
+            const leftZone = document.getElementById('giantNavLeft');
+            const rightZone = document.getElementById('giantNavRight');
+            const btnHtmlPrev = `<button class="giant-nav-btn giant-btn-prev" id="btnSidePrev" onclick="prevSegment()">◀ SEBELUM</button>`;
+            const btnHtmlNext = `<button class="giant-nav-btn giant-btn-next" id="btnSideNext" onclick="nextSegment()">BERIKUTNYA ▶</button>`;
+            
+            if(!leftZone || !rightZone) return;
+
+            leftZone.innerHTML = '';
+            rightZone.innerHTML = '';
+
+            const layoutBtn = document.getElementById('btnNavLayout');
+
+            if (currentNavLayout === 'split') {
+                leftZone.innerHTML = btnHtmlPrev;
+                rightZone.innerHTML = btnHtmlNext;
+                if(layoutBtn) layoutBtn.innerHTML = '🎛️ Navigasi: Split (Kiri/Kanan)';
+            } else if (currentNavLayout === 'right') {
+                rightZone.innerHTML = btnHtmlPrev + btnHtmlNext;
+                if(layoutBtn) layoutBtn.innerHTML = '🎛️ Navigasi: Semua Kanan';
+            } else if (currentNavLayout === 'left') {
+                leftZone.innerHTML = btnHtmlPrev + btnHtmlNext;
+                if(layoutBtn) layoutBtn.innerHTML = '🎛️ Navigasi: Semua Kiri';
+            }
+        }
+
+        window.cycleNavLayout = function() {
+            if (currentNavLayout === 'split') currentNavLayout = 'right';
+            else if (currentNavLayout === 'right') currentNavLayout = 'left';
+            else currentNavLayout = 'split';
+            
+            localStorage.setItem('stageNavLayout', currentNavLayout);
+            renderGiantNav();
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('stageNavLayout');
+            if(saved) currentNavLayout = saved;
+            renderGiantNav();
+        });
+
+        const origLoadSegment2 = window.loadSegment;
+        window.loadSegment = function(idx) {
+            origLoadSegment2(idx);
+            
+            setTimeout(() => {
+                const sideNext = document.getElementById('btnSideNext');
+                const sidePrev = document.getElementById('btnSidePrev');
+                if(!window.currentEventData || !window.currentEventData.rundown) return;
+                
+                if (sidePrev) sidePrev.disabled = (idx === 0);
+                if (sideNext) sideNext.disabled = (idx >= window.currentEventData.rundown.length - 1);
+            }, 100); 
+        }
+        // =======================
+
+</script>
+</body>
+</html>

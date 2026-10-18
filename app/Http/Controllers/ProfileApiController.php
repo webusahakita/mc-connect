@@ -10,12 +10,11 @@ class ProfileApiController extends Controller
 {
     /**
      * API untuk mengambil data profil MC
-     * Karena ini simulasi sederhana (tidak pakai token), kita ambil MC pertama di database
-     * Di production, Anda harus menggunakan auth()->user() dengan Sanctum/Passport
+     * Identitas MC berasal dari sesi yang diperiksa middleware.
      */
-    public function getProfile()
+    public function getProfile(Request $request)
     {
-        $mc = UserMC::first();
+        $mc = $request->attributes->get('mc');
         
         if (!$mc) {
             return response()->json(['error' => 'MC not found'], 404);
@@ -43,7 +42,7 @@ class ProfileApiController extends Controller
      */
     public function updateProfile(Request $request)
     {
-        $mc = UserMC::first();
+        $mc = $request->attributes->get('mc');
         
         if (!$mc) {
             return response()->json(['error' => 'MC not found'], 404);
@@ -115,27 +114,16 @@ class ProfileApiController extends Controller
      */
     public function login(Request $request)
     {
-        $email = $request->input('email');
-        $password = $request->input('password');
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
+        $mc = UserMC::where('email', $validated['email'])->first();
 
-        // Dummy bypass for static demo
-        if ($email === 'vanya@mcconnect.id' && $password === 'password123') {
-            return response()->json([
-                'success' => true,
-                'message' => 'Login Berhasil (Bypass)',
-                'user' => [
-                    'id' => 1,
-                    'name' => 'Vanya Pranita',
-                    'email' => 'vanya@mcconnect.id',
-                    'tier' => 'Pro'
-                ]
-            ]);
-        }
+        if ($mc && Hash::check($validated['password'], $mc->password_hash)) {
+            $request->session()->regenerate();
+            $request->session()->put('mc_user_id', $mc->id);
 
-        $mc = UserMC::where('email', $email)->first();
-
-        // Cek password hash atau bypass dummy "password123" atau "admin"
-        if ($mc && (Hash::check($password, $mc->password_hash) || $password === 'password123' || $password === 'admin')) {
             return response()->json([
                 'success' => true,
                 'message' => 'Login Berhasil',
@@ -144,13 +132,34 @@ class ProfileApiController extends Controller
                     'name' => $mc->nama_panggung,
                     'email' => $mc->email,
                     'tier' => $mc->tier_langganan
-                ]
-            ]);
+                ],
+                'csrf_token' => $request->session()->token(),
+            ])->header('Cache-Control', 'no-store, private');
         }
 
         return response()->json([
             'success' => false,
             'message' => 'Email atau kata sandi tidak cocok.'
-        ], 401);
+        ], 401)->header('Cache-Control', 'no-store, private');
+    }
+
+    public function session(Request $request)
+    {
+        $mc = $request->attributes->get('mc');
+
+        return response()->json(['success' => true, 'user' => [
+            'id' => $mc->id,
+            'name' => $mc->nama_panggung,
+            'email' => $mc->email,
+            'tier' => $mc->tier_langganan,
+        ]]);
+    }
+
+    public function logout(Request $request)
+    {
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return response()->json(['success' => true]);
     }
 }
