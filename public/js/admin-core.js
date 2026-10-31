@@ -117,7 +117,7 @@ async function apiDelete(endpoint) {
  * Inject CSRF mettag dari Laravel jikbelum ad* (admin.html statis perlu ini untuk POST request)
  */
 (function injectCsrfMeta() {
-    if (!document.querySelector('meta[name="csrf-token"]')) {
+    if (typeof fetch === "function" && typeof document !== "undefined" && !document.querySelector('meta[name="csrf-token"]')) {
         fetch('/api/csrf-token').then(r => r.json()).then(d => {
             const meta = document.createElement('meta');
             meta.name = 'csrf-token';

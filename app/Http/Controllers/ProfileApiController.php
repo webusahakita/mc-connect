@@ -208,7 +208,7 @@ class ProfileApiController extends Controller
         if (!$isCurrentValid) {
             return response()->json([
                 'success' => false,
-                'message' => 'Kata sandi saat ini tidak cocok. Silakan periksa kembali.'
+                'message' => 'Password saat ini (lama) tidak sesuai.'
             ], 422);
         }
 
