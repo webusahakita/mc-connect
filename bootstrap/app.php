@@ -12,7 +12,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // The same-origin HTML frontend uses Laravel sessions and CSRF protection.
+        $middleware->api(prepend: ['web']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

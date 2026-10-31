@@ -135,4 +135,25 @@ Aplikasi telah dilengkapi server mandiri dan antarmuka interaktif yang langsung 
    npm run dev
    php artisan serve
    ```
-5. Akses portal publik di `http://localhost:8000` dan dashboard admin di `http://localhost:8000/admin/dashboard`.
+5. Akses portal publik di `http://localhost:8000` dan dashboard admin di `http://localhost:8000/admin`.
+
+## Autentikasi dan pengujian
+
+Login melalui `/login` menggunakan akun pada tabel `users_mc` dan password yang sesuai dengan `password_hash`. Bypass password demo sudah dihapus. Sesi Laravel diperlukan untuk data privat, perubahan CMS, upload, keuangan, serta halaman admin, stage, dan vendor. Perangkat atau browser lain perlu login terlebih dahulu.
+
+Halaman workspace kini berada di `resources/views/workspace/` dan dilayani melalui Laravel. URL `/admin`, `/stage`, `/vendor` beserta padanan `.html` tetap tersedia. Portal publik dan formulir booking tetap dapat diakses tanpa login. Skrip `public/js/session-client.js` menangani cookie sesi dan token CSRF untuk request frontend.
+
+Endpoint lama `/api/setup-db` sudah dihapus; gunakan migrasi Artisan untuk perubahan skema database.
+
+Pengujian terisolasi dari database aplikasi:
+
+```powershell
+php vendor/bin/phpunit
+node --test tests/JavaScript/session-client.test.mjs
+```
+
+PHPUnit menggunakan SQLite di memori dan konfigurasi sesi/cache khusus pengujian.
+
+## Deployment produksi
+
+Push ke `main` menjalankan tes, backup, dan deployment otomatis ke https://mc.webusaha.com melalui GitHub Actions. Tunggu workflow berhasil sebelum menguji perubahan di website. Lihat [panduan update dan pemulihan](deployment/hostinger/AUTO-DEPLOY.md).
