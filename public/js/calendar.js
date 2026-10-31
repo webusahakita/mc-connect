@@ -40,10 +40,10 @@ class AvailabilityCalendar {
 
         let html = `
             <div class="calendar-header-bar">
-                <div class="calendar-nav-controls" style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 1rem;">
-                    <button class="btn btn-secondary btn-sm" id="calPrevBtn" style="padding: 0.4rem 0.8rem; flex-shrink: 0;">◀ Sebelumnya</button>
-                    <h3 class="calendar-month-title" style="margin: 0; text-align: center; font-size: 1.1rem; flex-grow: 1;">${this.monthNames[month]} ${year}</h3>
-                    <button class="btn btn-secondary btn-sm" id="calNextBtn" style="padding: 0.4rem 0.8rem; flex-shrink: 0;">Berikutnya ▶</button>
+                <div class="calendar-nav-controls" style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 1rem; gap: 0.5rem;">
+                    <button class="btn btn-secondary btn-sm" id="calPrevBtn" style="padding: 0.4rem 0.75rem; flex-shrink: 0; white-space: nowrap;">◀ Sebelumnya</button>
+                    <h3 class="calendar-month-title" style="margin: 0; text-align: center; font-size: 1.1rem; flex-grow: 1; white-space: nowrap;">${this.monthNames[month]} ${year}</h3>
+                    <button class="btn btn-secondary btn-sm" id="calNextBtn" style="padding: 0.4rem 0.75rem; flex-shrink: 0; white-space: nowrap;">Berikutnya ▶</button>
                 </div>
                 <div class="calendar-legend">
                     <div class="legend-item"><span class="legend-dot avail"></span> Tersedia (Available)</div>
@@ -52,14 +52,15 @@ class AvailabilityCalendar {
                 </div>
             </div>
 
-            <div class="calendar-grid">
-                <div class="calendar-day-header">Min</div>
-                <div class="calendar-day-header">Sen</div>
-                <div class="calendar-day-header">Sel</div>
-                <div class="calendar-day-header">Rab</div>
-                <div class="calendar-day-header">Kam</div>
-                <div class="calendar-day-header">Jum</div>
-                <div class="calendar-day-header">Sab</div>
+            <div class="calendar-grid-container" style="width: 100%; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                <div class="calendar-grid">
+                    <div class="calendar-day-header">Min</div>
+                    <div class="calendar-day-header">Sen</div>
+                    <div class="calendar-day-header">Sel</div>
+                    <div class="calendar-day-header">Rab</div>
+                    <div class="calendar-day-header">Kam</div>
+                    <div class="calendar-day-header">Jum</div>
+                    <div class="calendar-day-header">Sab</div>
         `;
 
         // Empty cells before first day
@@ -144,7 +145,7 @@ class AvailabilityCalendar {
             `;
         }
 
-        html += `</div>`;
+        html += `</div></div>`;
         this.container.innerHTML = html;
 
         document.getElementById('calPrevBtn')?.addEventListener('click', () => {

@@ -1458,6 +1458,7 @@ function navigateToSection(sectionId, menuElement) {
     // Scroll to top
     const mainContent = document.querySelector('.admin-main-content');
     if (mainContent) mainContent.scrollTop = 0;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
     // Section-specific initialization
     if (sectionId === 'sec-customers' && typeof window.initCustomersPage === 'function') {
@@ -1477,6 +1478,9 @@ function navigateToSection(sectionId, menuElement) {
     }
     if (sectionId === 'sec-cashflow' && typeof renderCashflowTable === 'function') {
         renderCashflowTable();
+    }
+    if (sectionId === 'sec-calendar' && window.adminCalendar) {
+        window.adminCalendar.render();
     }
 }
 window.navigateToSection = navigateToSection;
@@ -2692,6 +2696,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showAgendaInspector(dateStr, status, eventObj, eventsOnDate);
             });
             window.calendarApp = window.adminCalendar;
+            window.adminCalendar.init();
         }
     } catch(e) { console.error("Calendar Init Error:", e); }
 
@@ -7243,3 +7248,170 @@ if (!window.syncEngine) {
 } else {
     window.syncEngine.pushEventsToServer = pushEventsToServer;
 }
+
+
+// ============================================================
+// Security & Change Password Logic
+// ============================================================
+window.togglePasswordVisibility = function(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const isPassword = input.getAttribute('type') === 'password';
+    input.setAttribute('type', isPassword ? 'text' : 'password');
+    const eyeIcon = btn.querySelector('.eye-icon');
+    if (eyeIcon) {
+        eyeIcon.textContent = isPassword ? '🙈' : '👁️';
+    }
+};
+
+window.evaluatePasswordStrength = function(pass) {
+    const container = document.getElementById('passStrengthContainer');
+    const bar = document.getElementById('passStrengthBar');
+    const text = document.getElementById('passStrengthText');
+    if (!container || !bar || !text) return;
+
+    if (!pass) {
+        container.style.display = 'none';
+        return;
+    }
+
+    container.style.display = 'flex';
+    let score = 0;
+    if (pass.length >= 8) score++;
+    if (pass.length >= 12) score++;
+    if (/[A-Z]/.test(pass) && /[a-z]/.test(pass)) score++;
+    if (/\d/.test(pass)) score++;
+    if (/[^A-Za-z0-9]/.test(pass)) score++;
+
+    bar.className = 'strength-bar-fill';
+    text.className = 'strength-text';
+
+    if (score <= 2) {
+        bar.classList.add('weak');
+        text.classList.add('weak');
+        text.textContent = 'Kekuatan: Lemah (Gunakan minimal 8 karakter kombinasi)';
+    } else if (score <= 4) {
+        bar.classList.add('medium');
+        text.classList.add('medium');
+        text.textContent = 'Kekuatan: Cukup Baik (Tambahkan angka atau simbol agar lebih kuat)';
+    } else {
+        bar.classList.add('strong');
+        text.classList.add('strong');
+        text.textContent = 'Kekuatan: Sangat Kuat & Aman 🛡️';
+    }
+
+    if (typeof window.checkPasswordMatch === 'function') {
+        window.checkPasswordMatch();
+    }
+};
+
+window.checkPasswordMatch = function() {
+    const newPass = document.getElementById('newPassword')?.value || '';
+    const confirmPass = document.getElementById('confirmPassword')?.value || '';
+    const indicator = document.getElementById('passMatchIndicator');
+    if (!indicator) return;
+
+    if (!confirmPass) {
+        indicator.style.display = 'none';
+        return;
+    }
+
+    indicator.style.display = 'block';
+    if (newPass === confirmPass) {
+        indicator.style.color = '#34D399';
+        indicator.innerHTML = '✓ Konfirmasi kata sandi cocok';
+    } else {
+        indicator.style.color = '#F87171';
+        indicator.innerHTML = '✗ Kata sandi konfirmasi belum cocok';
+    }
+};
+
+window.resetPasswordForm = function() {
+    const form = document.getElementById('formChangePassword');
+    if (form) form.reset();
+    const container = document.getElementById('passStrengthContainer');
+    if (container) container.style.display = 'none';
+    const indicator = document.getElementById('passMatchIndicator');
+    if (indicator) indicator.style.display = 'none';
+    ['currPassword', 'newPassword', 'confirmPassword'].forEach(id => {
+        const inp = document.getElementById(id);
+        if (inp) inp.setAttribute('type', 'password');
+    });
+    document.querySelectorAll('#formChangePassword .eye-icon').forEach(eye => {
+        eye.textContent = '👁️';
+    });
+};
+
+window.handleChangePassword = async function(e) {
+    if (e) e.preventDefault();
+
+    const currPass = document.getElementById('currPassword')?.value;
+    const newPass = document.getElementById('newPassword')?.value;
+    const confirmPass = document.getElementById('confirmPassword')?.value;
+    const btn = document.getElementById('btnSubmitChangePassword');
+
+    if (!currPass || !newPass || !confirmPass) {
+        if (typeof showToast === 'function') showToast('Harap lengkapi semua kolom kata sandi.', 'error');
+        return;
+    }
+
+    if (newPass.length < 8) {
+        if (typeof showToast === 'function') showToast('Kata sandi baru minimal 8 karakter.', 'error');
+        return;
+    }
+
+    if (newPass !== confirmPass) {
+        if (typeof showToast === 'function') showToast('Konfirmasi kata sandi baru tidak cocok.', 'error');
+        return;
+    }
+
+    if (currPass === newPass) {
+        if (typeof showToast === 'function') showToast('Kata sandi baru tidak boleh sama dengan kata sandi saat ini.', 'error');
+        return;
+    }
+
+    const origBtnText = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Memperbarui...';
+    }
+
+    try {
+        const response = await fetch('/api/mc/change-password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                current_password: currPass,
+                new_password: newPass,
+                new_password_confirmation: confirmPass
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            if (typeof showToast === 'function') {
+                showToast('🔒 ' + (data.message || 'Kata sandi berhasil diperbarui!'), 'gold');
+            }
+            window.resetPasswordForm();
+        } else {
+            const errorMsg = data.message || 'Gagal memperbarui kata sandi.';
+            if (typeof showToast === 'function') {
+                showToast('⚠️ ' + errorMsg, 'error');
+            }
+        }
+    } catch (err) {
+        console.error('Change password error:', err);
+        if (typeof showToast === 'function') {
+            showToast('Terjadi kesalahan jaringan saat memperbarui kata sandi.', 'error');
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = origBtnText || '💾 Perbarui Kata Sandi';
+        }
+    }
+};

@@ -12,225 +12,9 @@
     <link rel="stylesheet" href="css/app.css?v=8.3">
     <link rel="stylesheet" href="css/command-center.css?v=8.4">
     <link rel="stylesheet" href="css/stage-mode.css?v=8.3">
-    <link rel="stylesheet" href="css/admin.css?v=8.3">
+    <link rel="stylesheet" href="css/admin.css?v=8.9">
     <link rel="stylesheet" href="css/custom-modal.css?v=8.3">
     <style>
-        /* =========================================================
-           CALENDAR WIDGET & ANTI-BENTROK GRID (INLINE FAIL-SAFE)
-           ========================================================= */
-        .calendar-widget-wrapper {
-            background: linear-gradient(180deg, rgba(21, 29, 48, 0.95), rgba(15, 23, 42, 0.98)) !important;
-            border: 1px solid var(--adm-border, rgba(255, 255, 255, 0.08)) !important;
-            border-radius: var(--adm-radius-lg, 16px) !important;
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5) !important;
-            padding: 1.5rem !important;
-            margin-bottom: 2rem !important;
-            position: relative !important;
-        }
-
-        .calendar-header-bar {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            flex-wrap: wrap !important;
-            gap: 1rem !important;
-            margin-bottom: 1.5rem !important;
-            padding-bottom: 1.25rem !important;
-            border-bottom: 1px solid var(--adm-border, rgba(255, 255, 255, 0.08)) !important;
-        }
-
-        .calendar-nav-controls {
-            display: flex !important;
-            align-items: center !important;
-            gap: 0.75rem !important;
-            flex-wrap: wrap !important;
-        }
-
-        .calendar-month-title {
-            font-size: 1.35rem !important;
-            font-weight: 800 !important;
-            color: var(--adm-text-primary) !important;
-            letter-spacing: -0.01em !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 0.5rem !important;
-        }
-
-        .calendar-month-badge {
-            font-size: 0.75rem !important;
-            font-weight: 700 !important;
-            background: rgba(212, 175, 55, 0.15) !important;
-            color: var(--adm-gold, #D4AF37) !important;
-            border: 1px solid rgba(212, 175, 55, 0.3) !important;
-            padding: 0.15rem 0.55rem !important;
-            border-radius: 999px !important;
-        }
-
-        .calendar-legend {
-            display: flex !important;
-            align-items: center !important;
-            gap: 1rem !important;
-            flex-wrap: wrap !important;
-        }
-
-        .legend-item {
-            display: flex !important;
-            align-items: center !important;
-            gap: 0.45rem !important;
-            font-size: 0.8rem !important;
-            color: var(--adm-text-secondary, #94A3B8) !important;
-            font-weight: 500 !important;
-        }
-
-        .legend-dot {
-            width: 8px !important;
-            height: 8px !important;
-            border-radius: 50% !important;
-            display: inline-block !important;
-        }
-
-        .legend-dot.avail {
-            background: #10B981 !important;
-            box-shadow: 0 0 6px rgba(16, 185, 129, 0.6) !important;
-        }
-
-        .legend-dot.tentative {
-            background: #F59E0B !important;
-            box-shadow: 0 0 6px rgba(245, 158, 11, 0.6) !important;
-        }
-
-        .legend-dot.locked {
-            background: #EF4444 !important;
-            box-shadow: 0 0 6px rgba(239, 68, 68, 0.6) !important;
-        }
-
-        .legend-dot.review {
-            background: #3B82F6 !important;
-            box-shadow: 0 0 6px rgba(59, 130, 246, 0.6) !important;
-        }
-
-        .calendar-grid {
-            display: grid !important;
-            grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
-            gap: 10px !important;
-            width: 100% !important;
-        }
-
-        .calendar-day-header {
-            text-align: center !important;
-            font-weight: 700 !important;
-            font-size: 0.76rem !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.08em !important;
-            padding: 0.5rem 0 !important;
-            color: var(--adm-text-muted, #64748B) !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-        }
-
-        .calendar-day-header.weekend {
-            color: #F87171 !important;
-        }
-
-        .calendar-cell {
-            min-height: 105px !important;
-            background: rgba(255, 255, 255, 0.02) !important;
-            border: 1px solid rgba(255, 255, 255, 0.06) !important;
-            border-radius: var(--adm-radius-sm, 8px) !important;
-            padding: 0.6rem !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: space-between !important;
-            cursor: pointer !important;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            position: relative !important;
-            overflow: hidden !important;
-        }
-
-        .calendar-cell:hover {
-            background: rgba(255, 255, 255, 0.05) !important;
-            border-color: rgba(212, 175, 55, 0.4) !important;
-            transform: translateY(-2px) !important;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4) !important;
-        }
-
-        .calendar-cell.inactive {
-            opacity: 0.25 !important;
-            background: transparent !important;
-            border-color: rgba(255, 255, 255, 0.02) !important;
-            cursor: default !important;
-            pointer-events: none !important;
-        }
-
-        .calendar-cell.past-date {
-            opacity: 0.4;
-            cursor: not-allowed;
-            background: rgba(255, 255, 255, 0.03) !important;
-        }
-
-        .calendar-cell.past-date:hover {
-            border-color: rgba(255, 255, 255, 0.05);
-        }
-
-        .calendar-cell.past-date-admin {
-            opacity: 0.6;
-            background: rgba(255, 255, 255, 0.01) !important;
-        }
-
-        .calendar-cell.past-date-admin:hover {
-            border-color: var(--adm-gold);
-        }
-
-        .calendar-cell.is-today {
-            border-color: var(--adm-gold, #D4AF37) !important;
-            background: rgba(212, 175, 55, 0.06) !important;
-            box-shadow: 0 0 0 1px var(--adm-gold, #D4AF37) !important;
-        }
-
-        .calendar-cell.selected {
-            border-color: #38BDF8 !important;
-            background: rgba(56, 189, 248, 0.08) !important;
-            box-shadow: 0 0 0 1px #38BDF8 !important;
-        }
-
-        .calendar-cell-date-bar {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            margin-bottom: 0.4rem !important;
-        }
-
-        .calendar-cell-date {
-            font-weight: 700 !important;
-            font-size: 0.95rem !important;
-            color: var(--adm-text-primary, #F8FAFC) !important;
-        }
-
-        .calendar-cell-pill {
-            font-size: 0.72rem !important;
-            padding: 0.3rem 0.5rem !important;
-            border-radius: var(--adm-radius-sm, 6px) !important;
-            font-weight: 600 !important;
-            display: flex !important;
-            align-items: center !important;
-            gap: 0.35rem !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-            margin-top: auto !important;
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-        }
-
-        .calendar-cell-avail {
-            display: flex !important;
-            align-items: center !important;
-            gap: 0.35rem !important;
-            font-size: 0.7rem !important;
-            color: rgba(16, 185, 129, 0.8) !important;
-            padding: 0.2rem 0 !important;
-        }
-
         .admin-section {
             display: none;
             animation: fadeIn 0.25s ease;
@@ -472,11 +256,11 @@
             <header class="admin-topbar">
                 <div class="admin-topbar-left">
                     <button class="btn btn-secondary btn-sm mobile-menu-toggle" onclick="toggleSidebar()"
-                        style="margin-right:0.75rem; font-size:1.2rem; padding:0.2rem 0.6rem;">☰</button>
-                    <div class="admin-topbar-breadcrumb" style="display:flex; align-items:center; gap:0.5rem;">
+                        style="font-size:1.2rem; padding:0.2rem 0.6rem;">☰</button>
+                    <div class="admin-breadcrumbs admin-topbar-breadcrumb">
                         <div class="sidebar-icon-sq">🏠</div>
-                        <span>Admin Workspace</span>
-                        <span style="opacity:0.4;">/</span>
+                        <span class="breadcrumb-prefix">Admin Workspace</span>
+                        <span class="breadcrumb-separator" style="opacity:0.4;">/</span>
                         <span class="curr" id="topbarBreadcrumb">Dashboard Ringkasan & Performa MC</span>
                     </div>
                 </div>
@@ -489,8 +273,8 @@
                         style="font-size:1.1rem; padding:0.2rem 0.5rem;" title="Ubah Mode Terang/Gelap">
                         🌗
                     </button>
-                    <a href="index.html" target="_blank" class="btn btn-secondary btn-sm" style="font-weight:600;">
-                        🌐 Portal Publik
+                    <a href="index.html" target="_blank" class="btn btn-secondary btn-sm btn-portal-publik" style="font-weight:600;" title="Buka Portal Publik">
+                        <span>🌐</span> <span class="btn-portal-text">Portal Publik</span>
                     </a>
 
                 </div>
@@ -535,7 +319,7 @@
 
                     <!-- 4 Performance Metric Cards -->
                     <div
-                        style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:1.5rem; margin-bottom:2.5rem;">
+                        style="display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap:1.5rem; margin-bottom:2.5rem;">
                         <div class="stat-metric-card gold">
                             <div class="stat-metric-top">
                                 <span class="stat-metric-label">Total Pendapatan Terkunci</span>
@@ -590,10 +374,9 @@
                             </div>
                         </div>
 
-                        <div
-                            style="display:grid; grid-template-columns: 2.2fr 1fr 1.2fr; gap:1.5rem; align-items:center;">
+                        <div class="dash-analytics-grid dash-revenue-grid">
                             <!-- SVG AreChart -->
-                            <div style="height:160px; width:100%; position:relative;">
+                            <div class="dash-grid-chart">
                                 <svg viewBox="0 0 600 150" style="width:100%; height:100%; overflow:visible;">
                                     <defs>
                                         <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
@@ -640,8 +423,7 @@
                             </div>
 
                             <!-- Highlights Column -->
-                            <div
-                                style="display:flex; flex-direction:column; gap:0.85rem; border-left:1px solid var(--adm-border); padding-left:1.5rem;">
+                            <div class="dash-grid-highlights">
                                 <div>
                                     <span
                                         style="font-size:0.75rem; color:var(--adm-text-muted); text-transform:uppercase; font-weight:700;">Rata-rata Deal</span>
@@ -665,8 +447,7 @@
                             </div>
 
                             <!-- Pie Chart Column (Proporsi Acara) -->
-                            <div
-                                style="display:flex; flex-direction:column; align-items:center; gap:0.75rem; border-left:1px solid var(--adm-border); padding-left:1.5rem; height:100%; justify-content:center;">
+                            <div class="dash-grid-pie">
                                 <span
                                     style="font-size:0.75rem; color:var(--adm-text-muted); text-transform:uppercase; font-weight:700; align-self:flex-start;">Proporsi
                                     Acara</span>
@@ -694,8 +475,7 @@
                             </div>
 
                             <!-- Pie Chart Column (Proporsi Pendapatan) -->
-                            <div
-                                style="display:flex; flex-direction:column; align-items:center; gap:0.75rem; border-left:1px solid var(--adm-border); padding-left:1.5rem; height:100%; justify-content:center;">
+                            <div class="dash-grid-pie">
                                 <span
                                     style="font-size:0.75rem; color:var(--adm-text-muted); text-transform:uppercase; font-weight:700; align-self:flex-start;">Proporsi
                                     Pendapatan</span>
@@ -730,10 +510,9 @@
                             </div>
                         </div>
 
-                        <div
-                            style="display:grid; grid-template-columns: 2.2fr 1fr 1.2fr; gap:1.5rem; align-items:center;">
+                        <div class="dash-analytics-grid dash-expense-grid">
                             <!-- SVG AreChart -->
-                            <div style="height:160px; width:100%; position:relative;">
+                            <div class="dash-grid-chart">
                                 <svg viewBox="0 0 600 150" style="width:100%; height:100%; overflow:visible;">
                                     <defs>
                                         <linearGradient id="chartGradExpense" x1="0" y1="0" x2="0" y2="1">
@@ -780,8 +559,7 @@
                             </div>
 
                             <!-- Highlights Column -->
-                            <div
-                                style="display:flex; flex-direction:column; gap:0.85rem; border-left:1px solid rgba(239,68,68,0.2); padding-left:1.5rem;">
+                            <div class="dash-grid-highlights expense-border">
                                 <div>
                                     <span
                                         style="font-size:0.75rem; color:var(--adm-text-muted); text-transform:uppercase; font-weight:700;">RATA-RATA
@@ -806,8 +584,7 @@
                             </div>
 
                             <!-- Pie Chart Column (Expense) -->
-                            <div
-                                style="display:flex; flex-direction:column; align-items:center; gap:0.75rem; border-left:1px solid rgba(239,68,68,0.2); padding-left:1.5rem; height:100%; justify-content:center;">
+                            <div class="dash-grid-pie expense-border">
                                 <span
                                     style="font-size:0.75rem; color:var(--adm-text-muted); text-transform:uppercase; font-weight:700; align-self:flex-start;">Proporsi
                                     Pengeluaran</span>
@@ -830,8 +607,7 @@
                         <h2 style="font-size:1.35rem; font-weight:800; margin:0;">Daftar Acara & Booking Aktif:</h2>
 
                         <!-- Filter Tabs -->
-                        <div style="display:flex; gap:0.4rem; background:rgba(255,255,255,0.04); padding:0.25rem; border-radius:var(--adm-radius-md); border:1px solid var(--adm-border);"
-                            id="dashEventFiltersContainer">
+                        <div class="filter-tabs-scrollable" id="dashEventFiltersContainer">
                             <button class="btn btn-primary btn-sm active" id="btnFilterAllEvents"
                                 style="padding:0.35rem 0.8rem; font-size:0.8rem;"
                                 onclick="filterDashEvents('all', this)">
@@ -854,7 +630,7 @@
                         </div>
                     </div>
 
-                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(360px, 1fr)); gap:1.75rem;"
+                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap:1.75rem;"
                         id="dashEventsGrid">
                         <!-- Events loaded dynamically from database -->
                     </div>
@@ -871,7 +647,7 @@
                                 <h3 style="margin:0; font-size:1.3rem; font-weight:800;">Data Pelanggan & Klien Aktif
                                     Terbaru</h3>
                             </div>
-                            <div style="display:flex; gap:0.6rem;">
+                            <div class="dash-header-actions">
                                 <button class="btn btn-secondary btn-sm" onclick="openAddCustomerModal()">
                                     + Tambah Klien
                                 </button>
@@ -990,11 +766,8 @@
                     </div>
 
                     <!-- Calendar Full View -->
-                    <div style="display:flex; justify-content:center; margin-bottom:2rem;">
-                        <div class="ecc-card"
-                            style="width:100%; background:linear-gradient(135deg, rgba(21,29,48,0.9), rgba(11,16,30,0.95)); padding:2rem; border-radius:1rem; box-shadow:0 8px 30px rgba(0,0,0,0.3);">
-                            <div class="calendar-widget-wrapper" id="adminCalendarWidget" style="min-height:550px;">
-                            </div>
+                    <div style="margin-bottom:2rem;">
+                        <div class="calendar-widget-wrapper" id="adminCalendarWidget">
                         </div>
                     </div>
 
@@ -1050,24 +823,19 @@
                                 </p>
                             </div>
                             <!-- Filter Tabs -->
-                            <div
-                                style="display:flex; gap:0.35rem; background:rgba(255,255,255,0.04); padding:0.25rem; border-radius:var(--adm-radius-md); border:1px solid var(--adm-border);">
+                            <div class="filter-tabs-scrollable cal-agenda-filters-bar">
                                 <button class="btn btn-sm cal-agenda-filter-btn active"
-                                    style="padding:0.35rem 0.75rem; font-size:0.78rem;"
                                     onclick="renderCalendarAgendaList('all', this)">
                                     Semua</button>
                                 <button class="btn btn-secondary btn-sm cal-agenda-filter-btn"
-                                    style="padding:0.35rem 0.75rem; font-size:0.78rem;"
                                     onclick="renderCalendarAgendaList('terkunci', this)">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Terkunci
                                 </button>
                                 <button class="btn btn-secondary btn-sm cal-agenda-filter-btn"
-                                    style="padding:0.35rem 0.75rem; font-size:0.78rem;"
                                     onclick="renderCalendarAgendaList('tentative', this)">
                                     Tentative
                                 </button>
                                 <button class="btn btn-secondary btn-sm cal-agenda-filter-btn"
-                                    style="padding:0.35rem 0.75rem; font-size:0.78rem;"
                                     onclick="renderCalendarAgendaList('review', this)">
                                     Review
                                 </button>
@@ -1617,7 +1385,7 @@ Kebutuhan Hospitality:
                                             placeholder="Video dokumentasi panggung, foto performberesolusi tinggi, sertsurat rekomendasi klien dapat diakses melalui link portofolio digital atau atas permintaan ke pihak manajemen."></textarea>
                                     </div>
 
-                                    <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;">
+                                    <div class="form-actions-bar presskit-actions-bar">
                                         <button type="button" class="btn btn-secondary"
                                             onclick="autoFillDummyPressKit()">✨ Auto-Fill Contoh Data</button>
                                         <button type="submit" class="btn btn-primary">💾 Simpan Data Press Kit</button>
@@ -1654,7 +1422,7 @@ Kebutuhan Hospitality:
                                         <small style="color:var(--adm-text-muted);">Catatan Tambahan untuk footer
                                             halaman 2 juga diatur di bawah.</small>
                                     </div>
-                                    <div style="display:flex; gap:0.5rem;">
+                                    <div class="riders-header-actions">
                                         <button class="btn btn-secondary btn-sm" onclick="autoFillDummyRiders()">✨
                                             Auto-Fill Contoh Riders</button>
                                         <button class="btn btn-primary btn-sm" onclick="openRiderModal()">+ Tambah
@@ -1778,11 +1546,12 @@ Kebutuhan Hospitality:
                         <button class="cms-tab-btn" onclick="switchCmsSubTab('cms-client-categories', this)">👥 Kategori
                             Klien</button>
                         <button class="cms-tab-btn" onclick="switchCmsSubTab('cms-wa-templates', this)">💬 Template
-                            WAA</button>
+                            WA</button>
                         <button class="cms-tab-btn" onclick="switchCmsSubTab('cms-cashflow-categories', this)">💰
                             Kategori Arus Kas</button>
                         <button class="cms-tab-btn" onclick="switchCmsSubTab('web-logo', this)">🌐 Logo Web &
                             Invoice</button>
+                        <button class="cms-tab-btn" onclick="switchCmsSubTab('web-security', this)">🔒 Keamanan Akun</button>
                     </div>
 
                     <div class="cms-subpanel active" id="web-payment">
@@ -2028,6 +1797,122 @@ Kebutuhan Hospitality:
                         </form>
                     </div>
                 </div>
+
+                    <!-- Sub-Panel 7: Keamanan Akun & Ganti Kata Sandi -->
+                    <div class="cms-subpanel" id="web-security">
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap:1.5rem; align-items:start;">
+                            <!-- Card Form Ganti Password -->
+                            <div class="ecc-card">
+                                <div class="ecc-card-header">
+                                    <div>
+                                        <div class="ecc-card-title">
+                                            <span style="font-size:1.25rem;">🔒</span> Ganti Kata Sandi Master MC
+                                        </div>
+                                        <p style="font-size:0.85rem; color:var(--adm-text-secondary); margin:0.25rem 0 0;">
+                                            Perbarui kredensial untuk login ke Command Center & Workspace Admin.
+                                        </p>
+                                    </div>
+                                    <span class="badge badge-available">Akun Master MC</span>
+                                </div>
+
+                                <form id="formChangePassword" onsubmit="handleChangePassword(event)" style="margin-top:1.25rem;">
+                                    <!-- Sandi Saat Ini -->
+                                    <div class="form-group" style="margin-bottom:1.25rem;">
+                                        <label class="form-label" for="currPassword" style="font-weight:600; display:block; margin-bottom:0.4rem;">
+                                            Kata Sandi Saat Ini <span style="color:#EF4444;">*</span>
+                                        </label>
+                                        <div class="password-input-wrapper">
+                                            <input type="password" id="currPassword" class="form-input password-input-field" placeholder="Masukkan kata sandi saat ini" required autocomplete="current-password">
+                                            <button type="button" class="btn-toggle-password" onclick="togglePasswordVisibility('currPassword', this)" title="Lihat/Sembunyikan Kata Sandi">
+                                                <span class="eye-icon">👁️</span>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Sandi Baru -->
+                                    <div class="form-group" style="margin-bottom:1.25rem;">
+                                        <label class="form-label" for="newPassword" style="font-weight:600; display:block; margin-bottom:0.4rem;">
+                                            Kata Sandi Baru <span style="color:#EF4444;">*</span>
+                                        </label>
+                                        <div class="password-input-wrapper">
+                                            <input type="password" id="newPassword" class="form-input password-input-field" placeholder="Minimal 8 karakter" minlength="8" required autocomplete="new-password" oninput="evaluatePasswordStrength(this.value)">
+                                            <button type="button" class="btn-toggle-password" onclick="togglePasswordVisibility('newPassword', this)" title="Lihat/Sembunyikan Kata Sandi">
+                                                <span class="eye-icon">👁️</span>
+                                            </button>
+                                        </div>
+                                        <!-- Realtime Strength Meter -->
+                                        <div class="password-strength-container" id="passStrengthContainer" style="display:none; margin-top:0.5rem;">
+                                            <div class="strength-bar-track">
+                                                <div class="strength-bar-fill" id="passStrengthBar"></div>
+                                            </div>
+                                            <div class="strength-text" id="passStrengthText">Kekuatan: -</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Konfirmasi Sandi Baru -->
+                                    <div class="form-group" style="margin-bottom:1.5rem;">
+                                        <label class="form-label" for="confirmPassword" style="font-weight:600; display:block; margin-bottom:0.4rem;">
+                                            Ulangi Kata Sandi Baru <span style="color:#EF4444;">*</span>
+                                        </label>
+                                        <div class="password-input-wrapper">
+                                            <input type="password" id="confirmPassword" class="form-input password-input-field" placeholder="Ketik ulang kata sandi baru" minlength="8" required autocomplete="new-password" oninput="checkPasswordMatch()">
+                                            <button type="button" class="btn-toggle-password" onclick="togglePasswordVisibility('confirmPassword', this)" title="Lihat/Sembunyikan Kata Sandi">
+                                                <span class="eye-icon">👁️</span>
+                                            </button>
+                                        </div>
+                                        <div id="passMatchIndicator" style="font-size:0.78rem; margin-top:0.35rem; display:none;"></div>
+                                    </div>
+
+                                    <!-- Tombol Simpan -->
+                                    <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
+                                        <button type="reset" class="btn btn-secondary btn-sm" onclick="resetPasswordForm()">
+                                            Batal / Reset
+                                        </button>
+                                        <button type="submit" id="btnSubmitChangePassword" class="btn btn-primary btn-sm" style="font-weight:700; padding:0.5rem 1.25rem;">
+                                            💾 Perbarui Kata Sandi
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Card Tips & Info Keamanan -->
+                            <div class="ecc-card" style="border-left: 4px solid var(--adm-gold); background: linear-gradient(135deg, rgba(212,175,55,0.06), rgba(15,23,42,0.95));">
+                                <div class="ecc-card-header">
+                                    <div class="ecc-card-title">
+                                        <span style="font-size:1.2rem;">🛡️</span> Panduan Keamanan Akun
+                                    </div>
+                                </div>
+                                <div style="display:flex; flex-direction:column; gap:1rem; font-size:0.86rem; color:var(--adm-text-secondary); line-height:1.5;">
+                                    <div style="display:flex; gap:0.75rem; align-items:flex-start;">
+                                        <span style="color:var(--adm-gold); font-size:1.1rem; flex-shrink:0;">🔑</span>
+                                        <div>
+                                            <strong style="color:var(--adm-text-primary); display:block;">Gunakan Sandi Kuat</strong>
+                                            Kombinasikan minimal 8 karakter dengan huruf kapital, angka, dan simbol untuk proteksi optimal.
+                                        </div>
+                                    </div>
+                                    <div style="display:flex; gap:0.75rem; align-items:flex-start;">
+                                        <span style="color:#38BDF8; font-size:1.1rem; flex-shrink:0;">🔒</span>
+                                        <div>
+                                            <strong style="color:var(--adm-text-primary); display:block;">Akses Tunggal Master MC</strong>
+                                            Kredensial ini melindungi seluruh data kontrak panggung, riwayat transfer DP, dan database klien VIP Anda.
+                                        </div>
+                                    </div>
+                                    <div style="display:flex; gap:0.75rem; align-items:flex-start;">
+                                        <span style="color:#10B981; font-size:1.1rem; flex-shrink:0;">🔄</span>
+                                        <div>
+                                            <strong style="color:var(--adm-text-primary); display:block;">Enkripsi Standar Industri</strong>
+                                            Kata sandi dienkripsi menggunakan algoritma Bcrypt hash satu arah dan tidak dapat dibaca oleh pihak lain.
+                                        </div>
+                                    </div>
+                                    <div style="margin-top:0.75rem; padding:0.75rem; border-radius:var(--adm-radius-sm); background:rgba(255,255,255,0.03); border:1px solid var(--adm-border);">
+                                        <div style="font-size:0.78rem; color:var(--adm-text-muted);">Status Keamanan:</div>
+                                        <div style="font-weight:700; color:#34D399; margin-top:0.15rem;">● Enkripsi Bcrypt Aktif (Zero-Knowledge)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
             </div> <!-- Close sec-web-settings -->
 
             <!-- ================= MENU 5: EVENT COMMAND CENTER ================= -->
@@ -5069,10 +4954,10 @@ Terimkasih banyak, Kak!</textarea>
     <script src="js/soundboard.js?v=8.7" defer></script>
     <script src="js/teleprompter.js?v=8.7" defer></script>
     <script src="js/live-sync.js?v=8.7" defer></script>
-    <script src="js/calendar.js?v=8.14" defer></script>
+    <script src="js/calendar.js?v=8.18" defer></script>
     <script src="js/customers.js?v=8.10" defer></script>
     <script src="js/app.js?v=8.11" defer></script>
-    <script src="js/admin-core.js?v=8.68" defer></script>
+    <script src="js/admin-core.js?v=8.71" defer></script>
     <script src="js/invoice-modal.js?v=1.20" defer></script>
     <script src="js/cms-overrides.js?v=8.7" defer></script>
     </div>

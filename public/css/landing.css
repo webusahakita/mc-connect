@@ -303,13 +303,12 @@
 }
 
 .calendar-widget-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
     padding: 2rem;
     box-shadow: var(--shadow-lg);
+    overflow: hidden;
 }
 
 .calendar-header-bar {
@@ -319,6 +318,25 @@
     margin-bottom: 1.5rem;
     flex-wrap: wrap;
     gap: 1rem;
+}
+
+.calendar-nav-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 1rem;
+    gap: 0.5rem;
+}
+
+.calendar-month-title {
+    margin: 0;
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    flex-grow: 1;
+    white-space: nowrap;
 }
 
 .calendar-legend {
@@ -344,6 +362,14 @@
 .legend-dot.avail { background: var(--color-available); }
 .legend-dot.tentative { background: var(--color-tentative); }
 .legend-dot.locked { background: var(--color-locked); }
+
+.calendar-grid-container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.5rem;
+}
 
 .calendar-grid {
     min-width: 550px;
@@ -920,8 +946,7 @@
     }
     .calendar-widget-wrapper {
         padding: 1.25rem 0.75rem;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+        overflow: hidden;
     }
     .calendar-grid {
         min-width: 500px;

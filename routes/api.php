@@ -54,6 +54,7 @@ Route::post('/events/{id}/ai/generate-script', [AiCoPilotController::class, 'gen
 Route::post('/mc/login', [ProfileApiController::class, 'login']);
 Route::get('/mc/profile', [ProfileApiController::class, 'getProfile']);
 Route::post('/mc/profile', [ProfileApiController::class, 'updateProfile']);
+Route::post('/mc/change-password', [ProfileApiController::class, 'changePassword']);
 
 // =============================================================
 // CMS API Routes — Semua data admin panel disimpan di database
