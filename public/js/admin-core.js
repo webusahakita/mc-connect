@@ -1151,26 +1151,8 @@ function loadActiveEventInCommandCenter(eventId) {
     }
 
     // WA Automation Gateway
-    const waListContainer = document.getElementById('ccWaAutomationList');
-    if (waListContainer) {
-        const templates = window.currentWaTemplates && window.currentWaTemplates.length > 0 
-            ? window.currentWaTemplates 
-            : [
-                { id: 't1', title: 'Reminder Pembayaran DP', body: 'Halo [NAMA], mohon segera melakukan pembayaran DP untuk acara [ACARA]. Terima kasih.' },
-                { id: 't2', title: 'Update Jadwal Meeting', body: 'Halo [NAMA], mari jadwalkan meeting persiapan acara [ACARA]. Kapan ada waktu?' }
-            ];
-        
-        let waHtml = '';
-        templates.forEach(t => {
-            waHtml += `
-                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:6px; padding:12px; margin-bottom:10px;">
-                    <div style="font-weight:700; color:var(--adm-gold); margin-bottom:6px;">${t.title}</div>
-                    <div style="font-size:0.8rem; color:#94A3B8; margin-bottom:8px;">${t.body.substring(0, 50)}...</div>
-                    <button class="btn btn-secondary btn-sm" onclick="sendWaTemplate('${encodeURIComponent(t.body)}')">Kirim Pesan Ini</button>
-                </div>
-            `;
-        });
-        waListContainer.innerHTML = waHtml || '<div style="text-align:center; padding:1.5rem; color:var(--adm-text-muted); font-size:0.85rem;">Belum ada template.</div>';
+    if (typeof window.renderCcWaAutomationList === 'function') {
+        window.renderCcWaAutomationList();
     }
 
     // 5. Tab 1 - VIP Protocol
@@ -1375,25 +1357,7 @@ function loadActiveEventInCommandCenter(eventId) {
         renderWardrobe();
     }
 
-    // 10. Tab 5 - Post-Event Review & Loyalty Sync
-    const postReviewArea = document.getElementById('postEventReviewTemplate');
-    if (postReviewArea) {
-        postReviewArea.value = `Halo Kak ${clientName}, salam hangat dari Vanya Arsyad & Tim MC-Connect.
-
-Terima kasih banyak atas kepercayaan luar biasa yang telah diberikan kepada kami untuk memandu agenda istimewa "${ev.title}". Merupakan suatu kehormatan dan kebahagiaan tak terhingga dapat menjadi bagian dari momen indah Anda!
-
-Jika Kak ${clientName} berkenan, kami akan sangat berterima kasih atas ulasan bintang 5 dan testimoni singkat melalui tautan berikut:
-⭐ https://vanyaarsyad.com/review?id=${ev.id}
-
-Ulasan dan feedback Kak ${clientName} sangat berharga bagi peningkatan standar performa panggung kami di masa depan. Sukses dan bahagia selalu!
-
-Salam hormat,
-Vanya Arsyad, S.I.Kom`;
-    }
-    const postReviewSub = document.getElementById('tabReviewSubtitle');
-    if (postReviewSub) {
-        postReviewSub.textContent = `Kirim pesan otomatis WhatsApp kepada ${clientName} (${clientPhone}) untuk meminta testimoni & rating bintang 5 setelah acara selesai.`;
-    }
+    // (Post-Event Review removed)
 }
 window.loadActiveEventInCommandCenter = loadActiveEventInCommandCenter;
 
@@ -4155,31 +4119,212 @@ window.openEditInvoiceModal = function() {
 };
 
 
-window.sendWaTemplate = async function(encodedBody) {
-    if(!activeCommandCenterEventId) return;
-    const ev = adminEventsDb.find(e => String(e.id) === String(activeCommandCenterEventId));
-    if(!ev) return;
+// WA Automation Helpers
+window.getActiveMcName = function() {
+    if (window.activeMcProfile && window.activeMcProfile.nama_panggung) {
+        return window.activeMcProfile.nama_panggung;
+    }
+    if (window.cmsConfig && window.cmsConfig.profile && window.cmsConfig.profile.nama_panggung) {
+        return window.cmsConfig.profile.nama_panggung;
+    }
+    try {
+        const rawAuth = sessionStorage.getItem('mc_auth_user');
+        if (rawAuth) {
+            const authObj = JSON.parse(rawAuth);
+            if (authObj.nama_panggung) return authObj.nama_panggung;
+            if (authObj.name) return authObj.name;
+        }
+    } catch (e) {}
 
-    let body = decodeURIComponent(encodedBody);
-    body = body.replace(/\[NAMA\]/g, ev.pic || 'Klien');
-    body = body.replace(/\[ACARA\]/g, ev.title || 'Acara');
-    
-    let phone = ev.metadata?.pic_wa || '';
-    if(phone.startsWith('0')) phone = '62' + phone.substring(1);
-    
+    const welcomeEl = document.getElementById('dashWelcomeName');
+    if (welcomeEl && welcomeEl.textContent && welcomeEl.textContent.trim() !== 'Loading...' && welcomeEl.textContent.trim() !== '') {
+        return welcomeEl.textContent.replace(/^Selamat Datang,\s*|!$/g, '').trim();
+    }
+    const sideNameEl = document.getElementById('sidebarMcName');
+    if (sideNameEl && sideNameEl.textContent && sideNameEl.textContent.trim() !== 'Loading...' && sideNameEl.textContent.trim() !== '') {
+        return sideNameEl.textContent.trim();
+    }
+    return 'MC';
+};
+
+window.getEventClientInfo = function(ev) {
+    let clientName = 'Pelanggan';
+    let rawPhone = '';
+
+    if (ev) {
+        if (ev.pic) {
+            const m = String(ev.pic).match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+            if (m) {
+                clientName = m[1].trim() || clientName;
+                rawPhone = m[2].trim();
+            } else {
+                clientName = String(ev.pic).trim() || clientName;
+            }
+        }
+
+        if (!rawPhone && ev.metadata && ev.metadata.pic_wa) {
+            rawPhone = String(ev.metadata.pic_wa).trim();
+        }
+        if (!rawPhone && ev.phone) {
+            rawPhone = String(ev.phone).trim();
+        }
+        if (!rawPhone && ev.wa) {
+            rawPhone = String(ev.wa).trim();
+        }
+
+        const custDb = window.mcCustomers || window.customersDb;
+        if (!rawPhone && Array.isArray(custDb)) {
+            const found = custDb.find(c => 
+                (c.id && String(c.id) === String(ev.id)) || 
+                (c.name && clientName && c.name.toLowerCase() === clientName.toLowerCase())
+            );
+            if (found) {
+                if (found.wa) rawPhone = String(found.wa).trim();
+                if (found.name && clientName === 'Pelanggan') clientName = found.name;
+            }
+        }
+    }
+
+    let cleanPhone = rawPhone.replace(/[^0-9]/g, '');
+    if (cleanPhone.startsWith('0')) {
+        cleanPhone = '62' + cleanPhone.substring(1);
+    } else if (cleanPhone && !cleanPhone.startsWith('62')) {
+        cleanPhone = '62' + cleanPhone;
+    }
+
+    return {
+        name: clientName,
+        phone: rawPhone,
+        cleanPhone: cleanPhone
+    };
+};
+
+window.renderCcWaAutomationList = function() {
+    const waListContainer = document.getElementById('ccWaAutomationList');
+    if (!waListContainer) return;
+
+    const ev = window.activeCommandCenterEvent || (typeof activeCommandCenterEventId !== 'undefined' && activeCommandCenterEventId && Array.isArray(window.adminEventsDb) ? adminEventsDb.find(e => String(e.id) === String(activeCommandCenterEventId)) : null);
+    if (!ev) {
+        waListContainer.innerHTML = '<div style="text-align:center; padding:1.5rem; color:var(--adm-text-muted); font-size:0.85rem;">Pilih agenda acara terlebih dahulu.</div>';
+        return;
+    }
+
+    const mcName = window.getActiveMcName();
+    const clientInfo = window.getEventClientInfo(ev);
+
+    const defaultTemplates = [
+        {
+            id: 't1',
+            title: 'Sapaan Awal',
+            body: `Halo Kak {name}, salam hangat dari ${mcName} (Master of Ceremony).\n\nTerkait persiapan acara "{event}", kami siap berkoordinasi untuk rundown panggung, naskah prompter, serta kebutuhan teknis acara Anda. Ada detail khusus yang ingin dikoordinasikan hari ini?`
+        },
+        {
+            id: 't2',
+            title: 'Follow Up H-7',
+            body: `Halo Kak {name}, mengingatkan kembali bahwa acara "{event}" tinggal 7 hari lagi!\n\nMohon pastikan semua rundown dan daftar VIP sudah final. Hubungi kami jika butuh bantuan.`
+        }
+    ];
+
+    const templates = (window.currentWaTemplates && window.currentWaTemplates.length > 0)
+        ? window.currentWaTemplates
+        : defaultTemplates;
+
+    let waHtml = '';
+    templates.forEach(t => {
+        let rawBody = t.body || t.message || '';
+        let processedBody = rawBody
+            .replace(/\{name\}/g, clientInfo.name)
+            .replace(/\[NAMA\]/g, clientInfo.name)
+            .replace(/\{event\}/g, ev.title || 'Acara')
+            .replace(/\[ACARA\]/g, ev.title || 'Acara')
+            .replace(/\{mc_name\}/g, mcName)
+            .replace(/Vanya Arsyad/g, mcName);
+
+        let previewText = processedBody.replace(/\s+/g, ' ').substring(0, 75);
+
+        waHtml += `
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:12px; margin-bottom:10px;">
+                <div style="font-weight:700; color:var(--adm-gold); margin-bottom:6px;">${t.title}</div>
+                <div style="font-size:0.8rem; color:#94A3B8; margin-bottom:10px; line-height:1.4;">${previewText}...</div>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="sendWaTemplate('${encodeURIComponent(processedBody)}')">Kirim Pesan Ini</button>
+            </div>
+        `;
+    });
+    waListContainer.innerHTML = waHtml || '<div style="text-align:center; padding:1.5rem; color:var(--adm-text-muted); font-size:0.85rem;">Belum ada template.</div>';
+};
+
+window.sendWaTemplate = async function(encodedBody) {
+    const ev = window.activeCommandCenterEvent || (typeof activeCommandCenterEventId !== 'undefined' && activeCommandCenterEventId && Array.isArray(window.adminEventsDb) ? adminEventsDb.find(e => String(e.id) === String(activeCommandCenterEventId)) : null);
+    if (!ev) {
+        if (typeof showToast === 'function') showToast('Pilih acara di Command Center terlebih dahulu.', 'warning');
+        else alert('Pilih acara di Command Center terlebih dahulu.');
+        return;
+    }
+
+    const mcName = window.getActiveMcName();
+    const clientInfo = window.getEventClientInfo(ev);
+
+    let body = decodeURIComponent(encodedBody || '');
+    body = body
+        .replace(/\{name\}/g, clientInfo.name)
+        .replace(/\[NAMA\]/g, clientInfo.name)
+        .replace(/\{event\}/g, ev.title || 'Acara')
+        .replace(/\[ACARA\]/g, ev.title || 'Acara')
+        .replace(/\{mc_name\}/g, mcName)
+        .replace(/Vanya Arsyad/g, mcName);
+
+    // If client has no phone number, prompt for phone
+    if (!clientInfo.cleanPhone) {
+        if (typeof showToast === 'function') {
+            showToast('Nomor WhatsApp pelanggan belum terdaftar pada agenda ini.', 'warning');
+        }
+        if (typeof uiCustomForm === 'function') {
+            const data = await uiCustomForm([
+                { id: 'phone', label: 'Nomor WhatsApp Pelanggan *', type: 'text', placeholder: 'Contoh: 08123456789' },
+                { id: 'message', label: 'Isi Pesan WhatsApp', type: 'textarea', value: body }
+            ], 'Kirim WhatsApp ke ' + clientInfo.name);
+            if (!data || !data.message) return;
+            let cleanPhone = (data.phone || '').replace(/[^0-9]/g, '');
+            if (cleanPhone.startsWith('0')) cleanPhone = '62' + cleanPhone.substring(1);
+            else if (cleanPhone && !cleanPhone.startsWith('62')) cleanPhone = '62' + cleanPhone;
+            if (!cleanPhone) {
+                if (typeof showToast === 'function') showToast('Nomor WhatsApp wajib diisi.', 'error');
+                return;
+            }
+            const waUrl = 'https://api.whatsapp.com/send?phone=' + cleanPhone + '&text=' + encodeURIComponent(data.message);
+            window.open(waUrl, '_blank');
+        }
+        return;
+    }
+
+    // Normal case: Phone is automatically resolved from client. Modal ONLY allows editing message text.
+    let editedMessage = null;
     if (typeof uiCustomForm === 'function') {
         const data = await uiCustomForm([
-            { id: 'phone', label: 'Nomor WhatsApp', type: 'text', value: phone },
-            { id: 'message', label: 'Isi Pesan (Edit bila perlu)', type: 'textarea', value: body }
-        ], 'Konfirmasi Pesan WhatsApp');
+            { 
+                id: 'message', 
+                label: 'Kirim ke: ' + clientInfo.name + ' (' + (clientInfo.phone || clientInfo.cleanPhone) + ')\nEdit teks pesan bila perlu:', 
+                type: 'textarea', 
+                value: body 
+            }
+        ], 'Kirim Pesan WhatsApp');
         
-        if (data) {
-            window.openWhatsAppChat(data.phone, ev.pic || '', ev.title || '', data.message);
+        if (data && data.message !== undefined && data.message !== null) {
+            editedMessage = data.message;
         }
     } else {
-        const editedBody = prompt("Edit pesan sebelum dikirim:", body);
-        if (editedBody !== null) {
-            window.openWhatsAppChat(phone, ev.pic || '', ev.title || '', editedBody);
+        const promptRes = prompt('Kirim WhatsApp ke ' + clientInfo.name + ' (' + (clientInfo.phone || clientInfo.cleanPhone) + '):\nEdit pesan sebelum dikirim:', body);
+        if (promptRes !== null) {
+            editedMessage = promptRes;
+        }
+    }
+
+    // Directly send the edited message via WhatsApp - no second modal!
+    if (editedMessage !== null && editedMessage !== undefined && editedMessage.trim() !== '') {
+        const waUrl = 'https://api.whatsapp.com/send?phone=' + clientInfo.cleanPhone + '&text=' + encodeURIComponent(editedMessage);
+        window.open(waUrl, '_blank');
+        if (typeof showToast === 'function') {
+            showToast('Membuka WhatsApp...', 'success');
         }
     }
 };
@@ -4789,27 +4934,17 @@ window.fetchWaTemplates = async function() {
         if (res.ok) {
             const json = await res.json();
             if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-                window.currentWaTemplates = json.data.map((t, i) => ({
-                    id: 't' + i,
-                    title: t.title || 'Sapaan',
-                    body: t.message || t
-                }));
-                // Repopulate if Command Center is active
-                if (window.activeCommandCenterEvent) {
-                    const waListContainer = document.getElementById('ccWaAutomationList');
-                    if (waListContainer) {
-                        let waHtml = '';
-                        window.currentWaTemplates.forEach(t => {
-                            waHtml += `
-                                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:6px; padding:12px; margin-bottom:10px;">
-                                    <div style="font-weight:700; color:var(--adm-gold); margin-bottom:6px;">${t.title}</div>
-                                    <div style="font-size:0.8rem; color:#94A3B8; margin-bottom:8px;">${t.body.substring(0, 50)}...</div>
-                                    <button class="btn btn-secondary btn-sm" onclick="sendWaTemplate('${encodeURIComponent(t.body)}')">Kirim Pesan Ini</button>
-                                </div>
-                            `;
-                        });
-                        waListContainer.innerHTML = waHtml;
-                    }
+                const mcName = (typeof window.getActiveMcName === 'function') ? window.getActiveMcName() : 'MC';
+                window.currentWaTemplates = json.data.map((t, i) => {
+                    const rawMsg = t.message || t.body || '';
+                    return {
+                        id: 't' + i,
+                        title: t.title || 'Sapaan',
+                        body: rawMsg.replace(/Vanya Arsyad/g, mcName).replace(/\{mc_name\}/g, mcName)
+                    };
+                });
+                if (typeof window.renderCcWaAutomationList === 'function') {
+                    window.renderCcWaAutomationList();
                 }
             }
         }

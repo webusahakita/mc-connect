@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="css/app.css?v=8.3">
     <link rel="stylesheet" href="css/command-center.css?v=8.4">
     <link rel="stylesheet" href="css/stage-mode.css?v=8.3">
-    <link rel="stylesheet" href="css/admin.css?v=8.9">
+    <link rel="stylesheet" href="css/admin.css?v=8.10">
     <link rel="stylesheet" href="css/custom-modal.css?v=8.3">
     <style>
         .admin-section {
@@ -2002,9 +2002,6 @@ Kebutuhan Hospitality:
                             <button class="ecc-tab-btn" data-tab="tab-stage" onclick="switchTab('tab-stage')">
                                 <span>Stage, Rundown & AI</span>
                             </button>
-                            <button class="ecc-tab-btn" data-tab="tab-review" onclick="switchTab('tab-review')">
-                                <span>Post-Event Review</span>
-                            </button>
                             <button class="ecc-tab-btn" data-tab="tab-music" onclick="switchTab('tab-music')">
                                 <span>Musik & Sound Acara</span>
                             </button>
@@ -2498,67 +2495,6 @@ Kebutuhan Hospitality:
                                 </div>
                             </div>
                         </div>
-
-                        <!-- TAB 5: POST-EVENT REVIEW -->
-                        <div class="tab-panel" id="tab-review">
-                            <div class="grid-2col">
-                                <div class="ecc-card">
-                                    <div class="ecc-card-header">
-                                        <div class="ecc-card-title">⭐ Review Harvester via WhatsApp</div>
-                                    </div>
-                                    <p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:1.5rem; line-height:1.6;"
-                                        id="tabReviewSubtitle">
-                                        Kirim pesan otomatis kepada klien Natasha untuk meminta testimoni & bintang 5 setelah
-                                        acara selesai.
-                                    </p>
-                                    <div class="form-group">
-                                        <label class="form-label"
-                                            style="display:flex; justify-content:space-between; align-items:center;">
-                                            <span>Template Pesan WhatsApp (Dapat Diedit)</span>
-                                            <span
-                                                style="font-size:0.75rem; color:var(--adm-gold); font-weight:600;">Terhubung
-                                                Otomatis ke Acara Aktif</span>
-                                        </label>
-                                        <textarea class="form-textarea" style="height:140px;"
-                                            id="postEventReviewTemplate">Halo Kak Natasha, salam hangat dari Loading... & Tim MC-Connect.
-
-Terimkasih banyak atas kepercayaan luar biasyang telah diberikan kepadkami untuk memandu agendistimewAnda. Semogmomen bahagianyberkesan mendalam!
-
-Boleh kami mintwaktu 1 menit untuk memberikan ulasan & rating bintang 5 di portal resmi kami?
-P https://vanyaarsyad.com/#kebijakan
-
-Terimkasih banyak, Kak!</textarea>
-                                    </div>
-                                    <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
-                                        <button type="button" class="btn btn-secondary"
-                                            onclick="openWaPreviewModal('review')"
-                                            style="flex: 1; justify-content:center; font-size:0.85rem;"
-                                            title="Pratinjau & Edit di Popup">
-                                            Pratinjau & Edit
-                                        </button>
-                                        <button class="btn-wa-send" style="flex: 2; justify-content:center;"
-                                            onclick="sendWaAutomation('review')">Buka WhatsApp & Kirim Pesan
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div class="ecc-card">
-                                    <div class="ecc-card-header">
-                                        <div class="ecc-card-title">Catatan Ulasan Klien</div>
-                                    </div>
-                                    <div
-                                        style="background:var(--bg-surface); padding:1.25rem; border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
-                                        <div style="color:var(--gold-primary); font-size:1.2rem; margin-bottom:0.4rem;">
-                                            ⭐⭐⭐⭐⭐</div>
-                                        <p
-                                            style="font-style:italic; font-size:0.95rem; color:var(--text-secondary); margin-bottom:0.75rem;">
-                                            "Suasana wedding kami jadi luar biasa hidup dan berkelas berkat Kak Vanya. Semua
-                                            tamu memuji keanggunan dan kehangatan pembawaannya. Sangat recommended!"
-                                        </p>
-                                        <div style="font-weight:700; font-size:0.9rem;"> Natasha Hendrawan (Mempelai
-                                            Wanita)</div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
 
@@ -4955,9 +4891,9 @@ Terimkasih banyak, Kak!</textarea>
     <script src="js/teleprompter.js?v=8.7" defer></script>
     <script src="js/live-sync.js?v=8.7" defer></script>
     <script src="js/calendar.js?v=8.18" defer></script>
-    <script src="js/customers.js?v=8.10" defer></script>
+    <script src="js/customers.js?v=8.11" defer></script>
     <script src="js/app.js?v=8.11" defer></script>
-    <script src="js/admin-core.js?v=8.71" defer></script>
+    <script src="js/admin-core.js?v=8.72" defer></script>
     <script src="js/invoice-modal.js?v=1.20" defer></script>
     <script src="js/cms-overrides.js?v=8.7" defer></script>
     </div>

@@ -1306,16 +1306,32 @@ class CmsApiController extends Controller
             return response()->json(['success' => false, 'message' => 'MC not found']);
         }
 
-        $templates = $mc->wa_templates ? (is_string($mc->wa_templates) ? json_decode($mc->wa_templates, true) : $mc->wa_templates) : [
+        $mcName = ($mc->nama_panggung && trim($mc->nama_panggung) !== '') ? trim($mc->nama_panggung) : 'MC';
+
+        $defaultTemplates = [
             [
                 'title' => 'Sapaan Awal',
-                'message' => "Halo Kak {name}, salam hangat dari Vanya Arsyad (Master of Ceremony).\n\nTerkait persiapan acara \"{event}\", kami siap berkoordinasi untuk rundown panggung, naskah prompter, serta kebutuhan teknis acara Anda. Ada detail khusus yang ingin dikoordinasikan hari ini?"
+                'message' => "Halo Kak {name}, salam hangat dari {$mcName} (Master of Ceremony).\n\nTerkait persiapan acara \"{event}\", kami siap berkoordinasi untuk rundown panggung, naskah prompter, serta kebutuhan teknis acara Anda. Ada detail khusus yang ingin dikoordinasikan hari ini?"
             ],
             [
                 'title' => 'Follow Up H-7',
                 'message' => "Halo Kak {name}, mengingatkan kembali bahwa acara \"{event}\" tinggal 7 hari lagi!\n\nMohon pastikan semua rundown dan daftar VIP sudah final. Hubungi kami jika butuh bantuan."
             ]
         ];
+
+        $templates = $mc->wa_templates ? (is_string($mc->wa_templates) ? json_decode($mc->wa_templates, true) : $mc->wa_templates) : $defaultTemplates;
+
+        // Auto replace any hardcoded 'Vanya Arsyad' or placeholder '{mc_name}' with actual MC name
+        if (is_array($templates)) {
+            foreach ($templates as &$tmpl) {
+                if (isset($tmpl['message'])) {
+                    $tmpl['message'] = str_replace(['Vanya Arsyad', '{mc_name}'], $mcName, $tmpl['message']);
+                }
+                if (isset($tmpl['body'])) {
+                    $tmpl['body'] = str_replace(['Vanya Arsyad', '{mc_name}'], $mcName, $tmpl['body']);
+                }
+            }
+        }
 
         return response()->json(['success' => true, 'data' => $templates]);
     }

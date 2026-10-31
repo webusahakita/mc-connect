@@ -1152,21 +1152,32 @@
         if (modal) modal.classList.remove('active');
     };
 
-    function openWhatsAppChat(phone, name, eventTitle) {
+    function openWhatsAppChat(phone, name, eventTitle, customMessage) {
         let cleanPhone = (phone || '').replace(/[^0-9]/g, '');
         if (cleanPhone.startsWith('0')) {
             cleanPhone = '62' + cleanPhone.substring(1);
-        } else if (!cleanPhone.startsWith('62')) {
+        } else if (cleanPhone && !cleanPhone.startsWith('62')) {
             cleanPhone = '62' + cleanPhone;
         }
+
+        // If customMessage is provided, send immediately without showing template selection
+        if (customMessage) {
+            const waUrl = 'https://api.whatsapp.com/send?phone=' + cleanPhone + '&text=' + encodeURIComponent(customMessage);
+            window.open(waUrl, '_blank');
+            return;
+        }
+
+        const mcName = (window.getActiveMcName && typeof window.getActiveMcName === 'function')
+            ? window.getActiveMcName()
+            : ((window.activeMcProfile && window.activeMcProfile.nama_panggung) || document.getElementById('dashWelcomeName')?.textContent?.replace(/^Selamat Datang,\s*|!$/g, '').trim() || 'MC');
 
         const modal = document.getElementById('selectWaTemplateModal');
         const container = document.getElementById('waTemplateOptionsContainer');
         const targetName = document.getElementById('waTargetName');
         
         if (!modal || !container || !targetName) {
-            // Fallback jikmodal tidak adconst greeting = `Halo Kak ${name}, salam hangat dari VanyArsyad (Master of Ceremony).\n\nTerkait persiapan acar"${eventTitle}", kami siap berkoordinasi untuk rundown panggung, naskah prompter, sertkebutuhan teknis acarAnda. Addetail khusus yang ingin dikoordinasikan hari ini?`;
-            const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(greeting)}`;
+            const greeting = 'Halo Kak ' + name + ', salam hangat dari ' + mcName + ' (Master of Ceremony).\n\nTerkait persiapan acara "' + eventTitle + '", kami siap berkoordinasi untuk rundown panggung, naskah prompter, serta kebutuhan teknis acara Anda. Ada detail khusus yang ingin dikoordinasikan hari ini?';
+            const waUrl = 'https://api.whatsapp.com/send?phone=' + cleanPhone + '&text=' + encodeURIComponent(greeting);
             window.open(waUrl, '_blank');
             return;
         }
@@ -1178,12 +1189,19 @@
             ? window.currentWaTemplates 
             : [{
                 title: 'Sapaan Awal (Default)',
-                message: `Halo Kak {name}, salam hangat dari VanyArsyad (Master of Ceremony).\n\nTerkait persiapan acar"{event}", kami siap berkoordinasi untuk rundown panggung, naskah prompter, sertkebutuhan teknis acarAnda. Addetail khusus yang ingin dikoordinasikan hari ini?`
+                message: 'Halo Kak {name}, salam hangat dari ' + mcName + ' (Master of Ceremony).\n\nTerkait persiapan acara "{event}", kami siap berkoordinasi untuk rundown panggung, naskah prompter, serta kebutuhan teknis acara Anda. Ada detail khusus yang ingin dikoordinasikan hari ini?'
             }];
 
         templates.forEach(tpl => {
-            let msg = tpl.message || '';
-            msg = msg.replace(/{name}/g, name).replace(/{event}/g, eventTitle);
+            let msg = tpl.message || tpl.body || '';
+            msg = msg
+                .replace(/\{name\}/g, name)
+                .replace(/\[NAMA\]/g, name)
+                .replace(/\{event\}/g, eventTitle)
+                .replace(/\[ACARA\]/g, eventTitle)
+                .replace(/\{mc_name\}/g, mcName)
+                .replace(/Vanya Arsyad/g, mcName)
+                .replace(/VanyArsyad/g, mcName);
 
             const btn = document.createElement('button');
             btn.className = 'btn btn-outline-gold';
@@ -1197,10 +1215,10 @@
                 <div style="font-size:0.75rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${msg}</div>
             `;
             btn.onclick = function() {
-                const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
+                const waUrl = 'https://api.whatsapp.com/send?phone=' + cleanPhone + '&text=' + encodeURIComponent(msg);
                 window.open(waUrl, '_blank');
-                if (typeof window.showToast === 'async function') {
-                    window.showToast(`MembukWhatsApp untuk ${name}...`, 'gold');
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Membuka WhatsApp untuk ' + name + '...', 'gold');
                 }
                 closeSelectWaTemplateModal();
             };
