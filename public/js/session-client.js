@@ -56,6 +56,17 @@
             if (!response.ok) return null;
             const data = await response.json();
             window.MCSession.user = data.user;
+            if (data.user) {
+                const sName = document.getElementById('sidebarMcName');
+                if (sName && data.user.name) sName.textContent = data.user.name;
+                const dName = document.getElementById('dashWelcomeName');
+                if (dName && data.user.name) dName.textContent = data.user.name;
+                const sAvatar = document.getElementById('sidebarAvatarImg');
+                if (sAvatar && data.user.photo_url) {
+                    sAvatar.src = data.user.photo_url;
+                    sAvatar.style.opacity = '1';
+                }
+            }
             // Display-only compatibility; authorization is always checked by the server.
             sessionStorage.removeItem('mc_auth_token');
             sessionStorage.setItem('mc_auth_user', JSON.stringify(data.user));

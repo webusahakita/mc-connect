@@ -29,6 +29,7 @@
                 <li><a href="#showreel">Showreel</a></li>
                 <li><a href="#katalog">Paket Layanan</a></li>
                 <li><a href="#kalender">Kalender Jadwal</a></li>
+                <li><a href="{{ url('/keunggulan.html') }}" target="_blank" rel="noopener">Kelebihan & Keunggulan</a></li>
                 <li><a href="#kebijakan">T&C & FAQ</a></li>
             </ul>
 

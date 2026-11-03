@@ -21,3 +21,21 @@ DirectoryIndex index.php index.html
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+<IfModule mod_headers.c>
+    # Progressive audio streaming with Byte Ranges
+    <FilesMatch "\.(mp3|wav|ogg|m4a)$">
+        Header set Accept-Ranges bytes
+        Header set Cache-Control "public, max-age=604800"
+    </FilesMatch>
+
+    # Long-term caching for static images, web fonts, and favicons
+    <FilesMatch "\.(webp|jpg|jpeg|png|gif|svg|ico|woff2?|ttf|eot)$">
+        Header set Cache-Control "public, max-age=2592000, immutable"
+    </FilesMatch>
+
+    # Cache CSS and JS with revalidation
+    <FilesMatch "\.(css|js)$">
+        Header set Cache-Control "public, max-age=86400, stale-while-revalidate=604800"
+    </FilesMatch>
+</IfModule>

@@ -111,13 +111,48 @@ function buildFormFields(formContainer, fields) {
                 }
             } else {
                 input = document.createElement('input');
-                input.type = field.type || 'text';
-                if (field.accept) {
-                    input.accept = field.accept;
-                }
-                if (field.type === 'file') {
-                    input.style.cursor = 'pointer';
-                    input.style.padding = '0.5rem';
+                if (field.type === 'number' || field.onlyDigits) {
+                    input.type = 'text';
+                    input.setAttribute('inputmode', 'numeric');
+                    input.setAttribute('pattern', '[0-9]*');
+                    input.addEventListener('keydown', function(e) {
+                        if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key) ||
+                            ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase()))) {
+                            return;
+                        }
+                        if (!/^[0-9]$/.test(e.key)) {
+                            e.preventDefault();
+                        }
+                    });
+                    input.addEventListener('input', function() {
+                        this.value = this.value.replace(/[^0-9]/g, '');
+                        if (field.min !== undefined && this.value !== '' && Number(this.value) < Number(field.min)) {
+                            this.value = String(field.min);
+                        }
+                    });
+                    input.addEventListener('paste', function(e) {
+                        e.preventDefault();
+                        const t = (e.clipboardData || window.clipboardData).getData('text');
+                        this.value = t.replace(/[^0-9]/g, '');
+                    });
+                } else {
+                    input.type = field.type || 'text';
+                    if (field.accept) {
+                        input.accept = field.accept;
+                    }
+                    if (field.type === 'file') {
+                        input.style.cursor = 'pointer';
+                        input.style.padding = '0.5rem';
+                    }
+                    if (field.min !== undefined) {
+                        input.min = field.min;
+                    }
+                    if (field.max !== undefined) {
+                        input.max = field.max;
+                    }
+                    if (field.step !== undefined) {
+                        input.step = field.step;
+                    }
                 }
             }
             input.id = 'cm_field_' + field.id;
@@ -198,7 +233,16 @@ function showModal({ title = 'Perhatian', message = '', type = 'alert', defaultT
                         if (el.type === 'file') {
                             result[f.id] = el.files.length > 0 ? el.files[0] : null;
                         } else {
-                            result[f.id] = el.value;
+                            let val = el.value;
+                            if (f.type === 'number' || f.onlyDigits) {
+                                val = String(val).replace(/[^0-9]/g, '');
+                                if (f.min !== undefined && val !== '') {
+                                    if (Number(val) < Number(f.min)) {
+                                        val = String(f.min);
+                                    }
+                                }
+                            }
+                            result[f.id] = val;
                         }
                     } else {
                         result[f.id] = '';

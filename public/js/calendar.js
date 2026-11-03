@@ -40,10 +40,16 @@ class AvailabilityCalendar {
 
         let html = `
             <div class="calendar-header-bar">
-                <div class="calendar-nav-controls" style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 1rem; gap: 0.5rem;">
-                    <button class="btn btn-secondary btn-sm" id="calPrevBtn" style="padding: 0.4rem 0.75rem; flex-shrink: 0; white-space: nowrap;">◀ Sebelumnya</button>
-                    <h3 class="calendar-month-title" style="margin: 0; text-align: center; font-size: 1.1rem; flex-grow: 1; white-space: nowrap;">${this.monthNames[month]} ${year}</h3>
-                    <button class="btn btn-secondary btn-sm" id="calNextBtn" style="padding: 0.4rem 0.75rem; flex-shrink: 0; white-space: nowrap;">Berikutnya ▶</button>
+                <div class="calendar-nav-controls" style="display:flex; align-items:center; justify-content:space-between; width:100%; gap:0.5rem;">
+                    <button type="button" class="btn btn-secondary btn-sm cal-nav-btn" id="calPrevBtn" title="Bulan Sebelumnya" aria-label="Bulan Sebelumnya" style="flex-shrink:0; display:inline-flex; align-items:center; gap:0.35rem; padding:0.4rem 0.75rem; font-size:0.82rem; font-weight:700;">
+                        <span class="cal-nav-arrow">◀</span>
+                        <span class="cal-nav-text">Sebelumnya</span>
+                    </button>
+                    <h3 class="calendar-month-title" style="flex:1 1 auto; min-width:0; text-align:center; margin:0 0.5rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:clamp(0.95rem, 3.8vw, 1.25rem); font-weight:800;">${this.monthNames[month]} ${year}</h3>
+                    <button type="button" class="btn btn-secondary btn-sm cal-nav-btn" id="calNextBtn" title="Bulan Berikutnya" aria-label="Bulan Berikutnya" style="flex-shrink:0; display:inline-flex; align-items:center; gap:0.35rem; padding:0.4rem 0.75rem; font-size:0.82rem; font-weight:700;">
+                        <span class="cal-nav-text">Berikutnya</span>
+                        <span class="cal-nav-arrow">▶</span>
+                    </button>
                 </div>
                 <div class="calendar-legend">
                     <div class="legend-item"><span class="legend-dot avail"></span> Tersedia (Available)</div>

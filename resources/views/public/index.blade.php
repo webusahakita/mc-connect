@@ -290,7 +290,7 @@
                 </label>
             </div>
 
-            <div style="margin-top:1.5rem; display:flex; justify-content:flex-end; gap:0.75rem;">
+            <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="document.getElementById('bookingModal').classList.remove('active')">Batal</button>
                 <button type="submit" class="btn btn-primary" id="btnSubmitBooking">Kirim Permintaan Booking</button>
             </div>

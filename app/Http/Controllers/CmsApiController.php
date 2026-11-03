@@ -41,31 +41,181 @@ class CmsApiController extends Controller
     }
 
     // ============================================================
+    // 0. AGGREGATED BOOTSTRAP API (Optimasi Round-Trip)
+    // ============================================================
+
+    public function getBootstrap(Request $request)
+    {
+        if (function_exists('session_write_close') && session()->isStarted()) {
+            session_write_close();
+        }
+
+        $mc = $this->getMC();
+
+        return response()->json([
+            'success'    => true,
+            'csrf_token' => csrf_token(),
+            'data'       => [
+                'biodata'               => $this->getBiodataData($mc),
+                'gallery'               => $this->getGalleryData($mc),
+                'packages'              => $this->getPackagesData($mc),
+                'policies'              => $this->getPoliciesData($mc),
+                'payment_settings'      => $this->getPaymentSettingsData($mc),
+                'testimonials'          => $this->getTestimonialsData(),
+                'presskit'              => $this->getPressKitData($mc),
+                'riders'                => $this->getRidersData($mc),
+                'wardrobe_catalog'      => $this->getWardrobeCatalogData($mc),
+                'cashflow_categories'   => $this->getCashflowCategoriesData($mc),
+                'cashflow_transactions' => $this->getCashflowTransactionsData($mc),
+                'customers'             => $this->getCustomersData($mc),
+                'events'                => $this->getEventsAdminData($mc),
+                'event_categories'      => $this->getEventCategoriesData($mc),
+                'client_categories'     => $this->getClientCategoriesData($mc),
+                'wa_templates'          => $this->getWaTemplatesData($mc),
+                'music_bank'            => $this->getMusicBankData($mc),
+            ]
+        ]);
+    }
+
+    public function getPublicBootstrap(Request $request)
+    {
+        if (function_exists('session_write_close') && session()->isStarted()) {
+            session_write_close();
+        }
+
+        $host = $request->getHost();
+        $cacheKey = 'mc_public_bootstrap_' . md5($host);
+
+        $cachedData = \Illuminate\Support\Facades\Cache::remember($cacheKey, 3600, function () use ($host) {
+            $mc = \App\Models\UserMC::where('custom_domain', $host)->first() ?? \App\Models\UserMC::first();
+            if (!$mc) {
+                return null;
+            }
+
+            return [
+                'biodata'          => $this->getBiodataData($mc),
+                'gallery'          => $this->getGalleryData($mc),
+                'packages'         => $this->getPackagesData($mc),
+                'policies'         => $this->getPoliciesData($mc),
+                'testimonials'     => $this->getTestimonialsData(),
+                'presskit'         => $this->getPressKitData($mc),
+                'riders'           => $this->getRidersData($mc),
+                'event_categories' => $this->getEventCategoriesData($mc),
+            ];
+        });
+
+        if (!$cachedData) {
+            return response()->json(['success' => false, 'message' => 'MC not found'], 404);
+        }
+
+        return response()->json([
+            'success'    => true,
+            'csrf_token' => csrf_token(),
+            'data'       => $cachedData
+        ]);
+    }
+
+    /**
+     * Helper pembersih cache publik saat ada mutasi data CMS
+     */
+    protected function invalidatePublicCache(): void
+    {
+        try {
+            \Illuminate\Support\Facades\Cache::flush();
+        } catch (\Throwable $e) {
+            // Ignore cache flush failures
+        }
+    }
+
+    /**
+     * Pipeline otomatis optimasi dan konversi foto ke WebP
+     */
+    protected function convertAndSaveImage($file, string $folder, string $prefix = 'img'): array
+    {
+        $destinationPath = public_path($folder);
+        if (!file_exists($destinationPath)) {
+            @mkdir($destinationPath, 0755, true);
+        }
+
+        $sourcePath = $file->getRealPath();
+        $ext = strtolower($file->getClientOriginalExtension());
+        
+        // Cek dukungan GD imagewebp
+        if (function_exists('imagewebp') && in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) {
+            try {
+                $image = match ($ext) {
+                    'jpg', 'jpeg' => @imagecreatefromjpeg($sourcePath),
+                    'png'         => @imagecreatefrompng($sourcePath),
+                    'webp'        => @imagecreatefromwebp($sourcePath),
+                    default       => null
+                };
+
+                if ($image) {
+                    if ($ext === 'png') {
+                        imagepalettetotruecolor($image);
+                        imagealphablending($image, true);
+                        imagesavealpha($image, true);
+                    }
+
+                    $webpFilename = $prefix . '_' . time() . '_' . uniqid() . '.webp';
+                    $webpFullPath = $destinationPath . '/' . $webpFilename;
+
+                    if (@imagewebp($image, $webpFullPath, 82)) {
+                        @imagedestroy($image);
+                        return [
+                            'filename'  => $webpFilename,
+                            'file_path' => $folder . '/' . $webpFilename,
+                            'url'       => '/' . $folder . '/' . $webpFilename,
+                        ];
+                    }
+                    @imagedestroy($image);
+                }
+            } catch (\Throwable $e) {
+                // Abaikan dan lanjutkan fallback
+            }
+        }
+
+        // Fallback simpan format asli
+        $originalFilename = $prefix . '_' . time() . '_' . uniqid() . '.' . $ext;
+        $file->move($destinationPath, $originalFilename);
+        return [
+            'filename'  => $originalFilename,
+            'file_path' => $folder . '/' . $originalFilename,
+            'url'       => '/' . $folder . '/' . $originalFilename,
+        ];
+    }
+
+    // ============================================================
     // 1. BIODATA MC
     // ============================================================
+
+    public function getBiodataData(UserMC $mc): array
+    {
+        return [
+            'name'                => $mc->nama_panggung,
+            'bio'                 => $mc->bio,
+            'photo'               => $mc->foto_profil,
+            'spec'                => $mc->spesialisasi,
+            'statEvents'          => $mc->stat_events ?? '500+ Events',
+            'statYears'           => $mc->stat_years ?? '8+ Tahun',
+            'showreel_youtube_id' => $mc->showreel_youtube_id,
+            'showreel_url'        => $mc->showreel_url,
+            'ig'                  => $mc->instagram_handle,
+            'tiktok'              => $mc->tiktok_handle,
+            'fb'                  => $mc->facebook_handle,
+            'email'               => $mc->email,
+            'no_telp'             => $mc->no_telp,
+            'calendarConfig'      => is_string($mc->calendar_config) ? json_decode($mc->calendar_config, true) : $mc->calendar_config,
+            'webConfig'           => is_string($mc->payment_config) ? json_decode($mc->payment_config, true) : $mc->payment_config,
+        ];
+    }
 
     public function getBiodata()
     {
         $mc = $this->getMC();
         return response()->json([
             'success' => true,
-            'data' => [
-                'name'               => $mc->nama_panggung,
-                'bio'                => $mc->bio,
-                'photo'              => $mc->foto_profil,
-                'spec'               => $mc->spesialisasi,
-                'statEvents'         => $mc->stat_events ?? '500+ Events',
-                'statYears'          => $mc->stat_years ?? '8+ Tahun',
-                'showreel_youtube_id'=> $mc->showreel_youtube_id,
-                'showreel_url'       => $mc->showreel_url,
-                'ig'                 => $mc->instagram_handle,
-                'tiktok'             => $mc->tiktok_handle,
-                'fb'                 => $mc->facebook_handle,
-                'email'              => $mc->email,
-                'no_telp'            => $mc->no_telp,
-                'calendarConfig' => is_string($mc->calendar_config) ? json_decode($mc->calendar_config, true) : $mc->calendar_config,
-            
-                'webConfig'      => is_string($mc->payment_config) ? json_decode($mc->payment_config, true) : $mc->payment_config,]
+            'data'    => $this->getBiodataData($mc)
         ]);
     }
 
@@ -85,15 +235,15 @@ class CmsApiController extends Controller
             }
             $file->move($destinationPath, $filename);
             
-            // Delete old file if it's a local storage path
-            if ($mc->foto_profil && \Illuminate\Support\Str::startsWith($mc->foto_profil, '/uploads/')) {
+            // Delete old file if it's a local storage path and different
+            if ($mc->foto_profil && \Illuminate\Support\Str::startsWith($mc->foto_profil, '/uploads/profile/')) {
                 $oldPath = public_path(ltrim($mc->foto_profil, '/'));
-                if (file_exists($oldPath)) {
+                if (file_exists($oldPath) && realpath($oldPath) !== realpath($destinationPath . '/' . $filename)) {
                     @unlink($oldPath);
                 }
             }
             $photoPath = '/uploads/profile/' . $filename;
-        } elseif ($request->input('photo')) {
+        } elseif ($request->filled('photo')) {
             $photoData = $request->input('photo');
             if (strpos($photoData, 'data:image/') === 0) {
                 $start = strlen('data:image/');
@@ -102,21 +252,23 @@ class CmsApiController extends Controller
                     $type = strtolower(substr($photoData, $start, $end - $start));
                     $base64Start = strpos($photoData, ',', $end);
                     
-                    if ($base64Start !== false && in_array($type, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+                    if ($base64Start !== false) {
                         $base64Data = substr($photoData, $base64Start + 1);
                         $decodedData = base64_decode($base64Data);
                         
                         if ($decodedData !== false) {
-                            $filename = 'profile_' . time() . '.' . $type;
+                            $ext = in_array($type, ['jpg', 'jpeg', 'png', 'gif', 'webp']) ? $type : 'jpg';
+                            if ($ext === 'jpeg') $ext = 'jpg';
+                            $filename = 'profile_' . time() . '.' . $ext;
                             $destinationPath = public_path('uploads/profile');
                             if (!file_exists($destinationPath)) {
                                 mkdir($destinationPath, 0755, true);
                             }
                             file_put_contents($destinationPath . '/' . $filename, $decodedData);
                             
-                            if ($mc->foto_profil && \Illuminate\Support\Str::startsWith($mc->foto_profil, '/uploads/')) {
+                            if ($mc->foto_profil && \Illuminate\Support\Str::startsWith($mc->foto_profil, '/uploads/profile/')) {
                                 $oldPath = public_path(ltrim($mc->foto_profil, '/'));
-                                if (file_exists($oldPath)) {
+                                if (file_exists($oldPath) && realpath($oldPath) !== realpath($destinationPath . '/' . $filename)) {
                                     @unlink($oldPath);
                                 }
                             }
@@ -125,6 +277,8 @@ class CmsApiController extends Controller
                     }
                 }
             } elseif (filter_var($photoData, FILTER_VALIDATE_URL) && strlen($photoData) <= 255) {
+                $photoPath = $photoData;
+            } elseif (\Illuminate\Support\Str::startsWith($photoData, '/uploads/') && strlen($photoData) <= 255) {
                 $photoPath = $photoData;
             }
         }
@@ -140,10 +294,13 @@ class CmsApiController extends Controller
             'showreel_url'       => $request->input('showreel_url', $mc->showreel_url),
             'instagram_handle'   => $request->input('ig', $mc->instagram_handle),
             'tiktok_handle'      => $request->input('tiktok', $mc->tiktok_handle),
+            'facebook_handle'    => $request->input('fb', $mc->facebook_handle),
             'no_telp'            => $request->input('no_telp', $mc->no_telp),
             'calendar_config'    => $request->input('calendarConfig') ? json_encode($request->input('calendarConfig')) : $mc->calendar_config,
             'payment_config'     => $request->input('webConfig') ? json_encode($request->input('webConfig')) : $mc->payment_config,
         ]);
+
+        $this->invalidatePublicCache();
 
         return response()->json([
             'success' => true,
@@ -156,18 +313,23 @@ class CmsApiController extends Controller
     // 2. GALLERY
     // ============================================================
 
+    public function getGalleryData(UserMC $mc)
+    {
+        $items = CmsGallery::where('mc_id', $mc->id)->orderBy('urutan')->get();
+        return $items->map(fn($g) => [
+            'id'      => 'g_' . $g->id,
+            'db_id'   => $g->id,
+            'url'     => $g->url,
+            'caption' => $g->caption,
+        ])->values();
+    }
+
     public function getGallery()
     {
         $mc = $this->getMC();
-        $items = CmsGallery::where('mc_id', $mc->id)->orderBy('urutan')->get();
         return response()->json([
             'success' => true,
-            'data' => $items->map(fn($g) => [
-                'id'      => 'g_' . $g->id,
-                'db_id'   => $g->id,
-                'url'     => $g->url,
-                'caption' => $g->caption,
-            ])->values()
+            'data'    => $this->getGalleryData($mc)
         ]);
     }
 
@@ -180,23 +342,19 @@ class CmsApiController extends Controller
         $uploaded = [];
 
         foreach ($request->file('files') as $i => $file) {
-            $filename = 'gallery_' . time() . '_' . $i . '.' . $file->getClientOriginalExtension();
-            $destinationPath = public_path('uploads/gallery');
-            if (!file_exists($destinationPath)) {
-                mkdir($destinationPath, 0755, true);
-            }
-            $file->move($destinationPath, $filename);
-            $url  = '/uploads/gallery/' . $filename;
+            $saved = $this->convertAndSaveImage($file, 'uploads/gallery', 'gallery_' . $i);
 
             $gallery = CmsGallery::create([
                 'mc_id'     => $mc->id,
-                'file_path' => 'uploads/gallery/' . $filename,
-                'url'       => $url,
+                'file_path' => $saved['file_path'],
+                'url'       => $saved['url'],
                 'caption'   => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
                 'urutan'    => $maxOrder + $i + 1,
             ]);
-            $uploaded[] = ['id' => 'g_' . $gallery->id, 'db_id' => $gallery->id, 'url' => $url, 'caption' => $gallery->caption];
+            $uploaded[] = ['id' => 'g_' . $gallery->id, 'db_id' => $gallery->id, 'url' => $saved['url'], 'caption' => $gallery->caption];
         }
+
+        $this->invalidatePublicCache();
 
         return response()->json(['success' => true, 'message' => count($uploaded) . ' foto berhasil diunggah!', 'data' => $uploaded]);
     }
@@ -236,6 +394,7 @@ class CmsApiController extends Controller
             ]);
         }
 
+        $this->invalidatePublicCache();
         return response()->json(['success' => true, 'message' => 'Galeri disimpan ke database!']);
     }
 
@@ -243,6 +402,7 @@ class CmsApiController extends Controller
     {
         $item = CmsGallery::where('mc_id', $this->getMC()->id)->findOrFail($id);
         $item->update(['caption' => $request->input('caption', '')]);
+        $this->invalidatePublicCache();
         return response()->json(['success' => true]);
     }
 
@@ -250,6 +410,7 @@ class CmsApiController extends Controller
     {
         $item = CmsGallery::where('mc_id', $this->getMC()->id)->findOrFail($id);
         $item->delete(); // booted() handles file deletion
+        $this->invalidatePublicCache();
         return response()->json(['success' => true, 'message' => 'Foto dihapus.']);
     }
 
@@ -257,11 +418,10 @@ class CmsApiController extends Controller
     // 3. PACKAGES (Paket Harga)
     // ============================================================
 
-    public function getPackages()
+    public function getPackagesData(UserMC $mc)
     {
-        $mc = $this->getMC();
         $pkgs = CmsPackage::where('mc_id', $mc->id)->orderBy('urutan')->get();
-        return response()->json(['success' => true, 'data' => $pkgs->map(fn($p) => [
+        return $pkgs->map(fn($p) => [
             'id'       => $p->id,
             'name'     => $p->name,
             'category' => $p->category,
@@ -269,7 +429,13 @@ class CmsApiController extends Controller
             'duration' => $p->duration,
             'features' => $p->features ?? [],
             'badge'    => $p->badge,
-        ])->values()]);
+        ])->values();
+    }
+
+    public function getPackages()
+    {
+        $mc = $this->getMC();
+        return response()->json(['success' => true, 'data' => $this->getPackagesData($mc)]);
     }
 
     public function savePackages(Request $request)
@@ -283,13 +449,14 @@ class CmsApiController extends Controller
                 'mc_id'    => $mc->id,
                 'name'     => $pkg['name'] ?? 'Paket ' . ($i + 1),
                 'category' => $pkg['category'] ?? 'Standard',
-                'price'    => $pkg['price'] ?? 0,
+                'price'    => max(0, abs((float)($pkg['price'] ?? 0))),
                 'duration' => $pkg['duration'] ?? 'Max. 4 Jam',
                 'features' => $pkg['features'] ?? [],
                 'badge'    => $pkg['badge'] ?? null,
                 'urutan'   => $i,
             ]);
         }
+        $this->invalidatePublicCache();
         return response()->json(['success' => true, 'message' => 'Paket harga disimpan ke database!']);
     }
 
@@ -297,9 +464,8 @@ class CmsApiController extends Controller
     // 4. POLICIES (Terms, Refund, FAQ, Riders text)
     // ============================================================
 
-    public function getPolicies()
+    public function getPoliciesData(UserMC $mc): array
     {
-        $mc = $this->getMC();
         $articles = \App\Models\CmsArticle::where('mc_id', $mc->id)->get()->keyBy('kategori');
         $faqArticle = $articles->get('FAQ');
         $faqs = [];
@@ -309,12 +475,18 @@ class CmsApiController extends Controller
                 $faqs[] = ['q' => trim($matches[1][$i]), 'a' => trim($matches[2][$i])];
             }
         }
-        return response()->json(['success' => true, 'data' => [
+        return [
             'terms'  => $articles->get('Terms')?->konten ?? '',
             'refund' => $articles->get('Refund')?->konten ?? '',
             'riders' => $articles->get('Riders')?->konten ?? '',
             'faqs'   => $faqs,
-        ]]);
+        ];
+    }
+
+    public function getPolicies()
+    {
+        $mc = $this->getMC();
+        return response()->json(['success' => true, 'data' => $this->getPoliciesData($mc)]);
     }
 
     public function savePolicies(Request $request)
@@ -336,45 +508,94 @@ class CmsApiController extends Controller
             ['mc_id' => $mc->id, 'kategori' => 'FAQ'],
             ['judul' => 'FAQ', 'slug' => 'faq', 'konten' => $faqContent, 'is_published' => 1]
         );
+        $this->invalidatePublicCache();
         return response()->json(['success' => true, 'message' => 'Kebijakan & FAQ disimpan ke database!']);
     }
 
     // ============================================================
     // Payment Settings (Config in UsersMC)
     // ============================================================
+    public function getPaymentSettingsData(UserMC $mc)
+    {
+        $config = is_string($mc->payment_config) ? json_decode($mc->payment_config, true) : $mc->payment_config;
+        return $config ?: null;
+    }
+
     public function getPaymentSettings()
     {
         $mc = $this->getMC();
-        $config = is_string($mc->payment_config) ? json_decode($mc->payment_config, true) : $mc->payment_config;
         return response()->json([
             'success' => true,
-            'data' => $config ?: null
+            'data'    => $this->getPaymentSettingsData($mc)
         ]);
     }
 
     public function savePaymentSettings(Request $request)
     {
         $mc = $this->getMC();
-        $mc->payment_config = json_encode($request->all());
-        $mc->save();
+        $payload = $request->all();
+        if (isset($payload['accounts']) && is_array($payload['accounts'])) {
+            foreach ($payload['accounts'] as &$acc) {
+                if (isset($acc['number'])) {
+                    $acc['number'] = preg_replace('/[^0-9]/', '', (string)$acc['number']);
+                }
+            }
+            unset($acc);
+        }
+        // Handle QRIS image upload if base64 provided
+        if (isset($payload['qrisUrl']) && is_string($payload['qrisUrl']) && \Illuminate\Support\Str::startsWith($payload['qrisUrl'], 'data:image/')) {
+            $dataUrl = $payload['qrisUrl'];
+            $semicolonPos = strpos($dataUrl, ';');
+            if ($semicolonPos !== false) {
+                $type = substr($dataUrl, 11, $semicolonPos - 11);
+                $base64Start = strpos($dataUrl, ',');
+                if ($base64Start !== false) {
+                    $base64Data = substr($dataUrl, $base64Start + 1);
+                    $decoded = base64_decode($base64Data);
+                    if ($decoded !== false) {
+                        $ext = in_array($type, ['jpg', 'jpeg', 'png', 'webp']) ? $type : 'png';
+                        if ($ext === 'jpeg') $ext = 'jpg';
+                        $filename = 'qris_' . $mc->id . '_' . time() . '.' . $ext;
+                        $destinationPath = public_path('uploads/qris');
+                        if (!file_exists($destinationPath)) {
+                            @mkdir($destinationPath, 0755, true);
+                        }
+                        file_put_contents($destinationPath . '/' . $filename, $decoded);
+                        $payload['qrisUrl'] = '/uploads/qris/' . $filename;
+                    }
+                }
+            }
+        }
 
-        return response()->json(['success' => true]);
+        $mc->payment_config = json_encode($payload);
+        $mc->save();
+        $this->invalidatePublicCache();
+
+        return response()->json([
+            'success' => true,
+            'qrisUrl' => $payload['qrisUrl'] ?? ''
+        ]);
     }
 
     // ============================================================
     // 4.5. TESTIMONIALS
     // ============================================================
 
-    public function getTestimonials()
+    public function getTestimonialsData()
     {
         $items = \App\Models\CmsTestimonial::orderBy('urutan')->get();
-        return response()->json(['success' => true, 'data' => $items->map(fn($t) => [
+        return $items->map(fn($t) => [
             'id' => $t->id,
             'rating' => $t->rating,
             'text' => $t->text,
             'author' => $t->author_name,
             'role' => $t->author_role,
-        ])->values()]);
+        ])->values();
+    }
+
+    public function getTestimonials()
+    {
+        return response()->json(['success' => true, 'data' => $this->getTestimonialsData()]);
     }
 
     public function saveTestimonials(Request $request)
@@ -400,14 +621,13 @@ class CmsApiController extends Controller
     // 5. PRESS KIT
     // ============================================================
 
-    public function getPressKit()
+    public function getPressKitData(UserMC $mc)
     {
-        $mc = $this->getMC();
         $pk = CmsPressKit::where('mc_id', $mc->id)->first();
         if (!$pk) {
-            return response()->json(['success' => true, 'data' => null]);
+            return null;
         }
-        return response()->json(['success' => true, 'data' => [
+        return [
             'stageName'   => $pk->stage_name,
             'spesialisasi'=> $pk->spesialisasi,
             'tagline'     => $pk->tagline,
@@ -423,7 +643,13 @@ class CmsApiController extends Controller
             'scope4'      => $pk->scope_nilai_tambah,
             'footerNote'  => $pk->footer_note,
             'ridersFooter'=> $pk->riders_footer_note,
-        ]]);
+        ];
+    }
+
+    public function getPressKit()
+    {
+        $mc = $this->getMC();
+        return response()->json(['success' => true, 'data' => $this->getPressKitData($mc)]);
     }
 
     public function savePressKit(Request $request)
@@ -449,6 +675,7 @@ class CmsApiController extends Controller
                 'riders_footer_note'  => $request->input('ridersFooter', ''),
             ]
         );
+        $this->invalidatePublicCache();
         return response()->json(['success' => true, 'message' => 'Press Kit disimpan ke database!']);
     }
 
@@ -456,16 +683,21 @@ class CmsApiController extends Controller
     // 6. RIDERS (Event Riders)
     // ============================================================
 
-    public function getRiders()
+    public function getRidersData(UserMC $mc)
     {
-        $mc = $this->getMC();
         $riders = CmsRider::where('mc_id', $mc->id)->orderBy('urutan')->get();
-        return response()->json(['success' => true, 'data' => $riders->map(fn($r) => [
+        return $riders->map(fn($r) => [
             'id'    => 'rv_' . $r->id,
             'db_id' => $r->id,
             'title' => $r->title,
             'notes' => $r->notes,
-        ])->values()]);
+        ])->values();
+    }
+
+    public function getRiders()
+    {
+        $mc = $this->getMC();
+        return response()->json(['success' => true, 'data' => $this->getRidersData($mc)]);
     }
 
     public function saveRider(Request $request)
@@ -480,13 +712,21 @@ class CmsApiController extends Controller
         ];
 
         if ($dbId) {
-            $rider = CmsRider::where('mc_id', $this->getMC()->id)->findOrFail($dbId);
-            $rider->update($data);
+            $rider = CmsRider::where('mc_id', $mc->id)->find($dbId);
+            if ($rider) {
+                $rider->update($data);
+            } else {
+                $maxOrder = CmsRider::where('mc_id', $mc->id)->max('urutan') ?? 0;
+                $data['urutan'] = $maxOrder + 1;
+                $rider = CmsRider::create($data);
+            }
         } else {
             $maxOrder = CmsRider::where('mc_id', $mc->id)->max('urutan') ?? 0;
             $data['urutan'] = $maxOrder + 1;
             $rider = CmsRider::create($data);
         }
+
+        $this->invalidatePublicCache();
 
         return response()->json(['success' => true, 'message' => 'Rider disimpan!', 'data' => [
             'id'    => 'rv_' . $rider->id,
@@ -498,7 +738,12 @@ class CmsApiController extends Controller
 
     public function deleteRider($id)
     {
-        CmsRider::where('mc_id', $this->getMC()->id)->findOrFail($id)->delete();
+        $mc = $this->getMC();
+        $rider = CmsRider::where('mc_id', $mc->id)->find($id);
+        if ($rider) {
+            $rider->delete();
+        }
+        $this->invalidatePublicCache();
         return response()->json(['success' => true, 'message' => 'Rider dihapus.']);
     }
 
@@ -506,9 +751,8 @@ class CmsApiController extends Controller
     // 7. WARDROBE CATALOG
     // ============================================================
 
-    public function getWardrobeCatalog()
+    public function getWardrobeCatalogData(UserMC $mc)
     {
-        $mc = $this->getMC();
         $items = CmsWardrobeCatalog::where('mc_id', $mc->id)->get();
         
         // AUTO-SEED DUMMY DATA JIKA KOSONG (SESUAI PERMINTAAN USER)
@@ -525,7 +769,7 @@ class CmsApiController extends Controller
             $items = CmsWardrobeCatalog::where('mc_id', $mc->id)->get();
         }
         
-        return response()->json(['success' => true, 'data' => $items->map(fn($w) => [
+        return $items->map(fn($w) => [
             'id'       => 'w_' . $w->id,
             'db_id'    => $w->id,
             'imgUrl'   => $w->foto_url,
@@ -534,7 +778,13 @@ class CmsApiController extends Controller
             'name'     => $w->nama,
             'colorName'=> $w->kategori,
             'status'   => $w->is_active ? 'Siap Pakai' : 'Sedang Dicuci/Diperbaiki'
-        ])->values()]);
+        ])->values();
+    }
+
+    public function getWardrobeCatalog()
+    {
+        $mc = $this->getMC();
+        return response()->json(['success' => true, 'data' => $this->getWardrobeCatalogData($mc)]);
     }
 
     public function saveWardrobeCatalogItem(Request $request)
@@ -588,17 +838,22 @@ class CmsApiController extends Controller
     // 8. CASHFLOW CATEGORIES
     // ============================================================
 
-    public function getCashflowCategories()
+    public function getCashflowCategoriesData(UserMC $mc)
     {
-        $mc = $this->getMC();
         $items = CmsCashflowCategory::where('mc_id', $mc->id)->get();
-        return response()->json(['success' => true, 'data' => $items->map(fn($c) => [
+        return $items->map(fn($c) => [
             'id'    => 'cc_' . $c->id,
             'db_id' => $c->id,
             'nama'  => $c->nama,
             'tipe'  => $c->tipe,
             'warna' => $c->warna,
-        ])->values()]);
+        ])->values();
+    }
+
+    public function getCashflowCategories()
+    {
+        $mc = $this->getMC();
+        return response()->json(['success' => true, 'data' => $this->getCashflowCategoriesData($mc)]);
     }
 
     public function saveCashflowCategories(Request $request)
@@ -608,13 +863,18 @@ class CmsApiController extends Controller
 
         CmsCashflowCategory::where('mc_id', $mc->id)->delete();
         foreach ($categories as $cat) {
+            $nama = trim($cat['nama'] ?? '');
+            if ($nama === '') continue;
+            $rawTipe = strtolower(trim($cat['tipe'] ?? ''));
+            $tipe = in_array($rawTipe, ['in', 'income', 'pemasukan']) ? 'in' : 'out';
             CmsCashflowCategory::create([
                 'mc_id' => $mc->id,
-                'nama'  => $cat['nama'] ?? 'Kategori',
-                'tipe'  => $cat['tipe'] ?? 'expense',
-                'warna' => $cat['warna'] ?? '#4a9eff',
+                'nama'  => $nama,
+                'tipe'  => $tipe,
+                'warna' => $cat['warna'] ?? ($tipe === 'in' ? '#10B981' : '#EF4444'),
             ]);
         }
+        $this->invalidatePublicCache();
         return response()->json(['success' => true, 'message' => 'Kategori cashflow disimpan ke database!']);
     }
 
@@ -622,10 +882,8 @@ class CmsApiController extends Controller
     // 9. CUSTOMERS (Data Pelanggan / Clients)
     // ============================================================
 
-    public function getCustomers()
+    public function getCustomersData(UserMC $mc)
     {
-        $mc = $this->getMC();
-        
         $categoriesRaw = $mc->event_categories ? (is_string($mc->event_categories) ? json_decode($mc->event_categories, true) : $mc->event_categories) : [
             'Wedding', 'Corporate', 'Sweet 17', 'Gala Dinner'
         ];
@@ -650,7 +908,7 @@ class CmsApiController extends Controller
         }
 
         $clients = Client::with('events')->where('mc_id', $mc->id)->orderBy('created_at', 'desc')->get();
-        return response()->json(['success' => true, 'data' => $clients->map(function($c) use ($categoriesNames, $categoriesMap) {
+        return $clients->map(function($c) use ($categoriesNames, $categoriesMap) {
             $cat = $c->kategori;
             // Jika kategori masih default 'Wedding', kita timpa dengan tipe_acara dari relasi Event (jika ada)
             if (empty($cat) || $cat === 'Wedding') {
@@ -673,22 +931,28 @@ class CmsApiController extends Controller
                 'category'        => $cat ?? 'Wedding',
                 'categoryIcon'    => $catIcon,
                 'wa'              => $c->no_wa,
-            'email'           => $c->email ?? '',
-            'event'           => $c->nama_acara ?? '',
-            'startTime'       => $c->events->first()?->waktu_mulai ? substr($c->events->first()->waktu_mulai, 0, 5) : '18:00',
-            'endTime'         => $c->events->first()?->waktu_selesai ? substr($c->events->first()->waktu_selesai, 0, 5) : '22:00',
-            'date'            => $c->tanggal_acara ? $c->tanggal_acara->format('Y-m-d') : '',
-            'formattedDate'   => $c->tanggal_acara ? $c->tanggal_acara->format('j M Y') : '',
-            'price'           => (float) ($c->nilai_kontrak ?? 0),
-            'paymentStatus'   => $c->status_pembayaran ?? 'Belum Bayar',
-            'isVip'           => (bool) $c->is_vip,
-            'client_category' => $c->client_category ?? '',
-            'calendarStatus'  => $c->calendar_status ?? 'Review',
-            'notes'           => $c->catatan_khusus ?? '',
-            'created_at'      => $c->created_at ? $c->created_at->toISOString() : null,
-            'updated_at'      => $c->updated_at ? $c->updated_at->toISOString() : null,
+                'email'           => $c->email ?? '',
+                'event'           => $c->nama_acara ?? '',
+                'startTime'       => $c->events->first()?->waktu_mulai ? substr($c->events->first()->waktu_mulai, 0, 5) : '18:00',
+                'endTime'         => $c->events->first()?->waktu_selesai ? substr($c->events->first()->waktu_selesai, 0, 5) : '22:00',
+                'date'            => $c->tanggal_acara ? $c->tanggal_acara->format('Y-m-d') : '',
+                'formattedDate'   => $c->tanggal_acara ? $c->tanggal_acara->format('j M Y') : '',
+                'price'           => (float) ($c->nilai_kontrak ?? 0),
+                'paymentStatus'   => $c->status_pembayaran ?? 'Belum Bayar',
+                'isVip'           => (bool) $c->is_vip,
+                'client_category' => $c->client_category ?? '',
+                'calendarStatus'  => $c->calendar_status ?? 'Review',
+                'notes'           => $c->catatan_khusus ?? '',
+                'created_at'      => $c->created_at ? $c->created_at->toISOString() : null,
+                'updated_at'      => $c->updated_at ? $c->updated_at->toISOString() : null,
             ];
-        })->values()]);
+        })->values();
+    }
+
+    public function getCustomers()
+    {
+        $mc = $this->getMC();
+        return response()->json(['success' => true, 'data' => $this->getCustomersData($mc)]);
     }
 
     public function saveCustomer(Request $request)
@@ -810,24 +1074,27 @@ class CmsApiController extends Controller
     // ==========================================
     // Cash Flow Transactions
     // ==========================================
+    public function getCashflowTransactionsData(UserMC $mc)
+    {
+        $transactions = \App\Models\CmsCashflowTransaction::where('mc_id', $mc->id)->orderBy('tanggal', 'desc')->orderBy('id', 'desc')->get();
+        return $transactions->map(fn($t) => [
+            'id' => $t->id,
+            'type' => $t->tipe,
+            'category' => $t->kategori,
+            'amount' => (float)$t->nominal,
+            'date' => $t->tanggal ? $t->tanggal->format('Y-m-d') : null,
+            'desc' => $t->deskripsi,
+            'eventId' => $t->event_id,
+            'proof' => $t->bukti_file ? url('storage/' . $t->bukti_file) : null
+        ])->values();
+    }
+
     public function getCashflowTransactions()
     {
         $mc = $this->getMC();
-        
-        $transactions = \App\Models\CmsCashflowTransaction::where('mc_id', $mc->id)->orderBy('tanggal', 'desc')->orderBy('id', 'desc')->get();
-        
         return response()->json([
             'success' => true,
-            'data' => $transactions->map(fn($t) => [
-                'id' => $t->id,
-                'type' => $t->tipe,
-                'category' => $t->kategori,
-                'amount' => (float)$t->nominal,
-                'date' => $t->tanggal ? $t->tanggal->format('Y-m-d') : null,
-                'desc' => $t->deskripsi,
-                'eventId' => $t->event_id,
-                'proof' => $t->bukti_file ? url('storage/' . $t->bukti_file) : null
-            ])->values()
+            'data'    => $this->getCashflowTransactionsData($mc)
         ]);
     }
 
@@ -901,12 +1168,10 @@ class CmsApiController extends Controller
     // 10. EVENTS ADMIN (Data Acara)
     // ============================================================
 
-    public function getEventsAdmin()
+    public function getEventsAdminData(UserMC $mc)
     {
-        $mc = $this->getMC();
-
-        // Auto-delete tentative events older than 24 hours
-        if ($mc) {
+        // Auto-delete tentative events older than 24 hours (throttled to avoid DB lock on every GET)
+        if ($mc && \Illuminate\Support\Facades\Cache::add('mc_tentative_cleaned_' . $mc->id, true, 1800)) {
             Event::whereHas('client', function ($q) use ($mc) {
                 $q->where('mc_id', $mc->id);
             })->where('status', 'Tentative')
@@ -919,7 +1184,7 @@ class CmsApiController extends Controller
             ->orderBy('tanggal_acara', 'desc')
             ->get();
 
-        return response()->json(['success' => true, 'data' => $events->map(function($e) {
+        return $events->map(function($e) {
             $meta = $this->normalizeEventMetadata($e->metadata);
             $client = $e->client;
             $timeStr = substr($e->waktu_mulai, 0, 5) . ' - ' . substr($e->waktu_selesai, 0, 5) . ' WIB';
@@ -953,7 +1218,13 @@ class CmsApiController extends Controller
                 'metadata'      => $meta,
                 'created_at'    => $e->created_at ? $e->created_at->toISOString() : null,
             ];
-        })->values()]);
+        })->values();
+    }
+
+    public function getEventsAdmin()
+    {
+        $mc = $this->getMC();
+        return response()->json(['success' => true, 'data' => $this->getEventsAdminData($mc)]);
     }
 
     public function createEvent(Request $request)
@@ -1171,6 +1442,58 @@ class CmsApiController extends Controller
         return response()->json(['success' => true, 'message' => 'Acara berhasil dihapus dari database.']);
     }
 
+    public function getEventCategoriesData(UserMC $mc)
+    {
+        return $mc->event_categories ? (is_string($mc->event_categories) ? json_decode($mc->event_categories, true) : $mc->event_categories) : [
+            'Wedding', 'Corporate', 'Sweet 17', 'Gala Dinner'
+        ];
+    }
+
+    public function getClientCategoriesData(UserMC $mc)
+    {
+        return $mc->client_categories ? (is_string($mc->client_categories) ? json_decode($mc->client_categories, true) : $mc->client_categories) : [
+            ['icon' => '⭐', 'name' => 'VIP'],
+            ['icon' => '🏢', 'name' => 'Corporate'],
+            ['icon' => '👥', 'name' => 'Regular']
+        ];
+    }
+
+    public function getWaTemplatesData(UserMC $mc)
+    {
+        $mcName = ($mc->nama_panggung && trim($mc->nama_panggung) !== '') ? trim($mc->nama_panggung) : 'MC';
+
+        $defaultTemplates = [
+            [
+                'title' => 'Sapaan Awal',
+                'message' => "Halo Kak {name}, salam hangat dari {$mcName} (Master of Ceremony).\n\nTerkait persiapan acara \"{event}\", kami siap berkoordinasi untuk rundown panggung, naskah prompter, serta kebutuhan teknis acara Anda. Ada detail khusus yang ingin dikoordinasikan hari ini?"
+            ],
+            [
+                'title' => 'Follow Up H-7',
+                'message' => "Halo Kak {name}, mengingatkan kembali bahwa acara \"{event}\" tinggal 7 hari lagi!\n\nMohon pastikan semua rundown dan daftar VIP sudah final. Hubungi kami jika butuh bantuan."
+            ]
+        ];
+
+        $templates = $mc->wa_templates ? (is_string($mc->wa_templates) ? json_decode($mc->wa_templates, true) : $mc->wa_templates) : $defaultTemplates;
+
+        if (is_array($templates)) {
+            foreach ($templates as &$tmpl) {
+                if (isset($tmpl['message'])) {
+                    $tmpl['message'] = str_replace(['Vanya Arsyad', '{mc_name}'], $mcName, $tmpl['message']);
+                }
+                if (isset($tmpl['body'])) {
+                    $tmpl['body'] = str_replace(['Vanya Arsyad', '{mc_name}'], $mcName, $tmpl['body']);
+                }
+            }
+        }
+
+        return $templates;
+    }
+
+    public function getMusicBankData(UserMC $mc)
+    {
+        return $mc->music_bank ? (is_string($mc->music_bank) ? json_decode($mc->music_bank, true) : $mc->music_bank) : [];
+    }
+
     // ============================================================
     // 11. EVENT CATEGORIES (Kategori Acara)
     // ============================================================
@@ -1189,11 +1512,7 @@ class CmsApiController extends Controller
             return response()->json(['success' => false, 'message' => 'MC not found']);
         }
 
-        $categories = $mc->event_categories ? (is_string($mc->event_categories) ? json_decode($mc->event_categories, true) : $mc->event_categories) : [
-            'Wedding', 'Corporate', 'Sweet 17', 'Gala Dinner'
-        ];
-
-        return response()->json(['success' => true, 'data' => $categories]);
+        return response()->json(['success' => true, 'data' => $this->getEventCategoriesData($mc)]);
     }
 
     public function saveEventCategories(Request $request)
@@ -1225,6 +1544,8 @@ class CmsApiController extends Controller
         $mc->event_categories = json_encode($cleanCategories);
         $mc->save();
 
+        $this->invalidatePublicCache();
+
         return response()->json(['success' => true, 'message' => 'Kategori Acara berhasil disimpan!', 'data' => $cleanCategories]);
     }
 
@@ -1245,13 +1566,7 @@ class CmsApiController extends Controller
             return response()->json(['success' => false, 'message' => 'MC not found']);
         }
 
-        $categories = $mc->client_categories ? (is_string($mc->client_categories) ? json_decode($mc->client_categories, true) : $mc->client_categories) : [
-            ['icon' => '⭐', 'name' => 'VIP'],
-            ['icon' => '🏢', 'name' => 'Corporate'],
-            ['icon' => '👥', 'name' => 'Regular']
-        ];
-
-        return response()->json(['success' => true, 'data' => $categories]);
+        return response()->json(['success' => true, 'data' => $this->getClientCategoriesData($mc)]);
     }
 
     public function saveClientCategories(Request $request)
@@ -1282,6 +1597,7 @@ class CmsApiController extends Controller
 
         $mc->client_categories = json_encode($cleanCategories);
         $mc->save();
+        $this->invalidatePublicCache();
 
         return response()->json(['success' => true, 'message' => 'Kategori Klien berhasil disimpan!', 'data' => $cleanCategories]);
     }
@@ -1302,34 +1618,7 @@ class CmsApiController extends Controller
             return response()->json(['success' => false, 'message' => 'MC not found']);
         }
 
-        $mcName = ($mc->nama_panggung && trim($mc->nama_panggung) !== '') ? trim($mc->nama_panggung) : 'MC';
-
-        $defaultTemplates = [
-            [
-                'title' => 'Sapaan Awal',
-                'message' => "Halo Kak {name}, salam hangat dari {$mcName} (Master of Ceremony).\n\nTerkait persiapan acara \"{event}\", kami siap berkoordinasi untuk rundown panggung, naskah prompter, serta kebutuhan teknis acara Anda. Ada detail khusus yang ingin dikoordinasikan hari ini?"
-            ],
-            [
-                'title' => 'Follow Up H-7',
-                'message' => "Halo Kak {name}, mengingatkan kembali bahwa acara \"{event}\" tinggal 7 hari lagi!\n\nMohon pastikan semua rundown dan daftar VIP sudah final. Hubungi kami jika butuh bantuan."
-            ]
-        ];
-
-        $templates = $mc->wa_templates ? (is_string($mc->wa_templates) ? json_decode($mc->wa_templates, true) : $mc->wa_templates) : $defaultTemplates;
-
-        // Auto replace any hardcoded 'Vanya Arsyad' or placeholder '{mc_name}' with actual MC name
-        if (is_array($templates)) {
-            foreach ($templates as &$tmpl) {
-                if (isset($tmpl['message'])) {
-                    $tmpl['message'] = str_replace(['Vanya Arsyad', '{mc_name}'], $mcName, $tmpl['message']);
-                }
-                if (isset($tmpl['body'])) {
-                    $tmpl['body'] = str_replace(['Vanya Arsyad', '{mc_name}'], $mcName, $tmpl['body']);
-                }
-            }
-        }
-
-        return response()->json(['success' => true, 'data' => $templates]);
+        return response()->json(['success' => true, 'data' => $this->getWaTemplatesData($mc)]);
     }
 
     public function saveWaTemplates(Request $request)
@@ -1370,8 +1659,7 @@ class CmsApiController extends Controller
             return response()->json(['success' => false, 'message' => 'MC not found']);
         }
 
-        $data = $mc->music_bank ? (is_string($mc->music_bank) ? json_decode($mc->music_bank, true) : $mc->music_bank) : [];
-        return response()->json(['success' => true, 'data' => $data]);
+        return response()->json(['success' => true, 'data' => $this->getMusicBankData($mc)]);
     }
 
     public function saveMusicBank(Request $request)

@@ -21,6 +21,9 @@ function createMockDom() {
         postMessage() {}
         close() {}
     };
+    dom.window.scrollTo = () => {};
+    dom.window.setInterval = () => 0;
+    dom.window.setTimeout = (fn) => { fn(); return 0; };
 
     return dom;
 }

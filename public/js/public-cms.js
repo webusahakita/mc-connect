@@ -28,29 +28,49 @@ async function initPublicCms() {
     window.escapeHtml = escapeHtml;
 
     try {
-        const ts = Date.now();
-        // Fetch all public data from API in parallel
-        const [bioRes, pkgsRes, polRes, galRes, pkRes, ridersRes, testRes, catRes] = await Promise.all([
-            fetch('/api/cms/biodata?t=' + ts).then(r => r.json()).catch(()=>({})),
-            fetch('/api/cms/packages?t=' + ts).then(r => r.json()).catch(()=>({})),
-            fetch('/api/cms/policies?t=' + ts).then(r => r.json()).catch(()=>({})),
-            fetch('/api/cms/gallery?t=' + ts).then(r => r.json()).catch(()=>({})),
-            fetch('/api/cms/presskit?t=' + ts).then(r => r.json()).catch(()=>({})),
-            fetch('/api/cms/riders?t=' + ts).then(r => r.json()).catch(()=>({})),
-            fetch('/api/cms/testimonials?t=' + ts).then(r => r.json()).catch(()=>({})),
-            fetch('/api/event-categories?t=' + ts).then(r => r.json()).catch(()=>({}))
-        ]);
-
-        const bio = bioRes?.data || {};
-        window.cachedBioData = bio;
-        const packages = pkgsRes?.data || [];
-        const policies = polRes?.data || {};
-        const gallery = galRes?.data || [];
-        const testimonials = testRes?.data || [];
-        const categories = catRes?.data || [];
-        
-        cachedPressKitData = pkRes?.data || {};
-        cachedRidersData = ridersRes?.data || [];
+        let bio = {}, packages = [], policies = {}, gallery = [], testimonials = [], categories = [];
+        try {
+            const bRes = await fetch('/api/cms/public-bootstrap');
+            if (bRes.ok) {
+                const bJson = await bRes.json();
+                if (bJson.success && bJson.data) {
+                    const d = bJson.data;
+                    bio = d.biodata || {};
+                    window.cachedBioData = bio;
+                    packages = d.packages || [];
+                    policies = d.policies || {};
+                    gallery = d.gallery || [];
+                    testimonials = d.testimonials || [];
+                    categories = d.event_categories || [];
+                    cachedPressKitData = d.presskit || {};
+                    cachedRidersData = d.riders || [];
+                }
+            }
+        } catch (e) {
+            console.warn('[Public CMS] Bootstrap gagal, beralih ke fallback...', e);
+        }
+        if (!bio.name) {
+            const ts = Date.now();
+            const [bioRes, pkgsRes, polRes, galRes, pkRes, ridersRes, testRes, catRes] = await Promise.all([
+                fetch('/api/cms/biodata?t=' + ts).then(r => r.json()).catch(()=>({})),
+                fetch('/api/cms/packages?t=' + ts).then(r => r.json()).catch(()=>({})),
+                fetch('/api/cms/policies?t=' + ts).then(r => r.json()).catch(()=>({})),
+                fetch('/api/cms/gallery?t=' + ts).then(r => r.json()).catch(()=>({})),
+                fetch('/api/cms/presskit?t=' + ts).then(r => r.json()).catch(()=>({})),
+                fetch('/api/cms/riders?t=' + ts).then(r => r.json()).catch(()=>({})),
+                fetch('/api/cms/testimonials?t=' + ts).then(r => r.json()).catch(()=>({})),
+                fetch('/api/event-categories?t=' + ts).then(r => r.json()).catch(()=>({}))
+            ]);
+            bio = bioRes?.data || {};
+            window.cachedBioData = bio;
+            packages = pkgsRes?.data || [];
+            policies = polRes?.data || {};
+            gallery = galRes?.data || [];
+            testimonials = testRes?.data || [];
+            categories = catRes?.data || [];
+            cachedPressKitData = pkRes?.data || {};
+            cachedRidersData = ridersRes?.data || [];
+        }
 
         // Populate Event Categories for Booking Form
         const eventTypeSelect = document.getElementById('bookEventType');
@@ -81,6 +101,7 @@ async function initPublicCms() {
             const imgEl = document.getElementById('pubHeroImg');
             if (imgEl) {
                 imgEl.src = bio.photo;
+                imgEl.onerror = () => { imgEl.src = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80'; imgEl.style.opacity = '1'; };
                 imgEl.onload = () => imgEl.style.opacity = '1';
             }
         }
@@ -89,21 +110,29 @@ async function initPublicCms() {
             if (specContainer) {
                 specContainer.innerHTML = bio.spec.split(',').map(s => `<span class="spec-chip">✨ ${escapeHtml(s.trim())}</span>`).join('');
             }
-            
-            const sosmedContainer = document.getElementById('pubHeroSosmed');
-            if (sosmedContainer) {
-                let html = '';
-                if (bio.ig) {
-                    html += `<a href="https://instagram.com/${escapeHtml(bio.ig.replace('@', ''))}" target="_blank" class="btn btn-secondary" style="padding: 0.5rem 1rem; display:flex; align-items:center; gap:0.5rem;"><img src="https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg" style="width:16px; height:16px;"> Instagram</a>`;
-                }
-                if (bio.tiktok) {
-                    html += `<a href="https://tiktok.com/${escapeHtml(bio.tiktok)}" target="_blank" class="btn btn-secondary" style="padding: 0.5rem 1rem; display:flex; align-items:center; gap:0.5rem;"><img src="https://upload.wikimedia.org/wikipedia/en/a/a9/TikTok_logo.svg" style="width:16px; height:16px;"> TikTok</a>`;
-                }
-                if (bio.fb) {
-                    html += `<a href="https://facebook.com/${escapeHtml(bio.fb)}" target="_blank" class="btn btn-secondary" style="padding: 0.5rem 1rem; display:flex; align-items:center; gap:0.5rem;"><img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" style="width:16px; height:16px;"> Facebook</a>`;
-                }
-                sosmedContainer.innerHTML = html;
+        }
+        
+        const sosmedContainer = document.getElementById('pubHeroSosmed');
+        if (sosmedContainer) {
+            let html = '';
+            if (bio.ig) {
+                const igUser = bio.ig.replace(/^@/, '').trim();
+                const igUrl = (bio.ig.startsWith('http://') || bio.ig.startsWith('https://')) ? bio.ig : `https://instagram.com/${igUser}`;
+                html += `<a href="${escapeHtml(igUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="padding: 0.5rem 1rem; display:inline-flex; align-items:center; gap:0.5rem; text-decoration:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:#E1306C;"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg> <span>Instagram</span></a>`;
             }
+            if (bio.tiktok) {
+                const ttUser = bio.tiktok.replace(/^@/, '').trim();
+                const ttUrl = (bio.tiktok.startsWith('http://') || bio.tiktok.startsWith('https://')) ? bio.tiktok : `https://tiktok.com/@${ttUser}`;
+                html += `<a href="${escapeHtml(ttUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="padding: 0.5rem 1rem; display:inline-flex; align-items:center; gap:0.5rem; text-decoration:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:#25F4EE;"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z"/></svg> <span>TikTok</span></a>`;
+            }
+            if (bio.fb) {
+                let fbVal = String(bio.fb).trim();
+                let fbUrl = (fbVal.startsWith('http://') || fbVal.startsWith('https://'))
+                    ? fbVal 
+                    : 'https://facebook.com/' + fbVal.replace(/^@/, '');
+                html += `<a href="${escapeHtml(fbUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="padding: 0.5rem 1rem; display:inline-flex; align-items:center; gap:0.5rem; text-decoration:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:#1877F2;"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg> <span>Facebook</span></a>`;
+            }
+            sosmedContainer.innerHTML = html;
         }
         if (bio.statEvents) {
             const parts = bio.statEvents.split(' ');
@@ -269,7 +298,7 @@ async function initPublicCms() {
             window.currentGalleryData = gallery; // Store globally for lightbox navigation
             galleryContainer.innerHTML = gallery.map((g, idx) => `
                 <div class="gallery-item" onclick="openLightbox(${idx})">
-                    <img src="${escapeHtml(g.url)}" alt="${escapeHtml(g.caption)}" loading="lazy">
+                    <img src="${escapeHtml(g.url)}" alt="${escapeHtml(g.caption)}" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=600&q=80';">
                     <div class="gallery-caption">${escapeHtml(g.caption)}</div>
                 </div>
             `).join('');

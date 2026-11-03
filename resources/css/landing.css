@@ -43,6 +43,7 @@
 .hero-title span {
     background: linear-gradient(135deg, #FFF, var(--gold-primary));
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
@@ -246,6 +247,10 @@
     position: absolute;
     top: -12px;
     right: 24px;
+    background: var(--gold-primary) !important;
+    color: #0B101E !important;
+    font-weight: 800;
+    border: none !important;
 }
 
 .package-name {
@@ -324,14 +329,58 @@
     gap: 0.5rem;
 }
 
+.cal-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.45rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+}
+
+.cal-nav-btn:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--gold-primary);
+    color: var(--gold-primary);
+    transform: translateY(-1px);
+}
+
+.cal-nav-btn:active {
+    transform: translateY(0);
+}
+
+.cal-nav-arrow {
+    display: inline-block;
+    font-size: 0.85rem;
+    line-height: 1;
+    color: var(--gold-primary);
+}
+
+.cal-nav-text {
+    display: inline;
+}
+
 .calendar-month-title {
     margin: 0;
     text-align: center;
-    font-size: 1.1rem;
+    font-size: clamp(0.95rem, 3.5vw, 1.25rem);
     font-weight: 700;
     color: var(--text-main);
     flex-grow: 1;
+    min-width: 0;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 0.5rem;
 }
 
 .calendar-legend {
@@ -402,8 +451,17 @@
 }
 
 .calendar-cell.inactive {
-    opacity: 0.35;
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.calendar-cell.past-date {
+    opacity: 0.4;
     cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.03) !important;
+}
+.calendar-cell.past-date:hover {
+    border-color: rgba(255, 255, 255, 0.05);
 }
 
 .calendar-cell.has-event.locked {
@@ -497,38 +555,7 @@
     }
 }
 
-@media (max-width: 992px) {
-    .hero-title {
-        font-size: 2.5rem;
-    }
-}
-@media (max-width: 480px) {
-    .hero-title {
-        font-size: 2rem;
-    }
-    .section-title {
-        font-size: 1.8rem;
-    }
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-    .calendar-widget-wrapper {
-        padding: 1.25rem 0.75rem;
-        overflow: hidden;
-    }
-    .calendar-grid {
-        min-width: 500px;
-        font-size: 0.8rem;
-    }
-    .calendar-cell {
-        min-height: 70px;
-        padding: 0.4rem;
-    }
-    .package-card {
-        padding: 1.5rem;
-    }
-}
-
+/* =========================================================
    LUXURY AMBIENT BACKGROUND MUSIC (BGM) WIDGET & NAVBAR
    ========================================================= */
 
@@ -845,13 +872,14 @@
 }
 
 /* Volume Slider Section */
+﻿/* Volume Slider Section */
 .bgm-volume-group {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
 }
 
-.bgm-volume-header {
+.bgm-volume-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -859,15 +887,21 @@
     color: var(--text-muted);
 }
 
-.bgm-slider-container {
+.bgm-volume-val {
+    font-weight: bold;
+    color: var(--gold-primary);
+}
+
+.bgm-volume-slider-row {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     color: var(--text-secondary);
 }
 
-.bgm-volume-slider {
+.bgm-vol-slider {
     -webkit-appearance: none;
+    appearance: none;
     width: 100%;
     height: 4px;
     background: rgba(255, 255, 255, 0.1);
@@ -876,7 +910,7 @@
     cursor: pointer;
 }
 
-.bgm-volume-slider::-webkit-slider-thumb {
+.bgm-vol-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
     width: 12px;
@@ -887,14 +921,14 @@
     box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
 }
 
-.bgm-volume-presets {
+.bgm-presets-row {
     display: flex;
     justify-content: space-between;
     gap: 0.35rem;
     margin-top: 0.25rem;
 }
 
-.bgm-vol-btn {
+.bgm-preset-btn, .bgm-btn-step {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.12);
     color: var(--text-muted);
@@ -906,49 +940,190 @@
     transition: all 0.2s ease;
 }
 
-.bgm-vol-btn:hover {
+.bgm-preset-btn:hover, .bgm-btn-step:hover {
     background: rgba(255, 255, 255, 0.1);
-    color: #FFFFFF;
+    border-color: var(--gold-primary);
 }
 
-.bgm-vol-btn.active {
+.bgm-preset-btn.active {
     background: rgba(212, 175, 55, 0.15);
     border-color: var(--gold-primary);
     color: var(--gold-primary);
 }
 
-/* Status Text */
-.bgm-status-text {
-    font-size: 0.72rem;
+.bgm-status-foot {
+    margin-top: 0.5rem;
+    font-size: 0.7rem;
     color: var(--text-muted);
-    text-align: left;
-    margin-top: 0.25rem;
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
+    text-align: center;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    padding-top: 0.4rem;
 }
 
-.bgm-status-text::before {
-    content: "■";
-    font-size: 0.5rem;
-    color: #EF4444;
+@media (max-width: 992px) {
+    .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+    }
+    .packages-grid {
+        grid-template-columns: 1fr;
+    }
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
-.bgm-status-text.playing::before {
-    content: "▶";
-    color: var(--color-available);
-    animation: blink 1.5s infinite;
+@media (max-width: 992px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
 }
-
-@keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
+@media (max-width: 768px) {
+    .calendar-nav-controls {
+        gap: 0.35rem;
+        margin-bottom: 0.85rem;
+    }
+    .calendar-nav-controls .cal-nav-text {
+        display: none !important;
+    }
+    .calendar-nav-controls .cal-nav-btn {
+        width: 38px;
+        min-width: 38px;
+        height: 38px;
+        padding: 0 !important;
+        font-size: 1rem;
+        border-radius: var(--radius-sm);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .calendar-nav-controls .cal-nav-arrow {
+        font-size: 0.95rem;
+    }
+    .calendar-month-title {
+        font-size: 1.05rem;
+        padding: 0 0.25rem;
+    }
+    .calendar-legend {
+        gap: 0.4rem 0.8rem;
+        font-size: 0.78rem;
+    }
+    .calendar-widget-wrapper {
+        padding: 1rem 0.65rem;
+    }
 }
 
 @media (max-width: 480px) {
-    .bgm-floating-widget {
-        bottom: 16px;
-        right: 16px;
-        width: calc(100vw - 32px);
+    .hero-title {
+        font-size: 2rem;
     }
+    .section-title {
+        font-size: 1.8rem;
+    }
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    .calendar-widget-wrapper {
+        padding: 0.85rem 0.5rem;
+        overflow: hidden;
+    }
+    .calendar-month-title {
+        font-size: 1rem;
+    }
+    .calendar-grid {
+        min-width: 460px;
+        font-size: 0.78rem;
+    }
+    .calendar-cell {
+        min-height: 60px;
+        padding: 0.3rem 0.25rem;
+    }
+    .calendar-cell-date {
+        font-size: 0.85rem;
+    }
+    .calendar-cell-pill {
+        font-size: 0.62rem;
+        padding: 0.15rem 0.3rem;
+    }
+    .package-card {
+        padding: 1.5rem;
+    }
+}
+
+
+/* Gallery Styles */
+.gallery-item {
+    position: relative;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: var(--shadow-md);
+    aspect-ratio: 1 / 1;
+}
+
+.gallery-item:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--gold-primary);
+}
+
+.gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.gallery-item:hover img {
+    transform: scale(1.05);
+}
+
+.gallery-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 2rem 1rem 1rem 1rem;
+    background: linear-gradient(to top, rgba(15, 23, 42, 0.95), transparent);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.gallery-item:hover .gallery-caption {
+    opacity: 1;
+}
+
+/* Lightbox Base */
+.lightbox {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+.lightbox.active {
+    opacity: 1;
+    visibility: visible;
+}
+.lightbox-close {
+    position: absolute;
+    top: 20px; right: 20px;
+    color: white; font-size: 30px; cursor: pointer;
+    z-index: 10002;
+    transition: color 0.2s;
+}
+.lightbox-close:hover {
+    color: var(--gold-primary);
 }

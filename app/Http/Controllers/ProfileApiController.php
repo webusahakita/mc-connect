@@ -152,6 +152,7 @@ class ProfileApiController extends Controller
             'name' => $mc->nama_panggung,
             'email' => $mc->email,
             'tier' => $mc->tier_langganan,
+            'photo_url' => $mc->foto_url ?? '',
         ]]);
     }
 

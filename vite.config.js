@@ -15,7 +15,13 @@ export default defineConfig({
                 'resources/js/live-sync.js',
                 'resources/js/calendar.js',
             ],
-            refresh: true,
+            refresh: [
+                'resources/**',
+                'routes/**',
+                'public/index.html',
+                'public/css/**',
+                'public/js/**',
+            ],
         }),
     ],
     server: {

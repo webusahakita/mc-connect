@@ -3,16 +3,44 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 0. Mobile Menu Toggle
+    // 0. Mobile Menu Toggle & Interactive Handling
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const navLinks = document.querySelector('.nav-links');
     const navActions = document.querySelector('.nav-actions');
     
     if (mobileMenuBtn) {
-        mobileMenuBtn.addEventListener('click', () => {
+        const toggleMobileMenu = () => {
             mobileMenuBtn.classList.toggle('active');
-            navLinks.classList.toggle('show');
-            navActions.classList.toggle('show');
+            navLinks?.classList.toggle('show');
+            navActions?.classList.toggle('show');
+        };
+
+        const closeMobileMenu = () => {
+            mobileMenuBtn.classList.remove('active');
+            navLinks?.classList.remove('show');
+            navActions?.classList.remove('show');
+        };
+
+        mobileMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleMobileMenu();
+        });
+
+        // Close menu automatically on mobile when a navigation link or action button is clicked
+        navLinks?.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', closeMobileMenu);
+        });
+
+        navActions?.querySelectorAll('a').forEach(btn => {
+            btn.addEventListener('click', closeMobileMenu);
+        });
+
+        // Close menu when tapping outside the navigation bar
+        document.addEventListener('click', (e) => {
+            const siteNav = document.querySelector('.site-nav');
+            if (siteNav && !siteNav.contains(e.target)) {
+                closeMobileMenu();
+            }
         });
     }
 
@@ -43,6 +71,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (targetBtn) targetBtn.classList.add('active');
         if (targetPanel) targetPanel.classList.add('active');
+
+        if (tabId === 'tab-vendor' && typeof renderAdminVendorCollab === 'function') {
+            renderAdminVendorCollab(window.activeCommandCenterEvent);
+        }
+        if (tabId === 'tab-rundown' && typeof renderAdminRundownList === 'function' && window.activeCommandCenterEvent) {
+            renderAdminRundownList(window.activeCommandCenterEvent);
+        }
     };
 
     // 4. Toast Notification

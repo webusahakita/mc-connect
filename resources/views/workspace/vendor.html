@@ -219,19 +219,37 @@
             </div>
         </div>
 
-        <!-- Full Rundown Cue Matrix -->
+        <!-- Full Rundown Cue Matrix Header & Filter Controls -->
         <div
-            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
-            <h3 style="font-size:1.25rem; font-weight:800; margin:0;">📋 Matriks Rundown Panggung & Cue Musik Lengkap:
-            </h3>
-            <span style="font-size:0.8rem; color:var(--text-secondary);" id="vendorRundownCountLabel">7 Segmen
-                Terdaftar</span>
+            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.75rem;">
+            <div>
+                <h3 style="font-size:1.25rem; font-weight:800; margin:0;">📋 Matriks Rundown Panggung & Cue Musik Lengkap:</h3>
+                <div style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.2rem;" id="vendorRundownCountLabel">
+                    Memuat data segmen...
+                </div>
+            </div>
+            <!-- Filter Baris Yang Ditampilkan -->
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                <label for="vendorPageSizeSelect" style="font-size:0.82rem; color:var(--text-secondary); font-weight:600;">
+                    Tampilkan Baris:
+                </label>
+                <select id="vendorPageSizeSelect" class="form-select"
+                    style="padding:0.35rem 0.65rem; font-size:0.82rem; background:#0B0F19; color:#FFFFFF; border:1px solid var(--border-subtle); border-radius:6px; cursor:pointer;"
+                    onchange="changeVendorPageSize(this.value)">
+                    <option value="5">5 baris</option>
+                    <option value="10" selected>10 baris</option>
+                    <option value="25">25 baris</option>
+                    <option value="50">50 baris</option>
+                    <option value="-1">Semua baris</option>
+                </select>
+            </div>
         </div>
 
-        <div
-            style="overflow-x:auto; background:var(--bg-surface); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
-            <table class="vendor-table" style="width:100%; border-collapse:collapse;">
-                <thead>
+        <!-- Scrollable Table Container (X and Y scroll with sticky header) -->
+        <div class="vendor-table-scroll-container"
+            style="overflow-x: auto; overflow-y: auto; max-height: 520px; background:var(--bg-surface); border-radius:var(--radius-md); border:1px solid var(--border-subtle); -webkit-overflow-scrolling: touch; box-shadow: 0 4px 20px rgba(0,0,0,0.25);">
+            <table class="vendor-table" style="width:100%; border-collapse:collapse; min-width: 900px;">
+                <thead style="position: sticky; top: 0; z-index: 10;">
                     <tr>
                         <th style="width:55px; text-align:center;">Urutan</th>
                         <th style="width:130px;">Waktu</th>
@@ -247,6 +265,28 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Pagination Navigation & Info Bar -->
+        <div class="vendor-pagination-bar"
+            style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; padding:0.85rem 1.25rem; background:rgba(17,24,39,0.7); border:1px solid var(--border-subtle); border-radius:var(--radius-md); flex-wrap:wrap; gap:0.75rem;">
+            <div style="font-size:0.85rem; color:var(--text-secondary);" id="vendorPaginationInfo">
+                Menampilkan baris 0 - 0 dari total 0 data | Halaman 1 dari 1
+            </div>
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnVendorPrev" onclick="navigateVendorPage(-1)"
+                    style="display:inline-flex; align-items:center; gap:0.35rem; font-weight:700; padding:0.4rem 0.85rem;">
+                    ◀ Sebelumnya
+                </button>
+                <span id="vendorPageIndicator"
+                    style="font-size:0.85rem; font-weight:700; color:var(--gold-primary); padding:0 0.5rem;">
+                    Halaman 1 / 1
+                </span>
+                <button type="button" class="btn btn-secondary btn-sm" id="btnVendorNext" onclick="navigateVendorPage(1)"
+                    style="display:inline-flex; align-items:center; gap:0.35rem; font-weight:700; padding:0.4rem 0.85rem;">
+                    Berikutnya ▶
+                </button>
+            </div>
+        </div>
     </div>
 
     <script src="js/soundboard.js"></script>
@@ -258,6 +298,25 @@
         let vendorRundown = [];
         let vendorMusicList = [];
         let currentPlayingRowIdx = null;
+        window.vendorCurrentPage = 1;
+        window.vendorPageSize = 10;
+
+        function changeVendorPageSize(val) {
+            window.vendorPageSize = parseInt(val, 10);
+            window.vendorCurrentPage = 1;
+            renderVendorRundown();
+        }
+
+        function navigateVendorPage(direction) {
+            const totalItems = (window.vendorRundown || vendorRundown).length;
+            const pageSize = window.vendorPageSize !== undefined ? window.vendorPageSize : window.vendorPageSize;
+            const totalPages = (pageSize === -1 || totalItems === 0) ? 1 : Math.ceil(totalItems / pageSize);
+            const targetPage = (window.vendorCurrentPage || 1) + direction;
+            if (targetPage >= 1 && targetPage <= totalPages) {
+                window.vendorCurrentPage = targetPage;
+                renderVendorRundown();
+            }
+        }
 
         // Web Audio Synthesizer Engine
         let vendorAudioCtx = null;
@@ -396,15 +455,57 @@
             const tbody = document.getElementById('vendorRundownTableBody');
             if (!tbody) return;
 
+            const totalItems = vendorRundown.length;
             const countLabel = document.getElementById('vendorRundownCountLabel');
-            if (countLabel) countLabel.textContent = `${vendorRundown.length} Segmen Terdaftar`;
+            if (countLabel) countLabel.textContent = `${totalItems} Segmen Terdaftar`;
 
-            tbody.innerHTML = vendorRundown.map((item, idx) => {
-                const segNum = idx + 1;
+            const totalPages = (window.vendorPageSize === -1 || totalItems === 0) ? 1 : Math.ceil(totalItems / window.vendorPageSize);
+            if (window.vendorCurrentPage > totalPages) window.vendorCurrentPage = totalPages;
+            if (window.vendorCurrentPage < 1) window.vendorCurrentPage = 1;
+
+            let startIndex = 0;
+            let endIndex = totalItems;
+            if (window.vendorPageSize !== -1) {
+                startIndex = (window.vendorCurrentPage - 1) * window.vendorPageSize;
+                endIndex = Math.min(startIndex + window.vendorPageSize, totalItems);
+            }
+
+            const pageItems = vendorRundown.slice(startIndex, endIndex);
+
+            // Update pagination info & controls
+            const paginationInfo = document.getElementById('vendorPaginationInfo');
+            if (paginationInfo) {
+                if (totalItems === 0) {
+                    paginationInfo.textContent = 'Menampilkan 0 baris | Halaman 1 dari 1';
+                } else {
+                    const startDisplay = startIndex + 1;
+                    const endDisplay = endIndex;
+                    paginationInfo.innerHTML = `Menampilkan baris <strong>${startDisplay} - ${endDisplay}</strong> dari total <strong>${totalItems}</strong> data segmen | Halaman <strong>${window.vendorCurrentPage}</strong> dari <strong>${totalPages}</strong>`;
+                }
+            }
+
+            const pageIndicator = document.getElementById('vendorPageIndicator');
+            if (pageIndicator) {
+                pageIndicator.textContent = `Halaman ${window.vendorCurrentPage} / ${totalPages}`;
+            }
+
+            const btnPrev = document.getElementById('btnVendorPrev');
+            const btnNext = document.getElementById('btnVendorNext');
+            if (btnPrev) btnPrev.disabled = (window.vendorCurrentPage <= 1);
+            if (btnNext) btnNext.disabled = (window.vendorCurrentPage >= totalPages || window.vendorPageSize === -1);
+
+            if (pageItems.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--text-muted);">Belum ada segmen rundown terdaftar.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = pageItems.map((item, localIdx) => {
+                const actualIdx = startIndex + localIdx;
+                const segNum = actualIdx + 1;
                 const isLive = (segNum === activeSegmentIndex);
                 const musicTitle = item.cue_music || '—';
                 const pic = item.pic || '—';
-                const isPlaying = (currentPlayingRowIdx === idx);
+                const isPlaying = (currentPlayingRowIdx === actualIdx);
 
                 // Match the song with the master bank to get the actual instruction
                 const matchedMusic = vendorMusicList.find(m => m.title === item.cue_music) || {};
@@ -443,10 +544,10 @@
             </td>
             <td style="text-align:center;">
                 <div style="display:flex; justify-content:center; gap:0.35rem; align-items:center;">
-                    <button class="vendor-btn-play ${isPlaying ? 'playing' : ''}" onclick="playVendorCue(${idx}, this)" title="Putar Musik / Audio Cue (100% Offline)">
+                    <button class="vendor-btn-play ${isPlaying ? 'playing' : ''}" onclick="playVendorCue(${actualIdx}, this)" title="Putar Musik / Audio Cue (100% Offline)">
                         ${isPlaying ? '⏹ Stop' : '▶ Play'}
                     </button>
-                    <button class="btn btn-secondary btn-sm" onclick="downloadSingleWav(${idx})" title="Unduh File .wav ke Gadget" style="font-size:0.75rem; padding:0.3rem 0.5rem;">
+                    <button class="btn btn-secondary btn-sm" onclick="downloadSingleWav(${actualIdx})" title="Unduh File .wav ke Gadget" style="font-size:0.75rem; padding:0.3rem 0.5rem;">
                         ⬇️
                     </button>
                 </div>
@@ -485,6 +586,14 @@
         }
 
         function highlightActiveRow(segmentIndex) {
+            if (window.vendorPageSize !== -1 && segmentIndex > 0) {
+                const targetPage = Math.ceil(segmentIndex / window.vendorPageSize);
+                if (targetPage !== window.vendorCurrentPage) {
+                    window.vendorCurrentPage = targetPage;
+                    renderVendorRundown();
+                    return;
+                }
+            }
             document.querySelectorAll('.vendor-table tr').forEach(r => r.classList.remove('active-live'));
             document.querySelectorAll('.vendor-table .badge').forEach(b => {
                 b.className = 'badge badge-completed';

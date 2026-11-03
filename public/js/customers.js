@@ -9,21 +9,29 @@
     let mcCustomers = [];
     let currentCustFilter = 'all';
 
-    async function loadCustomersData() {
+    async function loadCustomersData(force = false) {
         try {
-            const resCats = await Promise.all([
-                fetch('/api/cms/event-categories').then(r=>r.json()).catch(()=>({})),
-                fetch('/api/cms/client-categories').then(r=>r.json()).catch(()=>({}))
-            ]);
-            window.currentEventCategories = resCats[0]?.data || [];
-            window.currentClientCategories = resCats[1]?.data || [];
-
-            const res = await fetch('/api/cms/customers', { cache: 'no-store' });
-            const json = await res.json();
-            if (json.success && json.data) {
-                mcCustomers = json.data;
+            if (!force && window.mcCustomers && window.mcCustomers.length > 0) {
+                mcCustomers = window.mcCustomers;
+            } else if (!force && window.AdminDB && AdminDB.getItem("mc_customers_db_v1")) {
+                try { mcCustomers = JSON.parse(AdminDB.getItem("mc_customers_db_v1")); } catch (e) {}
                 window.mcCustomers = mcCustomers;
-                // Ensure _dbId is mapped
+            } else {
+                const resCats = await Promise.all([
+                    fetch('/api/cms/event-categories').then(r=>r.json()).catch(()=>({})),
+                    fetch('/api/cms/client-categories').then(r=>r.json()).catch(()=>({}))
+                ]);
+                window.currentEventCategories = resCats[0]?.data || [];
+                window.currentClientCategories = resCats[1]?.data || [];
+
+                const res = await fetch('/api/cms/customers', { cache: 'no-store' });
+                const json = await res.json();
+                if (json.success && json.data) {
+                    mcCustomers = json.data;
+                    window.mcCustomers = mcCustomers;
+                }
+            }
+            if (Array.isArray(mcCustomers)) {
                 mcCustomers.forEach(c => { if(c.id && !c._dbId) c._dbId = c.id; });
             }
         } catch(e) {
@@ -31,16 +39,14 @@
         }
         renderCustomersTable();
         renderDashboardCustomers();
-        if (typeof window.renderDashboardPies === 'function') window.renderDashboardPies();
+        if (typeof window.renderDashboardPies === "function") window.renderDashboardPies();
         updateCustomerMetrics();
         renderSidebarCustomerList();
         
         // Auto-heal: Ensure all loaded customers are in the calendar
-        setTimeout(() => {
-            if (typeof window.autoSyncCustomersToEvents === 'function') {
-                window.autoSyncCustomersToEvents(mcCustomers);
-            }
-        }, 1500); // Give events DB time to load
+        if (typeof window.autoSyncCustomersToEvents === "function") {
+            window.autoSyncCustomersToEvents(mcCustomers);
+        }
     }
 
     let _saveCustomersTimer = null;
@@ -65,8 +71,7 @@
     }
     
     async function pushCustomersToServer() {
-        // Disabled per user request: data lokal tidak boleh menimpa server
-        console.log('[Sync] pushCustomersToServer disabled.');
+        // Mutasi data pelanggan ditangani langsung lewat endpoint API khusus
     }
 
     function formatRupiahNum(val) {
@@ -616,8 +621,12 @@
         return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
     }
 
+    let _custSearchTimer = null;
     function searchCustomersTable(query) {
-        renderCustomersTable(currentCustFilter, query);
+        clearTimeout(_custSearchTimer);
+        _custSearchTimer = setTimeout(() => {
+            renderCustomersTable(currentCustFilter, query);
+        }, 200);
     }
 
 
@@ -732,7 +741,7 @@
                 <div style="display:flex; align-items:center; gap:0.55rem;">
                     <span style="font-size:1.15rem; color:#10B981;">✓</span>
                     <span style="font-size:0.82rem; font-weight:600; color:#6EE7B7;">
-                        Jadwal Kosong & Bebas Bentrok: Tanggal ${dateVal} siap menerimbooking acarMC baru.
+                        Jadwal Kosong & Bebas Bentrok: Tanggal ${dateVal} siap menerima booking acara MC baru.
                     </span>
                 </div>
             `;
@@ -795,7 +804,17 @@
             clientCatEl.value = '';
         }
         const waEl = document.getElementById('newCustWa');
-        if (waEl) waEl.value = '';
+        if (waEl) {
+            waEl.value = '';
+            waEl.setAttribute('inputmode', 'numeric');
+            waEl.oninput = function() { this.value = this.value.replace(/[^0-9]/g, ''); };
+            waEl.onkeydown = function(e) { if (['-', '.', '+', 'e', 'E', ' '].includes(e.key)) e.preventDefault(); };
+            waEl.onpaste = function(e) {
+                e.preventDefault();
+                const t = (e.clipboardData || window.clipboardData).getData('text');
+                this.value = t.replace(/[^0-9]/g, '');
+            };
+        }
         const emailEl = document.getElementById('newCustEmail');
         if (emailEl) emailEl.value = '';
         const eventEl = document.getElementById('newCustEvent');
@@ -812,7 +831,17 @@
         if (endEl) endEl.value = '22:00';
 
         const priceEl = document.getElementById('newCustPrice');
-        if (priceEl) priceEl.value = '';
+        if (priceEl) {
+            priceEl.value = '';
+            priceEl.setAttribute('inputmode', 'numeric');
+            priceEl.oninput = function() { this.value = this.value.replace(/[^0-9]/g, ''); };
+            priceEl.onkeydown = function(e) { if (['-', '.', '+', 'e', 'E'].includes(e.key)) e.preventDefault(); };
+            priceEl.onpaste = function(e) {
+                e.preventDefault();
+                const t = (e.clipboardData || window.clipboardData).getData('text');
+                this.value = t.replace(/[^0-9]/g, '');
+            };
+        }
         const payEl = document.getElementById('newCustPayment');
         if (payEl) payEl.value = 'Belum Bayar';
         const notesEl = document.getElementById('newCustNotes');
@@ -901,7 +930,17 @@
         }
 
         const waEl = document.getElementById('newCustWa');
-        if (waEl) waEl.value = cust.wa || '';
+        if (waEl) {
+            waEl.value = (cust.wa || '').replace(/[^0-9]/g, '');
+            waEl.setAttribute('inputmode', 'numeric');
+            waEl.oninput = function() { this.value = this.value.replace(/[^0-9]/g, ''); };
+            waEl.onkeydown = function(e) { if (['-', '.', '+', 'e', 'E', ' '].includes(e.key)) e.preventDefault(); };
+            waEl.onpaste = function(e) {
+                e.preventDefault();
+                const t = (e.clipboardData || window.clipboardData).getData('text');
+                this.value = t.replace(/[^0-9]/g, '');
+            };
+        }
         const emailEl = document.getElementById('newCustEmail');
         if (emailEl) emailEl.value = cust.email || '';
         const eventEl = document.getElementById('newCustEvent');
@@ -938,15 +977,35 @@
         const name = (document.getElementById('newCustName')?.value || '').trim();
         const category = document.getElementById('newCustCategory')?.value || 'Wedding';
         const clientCategory = document.getElementById('newCustClientCategory')?.value || 'Reguler';
-        const wa = (document.getElementById('newCustWa')?.value || '').trim();
+        const rawWa = (document.getElementById('newCustWa')?.value || '').trim();
+        const cleanWa = rawWa.replace(/[^0-9]/g, '');
+        if (!rawWa || cleanWa === '' || /[^0-9]/.test(rawWa) || cleanWa.length < 8) {
+            if (typeof uiAlert === 'function') {
+                uiAlert("No. WhatsApp hanya boleh berisi angka (minimal 8 digit, tanpa huruf, spasi, atau karakter tanda minus).");
+            } else {
+                alert("No. WhatsApp hanya boleh berisi angka (minimal 8 digit, tanpa huruf, spasi, atau karakter tanda minus).");
+            }
+            document.getElementById('newCustWa')?.focus();
+            return;
+        }
+        const wa = cleanWa;
         const email = (document.getElementById('newCustEmail')?.value || '').trim();
         const eventName = (document.getElementById('newCustEvent')?.value || '').trim();
         const date = document.getElementById('newCustDate')?.value || '';
         const startTime = document.getElementById('newCustStartTime')?.value || '18:00';
         const endTime = document.getElementById('newCustEndTime')?.value || '22:00';
         const duration = document.getElementById('newCustDuration')?.value || calculateEventDuration(startTime, endTime) || '4 Jam';
-        const priceStr = document.getElementById('newCustPrice')?.value || '';
-        const price = Number(priceStr.replace(/[^0-9]/g, '')) || 0;
+        const rawPriceInput = (document.getElementById('newCustPrice')?.value || '').trim();
+        const price = Number(rawPriceInput.replace(/[^0-9]/g, '')) || 0;
+        if (!rawPriceInput || price <= 0 || /[^0-9]/.test(rawPriceInput)) {
+            if (typeof uiAlert === 'function') {
+                uiAlert("Nilai Kontrak (Rp) hanya boleh berisi angka positif (tidak boleh minus atau huruf) dan harus lebih dari 0.");
+            } else {
+                alert("Nilai Kontrak (Rp) hanya boleh berisi angka positif (tidak boleh minus atau huruf) dan harus lebih dari 0.");
+            }
+            document.getElementById('newCustPrice')?.focus();
+            return;
+        }
         const payment = document.getElementById('newCustPayment')?.value || 'Belum Bayar';
         const calendarStatus = document.getElementById('newCustCalendarStatus')?.value || 'Review';
         const notes = (document.getElementById('newCustNotes')?.value || '').trim();

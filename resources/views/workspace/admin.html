@@ -10,10 +10,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/app.css?v=8.3">
+    <link rel="stylesheet" href="css/app.css?v=8.4">
     <link rel="stylesheet" href="css/command-center.css?v=8.4">
     <link rel="stylesheet" href="css/stage-mode.css?v=8.3">
-    <link rel="stylesheet" href="css/admin.css?v=8.10">
+    <link rel="stylesheet" href="css/admin.css?v=8.12">
     <link rel="stylesheet" href="css/custom-modal.css?v=8.3">
     <style>
         .admin-section {
@@ -92,6 +92,40 @@
             display: block;
         }
     </style>
+    <!-- Early definition of sidebar toggles to prevent ReferenceError and enable LiveReload -->
+    <script>
+        window.openSidebar = function() {
+            const shell = document.querySelector('.admin-shell');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            const sidebar = document.querySelector('.admin-sidebar');
+            if (shell) shell.classList.add('sidebar-mobile-open');
+            if (backdrop) backdrop.classList.add('active');
+            if (sidebar) sidebar.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        };
+        window.closeSidebar = function() {
+            const shell = document.querySelector('.admin-shell');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            const sidebar = document.querySelector('.admin-sidebar');
+            if (shell) shell.classList.remove('sidebar-mobile-open');
+            if (backdrop) backdrop.classList.remove('active');
+            if (sidebar) sidebar.classList.remove('open');
+            document.body.style.overflow = '';
+        };
+        window.toggleSidebar = function() {
+            const sidebar = document.querySelector('.admin-sidebar');
+            if (sidebar && sidebar.classList.contains('open')) {
+                window.closeSidebar();
+            } else {
+                if (window.innerWidth <= 1024) {
+                    window.openSidebar();
+                } else {
+                    const shell = document.querySelector('.admin-shell');
+                    if (shell) shell.classList.toggle('sidebar-collapsed');
+                }
+            }
+        };
+    </script>
 </head>
 
 <body>
@@ -225,6 +259,19 @@
                                 <div class="sidebar-icon-sq">&#128194;</div>
                                 <span>Master Bank Musik</span>
                             </div>
+                        </button>
+                    </li>
+
+                    <!-- MENU 8: PUSAT PANDUAN, FITUR & ROADMAP SAAS (STATIS) -->
+                    <li>
+                        <button class="sidebar-item-btn" id="menu-guide"
+                            onclick="navigateToSection('sec-guide', this)"
+                            style="border: 1px solid rgba(212, 175, 55, 0.3); background: rgba(212, 175, 55, 0.08); margin-top: 0.35rem;">
+                            <div class="sidebar-item-left">
+                                <div class="sidebar-icon-sq" style="background: rgba(212, 175, 55, 0.25); color: var(--adm-gold, #D4AF37);">📖</div>
+                                <span style="font-weight: 700; color: #FFFFFF;">Panduan & Fitur</span>
+                            </div>
+                            <span class="badge" style="padding:0.15rem 0.5rem; border-radius:99px; font-size:0.68rem; background:rgba(212,175,55,0.25); color:#FDE047; font-weight:800; border:1px solid rgba(212,175,55,0.4);">SAAS</span>
                         </button>
                     </li>
 </ul>
@@ -683,7 +730,7 @@
 
                 <!-- ================= MENU 2: KALENDER ACARA (ANTI-BENTROK) ================= -->
                 <div id="sec-calendar" class="admin-section">
-                    <div
+                    <div class="calendar-section-header"
                         style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
                         <div>
                             <div
@@ -697,13 +744,13 @@
                                 berstatus DP Paid secara real-time.
                             </p>
                         </div>
-                        <div style="display:flex; gap:0.6rem; align-items:center;">
+                        <div class="calendar-actions-bar" style="display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap;">
                             <button class="btn btn-secondary btn-sm"
                                 onclick="if(window.adminCalendar){window.adminCalendar.goToToday(); showToast('Kembali ke bulan aktif', 'gold');}">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right:4px;"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg> Hari Ini
                             </button>
-                            <button class="btn btn-primary btn-sm"
-                                onclick="document.getElementById('quickEventModal').classList.add('active')">
+                                                        <button class="btn btn-primary btn-sm" style="flex: 1 1 auto; min-width: 0; white-space: nowrap;"
+                                onclick="openAddCustomerModal()" title="Tambah Pelanggan & Jadwal Baru">
                                 + Tambah Jadwal Baru
                             </button>
                         </div>
@@ -1005,7 +1052,7 @@
                     <div class="cms-subpanel active" id="cms-bio">
                         <div class="ecc-card">
                             <div class="ecc-card-header">
-                                <div class="ecc-card-title">SSunting Profil Personal Branding, Jam Terbang & Showreel
+                                <div class="ecc-card-title">Sunting Profil Personal Branding, Jam Terbang & Showreel
                                 </div>
                                 <span class="badge badge-tier-pro">Live Sync Web Publik</span>
                             </div>
@@ -1066,25 +1113,30 @@
                                     </div>
                                 </div>
 
-                                <div class="grid-3col"
-                                    style="gap:1.25rem; display:grid; grid-template-columns: repeat(3, 1fr);">
+                                <div class="grid-3col cms-social-grid"
+                                    style="gap:1rem; display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
                                     <div class="form-group">
-                                        <label class="form-label">Handle Akun Instagram</label>
-                                        <input type="text" class="form-input" id="cmsIg" value="@vanyaarsyad.mc">
+                                        <label class="form-label" style="display:flex; align-items:center; gap:0.4rem;">
+                                            <span style="color:#E1306C;">📷</span> Handle Akun Instagram
+                                        </label>
+                                        <input type="text" class="form-input" id="cmsIg" placeholder="Misal: @vanyaarsyad.mc atau URL">
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-label">Handle Akun TikTok</label>
-                                        <input type="text" class="form-input" id="cmsTiktok"
-                                            value="@vanyastage_official">
+                                        <label class="form-label" style="display:flex; align-items:center; gap:0.4rem;">
+                                            <span style="color:#25F4EE;">🎵</span> Handle Akun TikTok
+                                        </label>
+                                        <input type="text" class="form-input" id="cmsTiktok" placeholder="Misal: @vanyastage_official atau URL">
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-label">Handle Akun Facebook</label>
-                                        <input type="text" class="form-input" id="cmsFb" value="">
+                                        <label class="form-label" style="display:flex; align-items:center; gap:0.4rem;">
+                                            <span style="color:#1877F2;">👥</span> Handle Akun Facebook
+                                        </label>
+                                        <input type="text" class="form-input" id="cmsFb" placeholder="Misal: vanyaarsyad.mc atau URL profil">
                                     </div>
                                 </div>
 
-                                <div style="display:flex; justify-content:flex-end; margin-top:1.5rem;">
-                                    <button type="submit" class="btn btn-primary">Simpan Biodata & Sosmed</button>
+                                <div class="cms-bio-submit-wrapper" style="display:flex; justify-content:flex-end; margin-top:1.5rem;">
+                                    <button type="submit" class="btn btn-primary btn-save-cms-bio" style="min-width:220px; font-weight:700;">💾 Simpan Biodata & Sosmed</button>
                                 </div>
                             </form>
                         </div>
@@ -1143,7 +1195,7 @@
                                 <div class="form-group">
                                     <label class="form-label">Informasi Kebijakan Anti-Bentrok Kalender</label>
                                     <input type="text" class="form-input" id="cfgCalNotice"
-                                        value="Tanggal bertandmerah telah terisi DP klien lain. Tanggal bertandkuning masih dalam proses konfirmasi DP.">
+                                        value="Tanggal bertanda merah telah terisi DP klien lain. Tanggal bertanda kuning masih dalam proses konfirmasi DP.">
                                 </div>
                                 <div style="display:flex; justify-content:flex-end; margin-top:1rem;">
                                     <button type="submit" class="btn btn-primary">Simpan Pengaturan Widget
@@ -1298,7 +1350,7 @@ Kebutuhan Hospitality:
                                             </div>
                                         </div>
                                         <div class="form-group">
-                                            <label class="form-label">Tagline (Dalam TandKutip)</label>
+                                            <label class="form-label">Tagline (Dalam Tanda Kutip)</label>
                                             <input type="text" class="form-input" id="pk_tagline"
                                                 placeholder='Misal: "Bringing Energy, Precision, and Elegance to Your Stage."'>
                                         </div>
@@ -1430,8 +1482,8 @@ Kebutuhan Hospitality:
                                             Rider</button>
                                     </div>
                                     <script>
-                                        function autoFillDummyRiders() {
-                                            if (!confirm('Ini akan menambahkan 3 contoh Rider secara otomatis ke database. Lanjutkan?')) return;
+                                        async function autoFillDummyRiders() {
+                                            if (!(await window.uiConfirm('Ini akan menambahkan 3 contoh Rider secara otomatis ke database. Lanjutkan?'))) return;
                                             const riders = [
                                                 { t: 'Technical Rider (Sistem Audio)', n: '- 1 buah Mic Wireless Profesional (Shure Axient / Sennheiser ew500 G4 atau setara)\n- 1 buah Mic Wireless cadangan (standby di FOH)\n- Monitor speaker yang menghadap ke area panggung' },
                                                 { t: 'Hospitality Rider (Akomodasi & Konsumsi)', n: '- Ruang tunggu privat / VIP Room yang ber-AC dan dekat dengan panggung\n- 1 box air mineral kemasan kecil bersuhu ruang\n- 2 porsi makanan berat untuk MC & Asisten' },
@@ -1449,7 +1501,7 @@ Kebutuhan Hospitality:
                                                     if (done === riders.length) {
                                                         document.getElementById('riders_footerNote').value = 'Rider ini bersifat fleksibel dan dapat didiskusikan secara musyawarah untuk disesuaikan dengan skala acara, model kemitraan, serta kondisi lapangan tanpa mengurangi standar kualitas performa.';
                                                         saveRidersFooterNote();
-                                                        if (typeof initAdminCms === 'function') initAdminCms();
+                                                        if (typeof initAdminCms === 'function') initAdminCms(true);
                                                         if (typeof window.showToast === 'function') window.showToast('3 Contoh Rider berhasil ditambahkan!', 'gold');
                                                     }
                                                 });
@@ -1489,7 +1541,7 @@ Kebutuhan Hospitality:
                             </div>
                             <div
                                 style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                                <p style="color:var(--text-secondary); font-size:0.9rem; margin:0;">Kelolfoto-foto
+                                <p style="color:var(--text-secondary); font-size:0.9rem; margin:0;">Kelola foto-foto
                                     panggung yang akan ditampilkan di landing page klien. (Mendukung upload banyak file
                                     sekaligus)</p>
                                 <div>
@@ -1505,17 +1557,15 @@ Kebutuhan Hospitality:
                                 style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:1rem;">
                                 <!-- Gallery items will be rendered here by JS -->
                             </div>
-                            <div
-                                style="display:flex; justify-content:space-between; align-items:center; margin-top:1.5rem; padding-top:1rem; border-top:1px solid var(--adm-border);">
+                            <div class="gallery-footer-actions"
+                                style="display:flex; justify-content:space-between; align-items:center; margin-top:1.5rem; padding-top:1rem; border-top:1px solid var(--adm-border); flex-wrap:wrap; gap:0.75rem;">
                                 <span id="galleryCountLabel"
                                     style="color:var(--adm-text-secondary); font-size:0.85rem;"></span>
-                                <div style="display:flex; gap:0.5rem;">
+                                <div class="gallery-btn-group" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
                                     <button type="button" class="btn btn-secondary btn-sm"
-                                        onclick="if(confirm('Hapus semufoto galeri dan kembalikan ke default?')){localStorage.removeItem('mc_gallery_config'); renderAdminGallery(); showToast('Galeri direset ke default.','gold');}">Reset
-                                        ke Default</button>
+                                        onclick="(async () => { if (await window.uiConfirm('Hapus semua foto galeri dan kembalikan ke default?')) { localStorage.removeItem('mc_gallery_config'); if(typeof renderAdminGallery === 'function') renderAdminGallery(); if(typeof showToast === 'function') showToast('Galeri direset ke default.', 'gold'); } })()">Reset ke Default</button>
                                     <button type="button" class="btn btn-primary"
-                                        onclick="saveAdminGalleryData(getAdminGalleryData()); showToast('Galeri berhasil disimpan! Perubahan akan tampil di landing page.', 'gold');">Simpan
-                                        & Publikasi Galeri</button>
+                                        onclick="saveAdminGalleryData(getAdminGalleryData()); showToast('Galeri berhasil disimpan! Perubahan akan tampil di landing page.', 'gold');">Simpan & Publikasi Galeri</button>
                                 </div>
                             </div>
                         </div>
@@ -1576,24 +1626,26 @@ Kebutuhan Hospitality:
                                 QRIS Statis
                             </h2>
                             <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">
-                                Unggah gambar QRIS atau masukkan URL gambar QRIS statis bisnis Anda. Jika dibiarkan
+                                Unggah gambar QRIS statis bisnis Anda. Jika dibiarkan
                                 kosong, sistem akan menggunakan QRIS dinamis bawaan berdasarkan nomor invoice.
                             </p>
                             <div style="display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-end;">
-                                <div style="flex: 1; min-width:250px;">
-                                    <label
-                                        style="display:block; margin-bottom:0.5rem; font-size:0.85rem; font-weight:600; color:var(--text-secondary);">Tautan
-                                        Gambar QRIS (URL)</label>
-                                    <input type="text" id="paymentQrisUrl" class="form-input"
-                                        placeholder="https://example.com/qris.png"
-                                        oninput="document.getElementById('previewQrisImg').src = this.value || 'data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22200%22%20height%3D%22200%22%3E%3Crect%20width%3D%22200%22%20height%3D%22200%22%20fill%3D%22%23e2e8f0%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20font-family%3D%22sans-serif%22%20font-size%3D%2214%22%20font-weight%3D%22bold%22%20fill%3D%22%2364748b%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22middle%22%3EQRIS%20Preview%3C%2Ftext%3E%3C%2Fsvg%3E';">
-                                </div>
-                                <div>
-                                    <label
-                                        style="display:block; margin-bottom:0.5rem; font-size:0.85rem; font-weight:600; color:var(--text-secondary);">Atau
-                                        Unggah (Upload) File</label>
-                                    <input type="file" id="paymentQrisFile" accept="image/*" class="form-input"
-                                        onchange="handleQrisPhotoUpload(event)" style="padding:0.35rem 0.6rem;">
+                                <input type="hidden" id="paymentQrisUrl">
+                                <div style="flex: 1; min-width: 280px;">
+                                    <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem; font-weight:600; color:var(--text-secondary);">
+                                        Unggah Gambar QRIS Statis (Format: JPG, PNG, WebP)
+                                    </label>
+                                    <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+                                        <input type="file" id="paymentQrisFile" accept="image/*" class="form-input"
+                                            onchange="handleQrisPhotoUpload(event)" style="padding:0.45rem 0.75rem; flex:1; min-width:200px;">
+                                        <button type="button" class="btn btn-sm" id="btnRemoveQris" onclick="removeQrisImage()" 
+                                            style="display:none; background:rgba(244,63,94,0.15); color:#F43F5E; border:1px solid rgba(244,63,94,0.3); font-weight:600; padding:0.45rem 0.85rem; border-radius:6px; cursor:pointer;">
+                                            🗑️ Hapus Gambar QRIS
+                                        </button>
+                                    </div>
+                                    <div style="font-size:0.78rem; color:var(--adm-text-muted, #94A3B8); margin-top:0.4rem;">
+                                        💡 File QRIS yang diunggah akan otomatis disimpan ke server dan disematkan pada lembar Invoice pembayaran klien.
+                                    </div>
                                 </div>
                             </div>
                             <div
@@ -1730,7 +1782,7 @@ Kebutuhan Hospitality:
                         <div
                             style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
                             <div>
-                                <div class="ecc-card-title">Kelola Template WAA</div>
+                                <div class="ecc-card-title">Kelola Template WA</div>
                                 <p style="color:var(--text-secondary); font-size:0.85rem; margin:0;">Buat template pesan
                                     WhatsApp yang bisa digunakan langsung dari direktori pelanggan. Gunakan {name} untuk
                                     nama pelanggan dan {event} untuk nama acara.</p>
@@ -2280,12 +2332,10 @@ Kebutuhan Hospitality:
                                         </select>
                                     </div>
                                     <div class="qris-box">
-                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=INV202609001"
-                                            alt="QRIS" class="qris-img" id="adminQrisImg">
+                                        <img src="/uploads/qris/qris_static_official.png" alt="QRIS Statis" class="qris-img" id="adminQrisImg" onerror="this.onerror=null; this.src='/uploads/qris/qris_static_official.png';">
                                         <div>
-                                            <div style="font-weight:700; font-size:0.95rem; margin-bottom:0.25rem;">Kode
-                                                QRIS Dinamis</div>
-                                            <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.4;">
+                                            <div style="font-weight:700; font-size:0.95rem; margin-bottom:0.25rem;" id="adminQrisTitle">Kode QRIS Dinamis</div>
+                                            <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.4;" id="adminQrisDesc">
                                                 Klien dapat memindai kode QRIS di samping via BCA, Mandiri, BRI, GoPay,
                                                 atau OVO.
                                             </p>
@@ -2470,17 +2520,35 @@ Kebutuhan Hospitality:
                                     </button>
                                 </div>
 
-                                <div
-                                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
-                                    <h3 style="font-size:1.1rem; font-weight:700; margin:0;">Cue Matrix Panggung:</h3>
-                                    <span style="font-size:0.8rem; color:var(--text-secondary);"
-                                        id="vendorCollabCountBadge">Memuat segmen...</span>
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.75rem;">
+                                    <div>
+                                        <h3 style="font-size:1.15rem; font-weight:800; margin:0;">Cue Matrix Panggung:</h3>
+                                        <span style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.2rem; display:inline-block;"
+                                            id="vendorCollabCountBadge">Memuat segmen...</span>
+                                    </div>
+                                    <!-- Filter Baris Yang Ditampilkan -->
+                                    <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                                        <label for="vendorCollabPageSizeSelect" style="font-size:0.82rem; color:var(--text-secondary); font-weight:600;">
+                                            Tampilkan Baris:
+                                        </label>
+                                        <select id="vendorCollabPageSizeSelect" class="form-select"
+                                            style="padding:0.35rem 0.65rem; font-size:0.82rem; background:#0B0F19; color:#FFFFFF; border:1px solid var(--border-subtle); border-radius:6px; cursor:pointer;"
+                                            onchange="if(typeof changeVendorCollabPageSize==='function') changeVendorCollabPageSize(this.value)">
+                                            <option value="5">5 baris</option>
+                                            <option value="10" selected>10 baris</option>
+                                            <option value="25">25 baris</option>
+                                            <option value="50">50 baris</option>
+                                            <option value="-1">Semua baris</option>
+                                        </select>
+                                    </div>
                                 </div>
 
-                                <div style="overflow-x: auto;">
+                                <!-- Scrollable Table Container (2D scroll dengan sticky header) -->
+                                <div class="vendor-collab-scroll-container"
+                                    style="overflow-x: auto; overflow-y: auto; max-height: 480px; background:var(--bg-surface); border-radius:var(--adm-radius-md, 8px); border:1px solid var(--border-subtle); -webkit-overflow-scrolling: touch; box-shadow: 0 4px 20px rgba(0,0,0,0.25);">
                                     <table class="vendor-collab-table"
-                                        style="width:100%; border-collapse:collapse; text-align:left; font-size:0.88rem;">
-                                        <thead>
+                                        style="width:100%; border-collapse:collapse; text-align:left; font-size:0.88rem; min-width: 800px;">
+                                        <thead style="position: sticky; top: 0; background: #0B0F19; z-index: 10;">
                                             <tr>
                                                 <th style="width: 50px; text-align: center;">No.</th>
                                                 <th style="width: 150px;">Waktu & Durasi</th>
@@ -2493,6 +2561,28 @@ Kebutuhan Hospitality:
                                             <!-- Populated dynamically virenderAdminVendorCollab(ev) -->
                                         </tbody>
                                     </table>
+                                </div>
+
+                                <!-- Pagination Navigation & Info Bar -->
+                                <div class="vendor-collab-pagination-bar"
+                                    style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; padding:0.75rem 1rem; background:rgba(17,24,39,0.7); border:1px solid var(--border-subtle); border-radius:var(--adm-radius-md, 8px); flex-wrap:wrap; gap:0.75rem;">
+                                    <div style="font-size:0.82rem; color:var(--text-secondary);" id="vendorCollabPaginationInfo">
+                                        Menampilkan 0 - 0 dari total 0 data | Halaman 1 dari 1
+                                    </div>
+                                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                                        <button type="button" class="btn btn-secondary btn-sm" id="btnVendorCollabPrev" onclick="navigateVendorCollabPage(-1)"
+                                            style="display:inline-flex; align-items:center; gap:0.35rem; font-weight:700; padding:0.35rem 0.75rem; font-size:0.82rem;">
+                                            ◀ Sebelumnya
+                                        </button>
+                                        <span id="vendorCollabPageIndicator"
+                                            style="font-size:0.82rem; font-weight:700; color:var(--gold-primary); padding:0 0.5rem;">
+                                            Halaman 1 / 1
+                                        </span>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="btnVendorCollabNext" onclick="navigateVendorCollabPage(1)"
+                                            style="display:inline-flex; align-items:center; gap:0.35rem; font-weight:700; padding:0.35rem 0.75rem; font-size:0.82rem;">
+                                            Berikutnya ▶
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2663,7 +2753,7 @@ Kebutuhan Hospitality:
                                             Live Broadcast Ready</div>
                                         <div
                                             style="font-size:0.72rem; color:var(--text-secondary); margin-top:0.25rem;">
-                                            Layar operator menerimlive cue</div>
+                                            Layar operator menerima live cue</div>
                                     </div>
                                 </div>
 
@@ -2850,8 +2940,6 @@ Kebutuhan Hospitality:
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
             <!-- ================= MENU 6: WARDROBE TRACKER (GLOBAL) ================= -->
             <div id="sec-wardrobe" class="admin-section">
@@ -2901,7 +2989,7 @@ Kebutuhan Hospitality:
                     <div>
                         <div
                             style="color:var(--gold-primary); font-size:0.85rem; font-weight:700; text-transform:uppercase;">
-                            6. Konsol Panggung & Prompter Suar</div>
+                            6. Konsol Panggung & Prompter Suara</div>
                         <h1 style="font-size:2rem; font-weight:800;">Stage Mode: Teleprompter & Soundboard</h1>
                         <p style="color:var(--text-secondary); font-size:0.9rem;">
                             Mode panggung untuk MC. Dilengkapi teleprompter adaptif (scroll otomatis / pengenalan
@@ -2910,7 +2998,7 @@ Kebutuhan Hospitality:
                     </div>
                     <div style="display:flex; gap:0.75rem;">
                         <a href="stage.html" target="_blank" class="btn btn-primary"
-                            style="background:linear-gradient(135deg, #4F46E5, #7C3AED); border:none;">ukStage Mode
+                            style="background:linear-gradient(135deg, #4F46E5, #7C3AED); border:none;">Buka Stage Mode
                             Fullscreen (Tablet/HP)
                         </a>
                     </div>
@@ -2945,15 +3033,15 @@ Kebutuhan Hospitality:
                                 onclick="changeAdminPrompterFont(2)">A+</button>
                         </div>
                         <button class="btn btn-secondary btn-sm" id="adminPrompterMirrorBtn"
-                            onclick="toggleAdminPrompterMirror()">ode Cermin (Mirror)
+                            onclick="toggleAdminPrompterMirror()">Mode Cermin (Mirror)
                         </button>
                         <button class="btn btn-secondary btn-sm" id="adminVoiceScrollBtn"
                             onclick="toggleAdminVoiceRecognition()"
-                            style="color:#A78BFA; border-color:rgba(167,139,250,0.3);">uto-Scroll Suar(Mati)
+                            style="color:#A78BFA; border-color:rgba(167,139,250,0.3);">Auto-Scroll Suara (Mati)
                         </button>
                         <button class="btn btn-secondary btn-sm" id="adminPrompterFsBtn"
                             onclick="togglePrompterFullscreen()" title="Layar Penuh Prompter">
-                            : Fullscreen
+                            ⛶ Fullscreen
                         </button>
                     </div>
 
@@ -3086,7 +3174,7 @@ Kebutuhan Hospitality:
                                 <button class="btn btn-secondary btn-sm"
                                     style="justify-content:flex-start; font-weight:700; background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.3); color:#F87171; padding:0.65rem 0.9rem;"
                                     onclick="playAudioEffect('bell')">
-                                    Stage Warning Bell (TandWaktu)
+                                    Stage Warning Bell (Tanda Waktu)
                                 </button>
                             </div>
                         </div>
@@ -3195,7 +3283,7 @@ Kebutuhan Hospitality:
                             <span class="badge badge-available">Broadcast Sync</span>
                         </div>
                         <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1rem;">
-                            Kirimkan notifikasi instan langsung ke layar tablet MC tanpmengganggu suarmikrofon.
+                            Kirimkan notifikasi instan langsung ke layar tablet MC tanpa mengganggu suara mikrofon.
                         </p>
                         <div style="display:flex; flex-direction:column; gap:0.6rem;">
                             <button class="btn btn-secondary btn-sm" style="justify-content:flex-start;"
@@ -3207,8 +3295,8 @@ Kebutuhan Hospitality:
                                 Kirim: "Level Mic MC Jernih & Stabil"
                             </button>
                             <button class="btn btn-secondary btn-sm" style="justify-content:flex-start;"
-                                onclick="sendVendorSignal('Standby Cue BerikutnySiap')">
-                                Kirim: "Track CUE BerikutnyStandby"
+                                onclick="sendVendorSignal('Standby Cue Berikutnya Siap')">
+                                Kirim: "Track CUE Berikutnya Standby"
                             </button>
                         </div>
                     </div>
@@ -3216,20 +3304,20 @@ Kebutuhan Hospitality:
                     <!-- FOH Audio Speaker Test Tones -->
                     <div class="ecc-card">
                         <div class="ecc-card-header">
-                            <div class="ecc-card-title">` Generator Uji Suar(Speaker Test)</div>
+                            <div class="ecc-card-title">🔊 Generator Uji Suara (Speaker Test)</div>
                             <span class="badge badge-review">Web Audio API</span>
                         </div>
                         <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1rem;">
                             Uji kejernihan frekuensi speaker panggung dan FOH sebelum gladi bersih dimulai.
                         </p>
                         <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                            <button class="btn btn-secondary btn-sm" onclick="playTestTone(440)">ad440 Hz (Concert A)
+                            <button class="btn btn-secondary btn-sm" onclick="playTestTone(440)">🔊 440 Hz (Concert A)
                             </button>
-                            <button class="btn btn-secondary btn-sm" onclick="playTestTone(1000)">ad1.000 Hz (Kalibrasi
+                            <button class="btn btn-secondary btn-sm" onclick="playTestTone(1000)">🔊 1.000 Hz (Kalibrasi
                                 1kHz)
                             </button>
                             <button class="btn btn-secondary btn-sm" style="color:#F87171;" onclick="stopTestTone()">
-                                Stop Nad</button>
+                                ⏹ Stop Nada</button>
                         </div>
                     </div> <!-- end ecc-card -->
                 </div> <!-- end grid-2col -->
@@ -3377,6 +3465,512 @@ Kebutuhan Hospitality:
                     </div>
                 </div>
 
+                <!-- ================= MENU 8: PUSAT PANDUAN, FITUR & ROADMAP SAAS ================= -->
+                <div id="sec-guide" class="admin-section">
+                    <!-- Hero Banner -->
+                    <div class="guide-hero-banner">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1.25rem;">
+                            <div style="max-width:760px;">
+                                <div style="display:inline-flex; align-items:center; gap:0.5rem; color:var(--adm-gold, #D4AF37); font-size:0.75rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; background:rgba(212,175,55,0.15); padding:0.3rem 0.8rem; border-radius:999px; border:1px solid rgba(212,175,55,0.3); margin-bottom:0.75rem;">
+                                    <span>📚</span> PUSAT DOKUMENTASI & KNOWLEDGE BASE MC-CONNECT
+                                </div>
+                                <h1 style="font-size:2rem; font-weight:800; margin:0 0 0.5rem 0; color:var(--adm-text-primary, #F8FAFC); line-height:1.2;">
+                                    Panduan Aplikasi, Fitur & Blueprint SaaS
+                                </h1>
+                                <p style="color:var(--text-secondary, #94A3B8); font-size:0.92rem; margin:0; line-height:1.6;">
+                                    Panduan praktis operasional bisnis MC dari hulu ke hilir, direktori lengkap keunggulan panggung, serta cetak biru transformasi MC-Connect menuju platform SaaS Multi-Tenant komersial skala nasional.
+                                </p>
+                            </div>
+                            <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+                                <a href="stage.html" target="_blank" class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:0.4rem; font-weight:700;">
+                                    <span>🎙️</span> Buka Stage Mode
+                                </a>
+                                <a href="vendor.html" target="_blank" class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:0.4rem; font-weight:700;">
+                                    <span>🎧</span> Buka Layar Vendor
+                                </a>
+                                <a href="index.html" target="_blank" class="btn btn-primary btn-sm" style="display:inline-flex; align-items:center; gap:0.4rem; font-weight:700;">
+                                    <span>🌐</span> Portal Publik
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Quick Badges Metric Strip -->
+                        <div style="display:flex; flex-wrap:wrap; gap:0.75rem; margin-top:1.25rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.08);">
+                            <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.78rem; color:#E2E8F0; background:rgba(255,255,255,0.05); padding:0.25rem 0.65rem; border-radius:6px; border:1px solid rgba(255,255,255,0.08);">
+                                <span style="color:#22C55E;">●</span> <strong>4 Portal:</strong> Publik, Admin, Stage, Vendor
+                            </div>
+                            <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.78rem; color:#E2E8F0; background:rgba(255,255,255,0.05); padding:0.25rem 0.65rem; border-radius:6px; border:1px solid rgba(255,255,255,0.08);">
+                                <span style="color:var(--adm-gold);">★</span> <strong>AI Co-Pilot:</strong> 4 Tone Scripting & Audio Cue
+                            </div>
+                            <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.78rem; color:#E2E8F0; background:rgba(255,255,255,0.05); padding:0.25rem 0.65rem; border-radius:6px; border:1px solid rgba(255,255,255,0.08);">
+                                <span style="color:#38BDF8;">⚡</span> <strong>Live Sync:</strong> Zero Latency Cue Matrix
+                            </div>
+                            <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.78rem; color:#E2E8F0; background:rgba(255,255,255,0.05); padding:0.25rem 0.65rem; border-radius:6px; border:1px solid rgba(255,255,255,0.08);">
+                                <span style="color:#A855F7;">🚀</span> <strong>SaaS Architecture:</strong> Multi-Tenant & Custom Subdomains
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigasi Sub-Tab Panduan -->
+                    <div class="cms-nav-tabs" style="margin-bottom:1.5rem;">
+                        <button class="cms-tab-btn active" onclick="switchCmsSubTab('guide-workflow', this)">
+                            🔄 1. Alur Pemesanan Hulu ke Hilir
+                        </button>
+                        <button class="cms-tab-btn" onclick="switchCmsSubTab('guide-features', this)">
+                            🌟 2. Katalog Fitur & Keunggulan
+                        </button>
+                        <button class="cms-tab-btn" onclick="switchCmsSubTab('guide-saas', this)">
+                            🚀 3. Brainstorming & Arsitektur SaaS
+                        </button>
+                        <button class="cms-tab-btn" onclick="switchCmsSubTab('guide-actions', this)">
+                            ⚡ 4. Aksi Cepat & Uji Coba Langsung
+                        </button>
+                    </div>
+
+                    <!-- ================= SUBPANEL 1: ALUR HULU KE HILIR ================= -->
+                    <div class="cms-subpanel active" id="guide-workflow">
+                        <div class="ecc-card" style="margin-bottom:1.5rem;">
+                            <div class="ecc-card-header">
+                                <h3 class="ecc-card-title">🗺️ Alur Siklus Hidup Acara (5 Fase Operasional Terpadu)</h3>
+                            </div>
+                            <p style="color:var(--text-secondary); font-size:0.88rem; line-height:1.6; margin-bottom:1.5rem;">
+                                MC-Connect menghubungkan seluruh mata rantai pekerjaan MC dari saat klien pertama kali melihat portofolio hingga acara selesai dan pembukuan laba bersih ditutup.
+                            </p>
+
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1.25rem;">
+                                <!-- Fase 1 -->
+                                <div class="guide-step-card">
+                                    <div class="guide-step-badge phase1">Fase 1: Hulu</div>
+                                    <h4 style="font-size:1.05rem; font-weight:700; color:var(--adm-text-primary); margin:0 0 0.5rem 0;">Pemasaran & Request Booking</h4>
+                                    <ul style="list-style:none; padding:0; margin:0 0 1rem 0; font-size:0.85rem; color:var(--text-secondary); line-height:1.6; display:flex; flex-direction:column; gap:0.4rem;">
+                                        <li>1. Klien membuka portal publik <code>/</code>.</li>
+                                        <li>2. Klien melihat Showreel YouTube, paket harga, dan ketentuan Riders.</li>
+                                        <li>3. Cek tanggal di Kalender Ketersediaan (warna hijau = Tersedia).</li>
+                                        <li>4. Klik tanggal hijau & isi formulir <em>Request to Book</em> (Nama PIC, WA, Jenis Acara, Venue).</li>
+                                    </ul>
+                                    <div style="margin-top:auto; padding-top:0.75rem; border-top:1px solid rgba(255,255,255,0.06); font-size:0.78rem; color:#93C5FD;">
+                                        <strong>Output Sistem:</strong> Draft invoice otomatis terbit berstatus <code>Unpaid</code>, tanggal di kalender menjadi kuning (<em>Tentative Booking</em>).
+                                    </div>
+                                </div>
+
+                                <!-- Fase 2 -->
+                                <div class="guide-step-card">
+                                    <div class="guide-step-badge phase2">Fase 2: Konfirmasi</div>
+                                    <h4 style="font-size:1.05rem; font-weight:700; color:var(--adm-text-primary); margin:0 0 0.5rem 0;">Manajemen Lead & Finansial</h4>
+                                    <ul style="list-style:none; padding:0; margin:0 0 1rem 0; font-size:0.85rem; color:var(--text-secondary); line-height:1.6; display:flex; flex-direction:column; gap:0.4rem;">
+                                        <li>5. Notifikasi booking masuk di Dashboard & Kalender Admin.</li>
+                                        <li>6. Kirim sapaan WhatsApp 1-klik dengan nomor tujuan bersih <code>628...</code> dan nama klien.</li>
+                                        <li>7. Terbitkan invoice resmi dengan gambar QRIS statis bisnis.</li>
+                                        <li>8. Klien membayar DP 50% via QRIS.</li>
+                                        <li>9. Admin ubah status menjadi <strong>DP Paid</strong>.</li>
+                                    </ul>
+                                    <div style="margin-top:auto; padding-top:0.75rem; border-top:1px solid rgba(255,255,255,0.06); font-size:0.78rem; color:#FDE047;">
+                                        <strong>Output Sistem:</strong> Tanggal otomatis terkunci (<strong>Merah Terkunci</strong> `#ef4444`). Anti-bentrok aktif, double-booking ditolak 100%.
+                                    </div>
+                                </div>
+
+                                <!-- Fase 3 -->
+                                <div class="guide-step-card">
+                                    <div class="guide-step-badge phase3">Fase 3: Pra-Acara</div>
+                                    <h4 style="font-size:1.05rem; font-weight:700; color:var(--adm-text-primary); margin:0 0 0.5rem 0;">Persiapan & AI MC Scripting</h4>
+                                    <ul style="list-style:none; padding:0; margin:0 0 1rem 0; font-size:0.85rem; color:var(--text-secondary); line-height:1.6; display:flex; flex-direction:column; gap:0.4rem;">
+                                        <li>10. Admin isi checklist persiapan acara & catatan protokoler VIP.</li>
+                                        <li>11. MC pilih busana di Wardrobe Tracker (mencegah busana dobel antar klien).</li>
+                                        <li>12. Buka <strong>AI MC Co-Pilot</strong>: pilih tone gaya bicara (Formal, Romantis, Enerjik, Elegan) untuk membuat naskah & audio cue.</li>
+                                        <li>13. Terapkan ke susunan Rundown 7 segmen & kaitkan lagu master Bank Musik.</li>
+                                    </ul>
+                                    <div style="margin-top:auto; padding-top:0.75rem; border-top:1px solid rgba(255,255,255,0.06); font-size:0.78rem; color:#D8B4FE;">
+                                        <strong>Output Sistem:</strong> Naskah terintegrasi otomatis ke tablet panggung dan matriks operator musik vendor.
+                                    </div>
+                                </div>
+
+                                <!-- Fase 4 -->
+                                <div class="guide-step-card">
+                                    <div class="guide-step-badge phase4">Fase 4: Hari H</div>
+                                    <h4 style="font-size:1.05rem; font-weight:700; color:var(--adm-text-primary); margin:0 0 0.5rem 0;">Live Stage & Vendor Collab</h4>
+                                    <ul style="list-style:none; padding:0; margin:0 0 1rem 0; font-size:0.85rem; color:var(--text-secondary); line-height:1.6; display:flex; flex-direction:column; gap:0.4rem;">
+                                        <li>14. MC membuka <strong>Layar Panggung</strong> (<code>/stage</code>) di tablet (OLED dark, zoom font, mirror mode prompter).</li>
+                                        <li>15. Operator Musik FOH membuka <strong>Layar Vendor</strong> (<code>/vendor</code>) di laptop.</li>
+                                        <li>16. Fitur <em>Speech-to-Scroll</em> mendeteksi suara bicara MC & menggulirkan prompter.</li>
+                                        <li>17. MC tekan <code>BERIKUTNYA ▶</code> $\rightarrow$ layar operator vendor seketika menyala kuning (<strong>LIVE ON STAGE</strong>).</li>
+                                    </ul>
+                                    <div style="margin-top:auto; padding-top:0.75rem; border-top:1px solid rgba(255,255,255,0.06); font-size:0.78rem; color:#FCA5A5;">
+                                        <strong>Output Sistem:</strong> Sinkronisasi live tanpa lag, Soundboard SFX instan, dan audio cue offline lokal.
+                                    </div>
+                                </div>
+
+                                <!-- Fase 5 -->
+                                <div class="guide-step-card">
+                                    <div class="guide-step-badge phase5">Fase 5: Hilir</div>
+                                    <h4 style="font-size:1.05rem; font-weight:700; color:var(--adm-text-primary); margin:0 0 0.5rem 0;">Pelunasan & Tutup Buku Kas</h4>
+                                    <ul style="list-style:none; padding:0; margin:0 0 1rem 0; font-size:0.85rem; color:var(--text-secondary); line-height:1.6; display:flex; flex-direction:column; gap:0.4rem;">
+                                        <li>18. Klien melakukan pelunasan sisa kontrak 50%.</li>
+                                        <li>19. Admin mencatat pengeluaran operasional (honor asisten, transport) di <em>Expense Tracker</em> + upload foto struk.</li>
+                                        <li>20. Sistem menghitung laba bersih riil per event dan kumulatif.</li>
+                                        <li>21. Status acara ditandai <strong>Selesai</strong>.</li>
+                                    </ul>
+                                    <div style="margin-top:auto; padding-top:0.75rem; border-top:1px solid rgba(255,255,255,0.06); font-size:0.78rem; color:#86EFAC;">
+                                        <strong>Output Sistem:</strong> Laporan keuangan bersih ter-update, LTV klien tercatat di CRM, dan pembukuan resmi tuntas.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ================= SUBPANEL 2: KATALOG FITUR ================= -->
+                    <div class="cms-subpanel" id="guide-features">
+                        <!-- 4 Portal Grid -->
+                        <div class="ecc-card" style="margin-bottom:1.5rem;">
+                            <div class="ecc-card-header">
+                                <h3 class="ecc-card-title">🌐 Ekosistem 4 Portal Terpadu</h3>
+                            </div>
+                            <div class="guide-portal-grid">
+                                <div class="guide-portal-card">
+                                    <div>
+                                        <div style="font-size:1.5rem; margin-bottom:0.5rem;">🌟</div>
+                                        <h4 style="font-size:1.05rem; font-weight:700; color:var(--adm-gold); margin:0 0 0.4rem 0;">1. Portal Publik (<code>/</code>)</h4>
+                                        <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.5; margin:0 0 1rem 0;">
+                                            Etalase personal branding modern dengan YouTube showreel, kalender jadwal ketersediaan anti-bentrok, form pemesanan instan, unduh Press Kit & Riders PDF, dan tautan resmi sosmed (IG, TikTok, FB).
+                                        </p>
+                                    </div>
+                                    <a href="index.html" target="_blank" class="btn btn-secondary btn-sm" style="width:100%; justify-content:center;">Lihat Portal Publik</a>
+                                </div>
+
+                                <div class="guide-portal-card">
+                                    <div>
+                                        <div style="font-size:1.5rem; margin-bottom:0.5rem;">💼</div>
+                                        <h4 style="font-size:1.05rem; font-weight:700; color:var(--adm-gold); margin:0 0 0.4rem 0;">2. Admin Workspace (<code>/admin</code>)</h4>
+                                        <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.5; margin:0 0 1rem 0;">
+                                            Pusat kendali eksekutif untuk mengelola lead, jadwal kalender, invoice QRIS bisnis, arus kas (Cash Flow & Expense), CRM pelanggan & LTV, AI MC Co-Pilot, wardrobe, dan bank musik.
+                                        </p>
+                                    </div>
+                                    <button onclick="navigateToSection('sec-dashboard')" class="btn btn-secondary btn-sm" style="width:100%; justify-content:center;">Buka Dashboard Admin</button>
+                                </div>
+
+                                <div class="guide-portal-card">
+                                    <div>
+                                        <div style="font-size:1.5rem; margin-bottom:0.5rem;">🎙️</div>
+                                        <h4 style="font-size:1.05rem; font-weight:700; color:var(--adm-gold); margin:0 0 0.4rem 0;">3. Live Stage Mode (<code>/stage</code>)</h4>
+                                        <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.5; margin:0 0 1rem 0;">
+                                            Antarmuka tablet panggung bertema hitam pekat OLED, teleprompter Speech-to-Scroll otomatis, hardware mirror mode, Live Soundboard SFX instan, stopwatch panggung, dan Anticipation Bar segmen.
+                                        </p>
+                                    </div>
+                                    <a href="stage.html" target="_blank" class="btn btn-secondary btn-sm" style="width:100%; justify-content:center;">Buka Layar Panggung</a>
+                                </div>
+
+                                <div class="guide-portal-card">
+                                    <div>
+                                        <div style="font-size:1.5rem; margin-bottom:0.5rem;">🎧</div>
+                                        <h4 style="font-size:1.05rem; font-weight:700; color:var(--adm-gold); margin:0 0 0.4rem 0;">4. Layar Vendor Musik (<code>/vendor</code>)</h4>
+                                        <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.5; margin:0 0 1rem 0;">
+                                            Layar FOH operator audio yang tersinkronisasi langsung dengan panggung via BroadcastChannel. Dilengkapi matriks cue rundown, sorot LIVE ON STAGE emas menyala, paginasi baris, dan kontrol musik offline.
+                                        </p>
+                                    </div>
+                                    <a href="vendor.html" target="_blank" class="btn btn-secondary btn-sm" style="width:100%; justify-content:center;">Buka Layar Vendor</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 10 Modul Unggulan Detail -->
+                        <div class="ecc-card">
+                            <div class="ecc-card-header">
+                                <h3 class="ecc-card-title">✨ 10 Modul Unggulan & Fitur Unik MC-Connect</h3>
+                            </div>
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:1.25rem;">
+                                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:1rem; border-radius:8px;">
+                                    <h5 style="color:var(--adm-gold); font-size:0.95rem; font-weight:700; margin:0 0 0.35rem 0;">🤖 AI MC Co-Pilot Script Drafting</h5>
+                                    <p style="font-size:0.82rem; color:var(--text-secondary); margin:0; line-height:1.5;">Menghasilkan draf naskah protokoler, ice-breaking, dan closing per segmen dengan 4 gaya bicara (Formal, Romantis, Enerjik, Elegan) lengkap dengan instruksi audio cue.</p>
+                                </div>
+
+                                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:1rem; border-radius:8px;">
+                                    <h5 style="color:var(--adm-gold); font-size:0.95rem; font-weight:700; margin:0 0 0.35rem 0;">🗣️ Speech-to-Scroll & Mirror Prompter</h5>
+                                    <p style="font-size:0.82rem; color:var(--text-secondary); margin:0; line-height:1.5;">Deteksi suara bicara MC secara lokal via Web Speech API untuk menggulirkan prompter otomatis tanpa perlu remote pedal. Mendukung pembalik teks horizontal (Mirror).</p>
+                                </div>
+
+                                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:1rem; border-radius:8px;">
+                                    <h5 style="color:var(--adm-gold); font-size:0.95rem; font-weight:700; margin:0 0 0.35rem 0;">⚡ Zero Stage Blunder & Live Sync</h5>
+                                    <p style="font-size:0.82rem; color:var(--text-secondary); margin:0; line-height:1.5;">Menghilangkan salah masuk segmen atau telat musik lagu grand entrance. Layar vendor operator sound otomatis menyorot kuning menyala saat MC berpindah segmen.</p>
+                                </div>
+
+                                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:1rem; border-radius:8px;">
+                                    <h5 style="color:var(--adm-gold); font-size:0.95rem; font-weight:700; margin:0 0 0.35rem 0;">🎵 Live Soundboard SFX & Bank Musik</h5>
+                                    <p style="font-size:0.82rem; color:var(--text-secondary); margin:0; line-height:1.5;">Pad suara instan (Tepuk Tangan, Fanfare, Drumroll, Laughter, Buzzer) berbasis Web Audio API lokal tanpa jeda unduhan. Repositori master lagu panggung siap putar.</p>
+                                </div>
+
+                                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:1rem; border-radius:8px;">
+                                    <h5 style="color:var(--adm-gold); font-size:0.95rem; font-weight:700; margin:0 0 0.35rem 0;">📅 Kalender Zero-Collision (Anti-Bentrok)</h5>
+                                    <p style="font-size:0.82rem; color:var(--text-secondary); margin:0; line-height:1.5;">Status booking 4 warna (Hijau Available, Kuning Tentative, Biru Review, Merah Terkunci). Sistem secara absolut menolak pembuatan acara ganda pada jam terkunci.</p>
+                                </div>
+
+                                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:1rem; border-radius:8px;">
+                                    <h5 style="color:var(--adm-gold); font-size:0.95rem; font-weight:700; margin:0 0 0.35rem 0;">💳 QRIS Statis Bisnis & Expense Tracker</h5>
+                                    <p style="font-size:0.82rem; color:var(--text-secondary); margin:0; line-height:1.5;">Menampilkan kode QRIS resmi bisnis MC pada invoice dan kasir. Dilengkapi pencatat biaya operasional per acara dan unggah struk kwitansi kamera HP.</p>
+                                </div>
+
+                                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:1rem; border-radius:8px;">
+                                    <h5 style="color:var(--adm-gold); font-size:0.95rem; font-weight:700; margin:0 0 0.35rem 0;">👔 Wardrobe Tracker (Cegah Baju Dobel)</h5>
+                                    <p style="font-size:0.82rem; color:var(--text-secondary); margin:0; line-height:1.5;">Katalog busana jas, batik, tuxedo, dan gaun lengkap dengan warna dan status cuci. Mengaitkan busana ke acara agar MC tidak memakai baju serupa di klien yang sama.</p>
+                                </div>
+
+                                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:1rem; border-radius:8px;">
+                                    <h5 style="color:var(--adm-gold); font-size:0.95rem; font-weight:700; margin:0 0 0.35rem 0;">💬 WhatsApp Communication Gateway</h5>
+                                    <p style="font-size:0.82rem; color:var(--text-secondary); margin:0; line-height:1.5;">Otomatisasi pengiriman pesan sapaan awal dan reminder pelunasan dengan sanitasi nomor telepon <code>628...</code> dan injeksi nama klien secara cerdas.</p>
+                                </div>
+
+                                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:1rem; border-radius:8px;">
+                                    <h5 style="color:var(--adm-gold); font-size:0.95rem; font-weight:700; margin:0 0 0.35rem 0;">👥 CRM & Pelacakan Nilai Kontrak (LTV)</h5>
+                                    <p style="font-size:0.82rem; color:var(--text-secondary); margin:0; line-height:1.5;">Direktori klien lengkap dengan akumulasi riwayat transaksi (Lifetime Value), filter kategori klien (VIP, Korporat, Regular, WO), dan pencarian instan.</p>
+                                </div>
+
+                                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:1rem; border-radius:8px;">
+                                    <h5 style="color:var(--adm-gold); font-size:0.95rem; font-weight:700; margin:0 0 0.35rem 0;">📶 Offline-First PWA (Service Worker)</h5>
+                                    <p style="font-size:0.82rem; color:var(--text-secondary); margin:0; line-height:1.5;">Tangguh di ballroom hotel atau basement bawah tanah tanpa sinyal seluler. Naskah teleprompter dan bank audio tetap dapat diputar tanpa hambatan.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ================= SUBPANEL 3: BRAINSTORMING SAAS ================= -->
+                    <div class="cms-subpanel" id="guide-saas">
+                        <!-- Blueprint Header -->
+                        <div class="ecc-card" style="margin-bottom:1.5rem;">
+                            <div class="ecc-card-header">
+                                <h3 class="ecc-card-title">🚀 Cetak Biru Transformasi SaaS: All-in-One Operating System untuk MC</h3>
+                            </div>
+                            <p style="color:var(--text-secondary); font-size:0.88rem; line-height:1.6; margin-bottom:1.25rem;">
+                                MC-Connect dirancang untuk berevolusi dari sistem private satu talent menjadi platform **B2B / B2C Vertical SaaS Multi-Tenant** nomor 1 di Indonesia untuk para MC, Presenter, Host, Moderator, dan Agensi Hiburan.
+                            </p>
+
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
+                                <div style="background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.3); padding:1.2rem; border-radius:8px;">
+                                    <h4 style="color:var(--adm-gold); font-size:1rem; font-weight:700; margin:0 0 0.4rem 0;">🏢 Multi-Tenancy & Custom Subdomain</h4>
+                                    <p style="font-size:0.82rem; color:var(--text-secondary); line-height:1.5; margin:0;">
+                                        Setiap MC mendapatkan subdomain unik mandiri (misal: <code>arkanza.mcconnect.id</code> atau <code>dimas.mcconnect.id</code>) serta dukungan pemetaan Custom Domain pribadi (<code>mc-arkanze.com</code>) dengan auto-SSL certificate.
+                                    </p>
+                                </div>
+
+                                <div style="background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.3); padding:1.2rem; border-radius:8px;">
+                                    <h4 style="color:#93C5FD; font-size:1rem; font-weight:700; margin:0 0 0.4rem 0;">🔒 Isolasi Data & Role Berjenjang</h4>
+                                    <p style="font-size:0.82rem; color:var(--text-secondary); line-height:1.5; margin:0;">
+                                        Setiap akun terisolasi row-level data di database. Mendukung peran akun: <strong>Platform Super Admin</strong>, <strong>Agency Manager</strong>, <strong>Solo MC</strong>, <strong>Stage Runner</strong>, dan <strong>Sound Operator (Guest Access)</strong>.
+                                    </p>
+                                </div>
+
+                                <div style="background:rgba(34,197,94,0.06); border:1px solid rgba(34,197,94,0.3); padding:1.2rem; border-radius:8px;">
+                                    <h4 style="color:#86EFAC; font-size:1rem; font-weight:700; margin:0 0 0.4rem 0;">🔄 Flywheel & Viral Growth Loop</h4>
+                                    <p style="font-size:0.82rem; color:var(--text-secondary); line-height:1.5; margin:0;">
+                                        Setiap kali MC menggunakan Layar Vendor, Sound Operator dan WO merasakan keunggulan platform dan menjadi agen referral alami ke ratusan MC lain. Dilengkapi sistem komisi afiliasi recurring 20%.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pricing Tiers Grid -->
+                        <div class="ecc-card" style="margin-bottom:1.5rem;">
+                            <div class="ecc-card-header">
+                                <h3 class="ecc-card-title">💎 Rencana Paket Berlangganan (SaaS Subscription Tiers)</h3>
+                            </div>
+                            <div class="saas-tier-grid">
+                                <!-- Tier 1: Starter -->
+                                <div class="saas-tier-card">
+                                    <div>
+                                        <div style="color:var(--text-secondary); font-size:0.8rem; font-weight:700; text-transform:uppercase;">Entry Level</div>
+                                        <h4 style="font-size:1.3rem; font-weight:800; color:var(--adm-text-primary); margin:0.3rem 0;">🥉 Starter (Freemium)</h4>
+                                        <p style="font-size:0.82rem; color:var(--text-secondary); margin:0;">Untuk MC pemula atau mahasiswa yang baru memulai karir.</p>
+                                        
+                                        <div class="saas-tier-price">
+                                            Rp 0 <span>/ bulan (Gratis)</span>
+                                        </div>
+
+                                        <ul class="saas-feature-list">
+                                            <li><span class="check">✓</span> 1 Profil MC Publik</li>
+                                            <li><span class="check">✓</span> Maksimal 3 Jadwal Booking / bulan</li>
+                                            <li><span class="check">✓</span> Formulir Request to Book dasar</li>
+                                            <li><span class="check">✓</span> Unduh Press Kit standar</li>
+                                            <li style="opacity:0.6;">✕ Tanpa AI MC Co-Pilot</li>
+                                            <li style="opacity:0.6;">✕ Tanpa Live Stage Mode & Vendor Sync</li>
+                                            <li style="opacity:0.6;">✕ Watermark "Powered by MC-Connect"</li>
+                                        </ul>
+                                    </div>
+                                    <button class="btn btn-secondary btn-sm" style="width:100%; justify-content:center; margin-top:1rem;">Daftar Gratis</button>
+                                </div>
+
+                                <!-- Tier 2: Pro Host (Featured) -->
+                                <div class="saas-tier-card featured">
+                                    <div class="saas-tier-badge">Paling Populer</div>
+                                    <div>
+                                        <div style="color:var(--adm-gold); font-size:0.8rem; font-weight:800; text-transform:uppercase;">Solo Professional</div>
+                                        <h4 style="font-size:1.3rem; font-weight:800; color:var(--adm-gold); margin:0.3rem 0;">🥈 Pro MC & Host</h4>
+                                        <p style="font-size:0.82rem; color:var(--text-secondary); margin:0;">Untuk MC profesional pernikahan, korporat, dan event reguler.</p>
+                                        
+                                        <div class="saas-tier-price">
+                                            Rp 99.000 <span>/ bulan</span>
+                                        </div>
+
+                                        <ul class="saas-feature-list">
+                                            <li><span class="check">✓</span> <strong>Jadwal Acara Tanpa Batas</strong> (Anti-Bentrok)</li>
+                                            <li><span class="check">✓</span> <strong>AI MC Co-Pilot</strong> (100 Token Scripting / bln)</li>
+                                            <li><span class="check">✓</span> <strong>Live Stage Mode</strong> (Prompter & SFX Soundboard)</li>
+                                            <li><span class="check">✓</span> <strong>Layar Operator Vendor</strong> (Live Sync Dua Arah)</li>
+                                            <li><span class="check">✓</span> Kode QRIS Statis Bisnis & Invoice Resmi</li>
+                                            <li><span class="check">✓</span> Wardrobe Tracker & Master Bank Musik</li>
+                                            <li><span class="check">✓</span> Subdomain Kustom (<code>namamc.mcconnect.id</code>)</li>
+                                            <li><span class="check">✓</span> Tanpa Watermark MC-Connect</li>
+                                        </ul>
+                                    </div>
+                                    <button class="btn btn-primary btn-sm" style="width:100%; justify-content:center; margin-top:1rem; font-weight:700;">Pilih Paket Pro</button>
+                                </div>
+
+                                <!-- Tier 3: Agency -->
+                                <div class="saas-tier-card">
+                                    <div>
+                                        <div style="color:var(--text-secondary); font-size:0.8rem; font-weight:700; text-transform:uppercase;">Talent Management</div>
+                                        <h4 style="font-size:1.3rem; font-weight:800; color:#A855F7; margin:0.3rem 0;">🥇 Agency & Multi-MC</h4>
+                                        <p style="font-size:0.82rem; color:var(--text-secondary); margin:0;">Untuk Event Organizer, Talent Agency, dan Sanggar Pembawa Acara.</p>
+                                        
+                                        <div class="saas-tier-price">
+                                            Rp 299.000 <span>/ bulan</span>
+                                        </div>
+
+                                        <ul class="saas-feature-list">
+                                            <li><span class="check">✓</span> <strong>Hingga 5 - 10 Talent MC</strong> dalam 1 Dashboard</li>
+                                            <li><span class="check">✓</span> <strong>Multi-User Roles:</strong> Manager, MC, Runner, FOH</li>
+                                            <li><span class="check">✓</span> <strong>AI MC Co-Pilot Unlimited / 500 Token</strong></li>
+                                            <li><span class="check">✓</span> Shared Wardrobe & Audio Master Agency</li>
+                                            <li><span class="check">✓</span> Laporan Konsolidasi Finansial & Fee Komisi</li>
+                                            <li><span class="check">✓</span> Dukungan Custom Domain Pribadi (<code>agency.com</code>)</li>
+                                            <li><span class="check">✓</span> Prioritas Support WhatsApp 24/7</li>
+                                        </ul>
+                                    </div>
+                                    <button class="btn btn-secondary btn-sm" style="width:100%; justify-content:center; margin-top:1rem;">Hubungi Tim Sales</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Monetisasi Tambahan & Add-Ons -->
+                        <div class="ecc-card">
+                            <div class="ecc-card-header">
+                                <h3 class="ecc-card-title">💰 Pendapatan Tambahan (Micro-Transactions & Add-ons)</h3>
+                            </div>
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:1rem; font-size:0.85rem;">
+                                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:1rem; border-radius:8px;">
+                                    <div style="color:var(--adm-gold); font-weight:700; margin-bottom:0.3rem;">🎟️ Top-Up Token AI Scripting</div>
+                                    <p style="color:var(--text-secondary); margin:0; font-size:0.8rem;">Paket 100 token = Rp 49.000 untuk menyusun ratusan naskah panggung tambahan tanpa batas.</p>
+                                </div>
+
+                                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:1rem; border-radius:8px;">
+                                    <div style="color:var(--adm-gold); font-weight:700; margin-bottom:0.3rem;">💬 WhatsApp Cloud API Credits</div>
+                                    <p style="color:var(--text-secondary); margin:0; font-size:0.8rem;">Kirim pengingat otomatis resmi centang hijau H-7 dan H-1 ke WhatsApp klien tanpa perlu klik manual.</p>
+                                </div>
+
+                                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:1rem; border-radius:8px;">
+                                    <div style="color:var(--adm-gold); font-weight:700; margin-bottom:0.3rem;">🌐 Custom Domain & Managed SSL</div>
+                                    <p style="color:var(--text-secondary); margin:0; font-size:0.8rem;">Add-on tahunan Rp 150.000/thn untuk instalasi domain pribadi instan dengan perlindungan SSL.</p>
+                                </div>
+
+                                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:1rem; border-radius:8px;">
+                                    <div style="color:var(--adm-gold); font-weight:700; margin-bottom:0.3rem;">💎 Audio Pack & Template Premium</div>
+                                    <p style="color:var(--text-secondary); margin:0; font-size:0.8rem;">Marketplace bundel SFX panggung orkestra mewah dan template rundown panggung pernikahan adat nusantara.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ================= SUBPANEL 4: AKSI CEPAT & UJI COBA ================= -->
+                    <div class="cms-subpanel" id="guide-actions">
+                        <div class="ecc-card">
+                            <div class="ecc-card-header">
+                                <h3 class="ecc-card-title">⚡ Aksi Cepat & Pintasan Sistem</h3>
+                            </div>
+                            <p style="color:var(--text-secondary); font-size:0.88rem; line-height:1.6; margin-bottom:1.25rem;">
+                                Gunakan tombol cepat di bawah untuk langsung menguji fungsionalitas setiap portal atau berpindah ke menu operasional terkait:
+                            </p>
+
+                            <div class="guide-action-grid">
+                                <a href="stage.html" target="_blank" class="guide-action-card">
+                                    <div style="font-size:1.8rem;">🎙️</div>
+                                    <div>
+                                        <div style="font-weight:700; color:var(--adm-text-primary);">Buka Live Stage Mode</div>
+                                        <div style="font-size:0.75rem; color:var(--text-secondary);">Teleprompter, Speech-to-Scroll & SFX</div>
+                                    </div>
+                                </a>
+
+                                <a href="vendor.html" target="_blank" class="guide-action-card">
+                                    <div style="font-size:1.8rem;">🎧</div>
+                                    <div>
+                                        <div style="font-weight:700; color:var(--adm-text-primary);">Buka Layar Vendor FOH</div>
+                                        <div style="font-size:0.75rem; color:var(--text-secondary);">Matriks Cue Musik & Live Sync</div>
+                                    </div>
+                                </a>
+
+                                <a href="index.html" target="_blank" class="guide-action-card">
+                                    <div style="font-size:1.8rem;">🌐</div>
+                                    <div>
+                                        <div style="font-weight:700; color:var(--adm-text-primary);">Buka Portal Publik</div>
+                                        <div style="font-size:0.75rem; color:var(--text-secondary);">Showreel & Form Request to Book</div>
+                                    </div>
+                                </a>
+
+                                <div onclick="navigateToSection('sec-command-center')" class="guide-action-card">
+                                    <div style="font-size:1.8rem;">⚡</div>
+                                    <div>
+                                        <div style="font-weight:700; color:var(--adm-text-primary);">Event Command Center</div>
+                                        <div style="font-size:0.75rem; color:var(--text-secondary);">Rundown, AI Co-Pilot & QRIS</div>
+                                    </div>
+                                </div>
+
+                                <div onclick="navigateToSection('sec-calendar')" class="guide-action-card">
+                                    <div style="font-size:1.8rem;">📅</div>
+                                    <div>
+                                        <div style="font-weight:700; color:var(--adm-text-primary);">Kalender Acara</div>
+                                        <div style="font-size:0.75rem; color:var(--text-secondary);">Jadwal Anti-Bentrok & Tambah Acara</div>
+                                    </div>
+                                </div>
+
+                                <div onclick="navigateToSection('sec-customers')" class="guide-action-card">
+                                    <div style="font-size:1.8rem;">👥</div>
+                                    <div>
+                                        <div style="font-weight:700; color:var(--adm-text-primary);">Data Pelanggan (CRM)</div>
+                                        <div style="font-size:0.75rem; color:var(--text-secondary);">Daftar Klien, LTV & Direct WA</div>
+                                    </div>
+                                </div>
+
+                                <div onclick="navigateToSection('sec-cashflow')" class="guide-action-card">
+                                    <div style="font-size:1.8rem;">💰</div>
+                                    <div>
+                                        <div style="font-weight:700; color:var(--adm-text-primary);">Cash Flow & Arus Kas</div>
+                                        <div style="font-size:0.75rem; color:var(--text-secondary);">Pemasukan, Pengeluaran & Laba</div>
+                                    </div>
+                                </div>
+
+                                <div onclick="navigateToSection('sec-wardrobe')" class="guide-action-card">
+                                    <div style="font-size:1.8rem;">👔</div>
+                                    <div>
+                                        <div style="font-weight:700; color:var(--adm-text-primary);">Wardrobe Tracker</div>
+                                        <div style="font-size:0.75rem; color:var(--text-secondary);">Katalog Busana & Jadwal Pakai</div>
+                                    </div>
+                                </div>
+
+                                <div onclick="navigateToSection('sec-musicbank'); window.renderMusicBankSection();" class="guide-action-card">
+                                    <div style="font-size:1.8rem;">📁</div>
+                                    <div>
+                                        <div style="font-weight:700; color:var(--adm-text-primary);">Master Bank Musik</div>
+                                        <div style="font-size:0.75rem; color:var(--text-secondary);">Koleksi Audio & Web Audio API</div>
+                                    </div>
+                                </div>
+
+                                <div onclick="navigateToSection('sec-web-settings')" class="guide-action-card">
+                                    <div style="font-size:1.8rem;">⚙️</div>
+                                    <div>
+                                        <div style="font-weight:700; color:var(--adm-text-primary);">Pengaturan Web & QRIS</div>
+                                        <div style="font-size:0.75rem; color:var(--text-secondary);">Upload QRIS Bisnis & Template WA</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div> <!-- end admin-content-pad -->
     
             
@@ -3416,7 +4010,7 @@ Kebutuhan Hospitality:
                 <div class="grid-2col" style="gap:1rem;">
                     <div class="form-group">
                         <label class="form-label">No. WhatsApp *</label>
-                        <input type="text" class="form-input" id="newCustWa" placeholder="Mis: 081234567890" required>
+                        <input type="text" class="form-input" id="newCustWa" placeholder="Mis: 081234567890" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')" onkeydown="if(['-','.','+','e','E',' '].includes(event.key)) event.preventDefault();" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Email Klien</label>
@@ -3438,7 +4032,7 @@ Kebutuhan Hospitality:
                 </div>
 
                 <!-- Waktu Acara (Jam Mulai, Jam Selesai) & Auto-Kalkulasi Durasi -->
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.75rem; margin-bottom:0.5rem;">
+                <div class="grid-time-row" style="margin-bottom:0.5rem;">
                     <div class="form-group" style="margin-bottom:0.25rem;">
                         <label class="form-label">Jam Mulai *</label>
                         <input type="time" class="form-input" id="newCustStartTime" value="18:00"
@@ -3471,7 +4065,7 @@ Kebutuhan Hospitality:
                     </div>
                     <div class="form-group">
                         <label class="form-label">Nilai Kontrak (Rp) *</label>
-                        <input type="text" class="form-input" id="newCustPrice" placeholder="12500000" required>
+                        <input type="text" class="form-input" id="newCustPrice" placeholder="12500000" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')" onkeydown="if(['-','.','+','e','E'].includes(event.key)) event.preventDefault();" required>
                     </div>
                 </div>
 
@@ -3491,7 +4085,7 @@ Kebutuhan Hospitality:
                         placeholder="Mis: Konsep intimate, lagu favorit Canon in D, tamu penting VIP hadir pukul 19:30"></textarea>
                 </div>
 
-                <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModals()">Batal</button>
                     <button type="submit" class="btn btn-primary">Simpan Data Pelanggan</button>
                 </div>
@@ -3701,8 +4295,7 @@ Kebutuhan Hospitality:
                         style="display:none; margin-bottom:1rem; padding:0.75rem 1rem; border-radius:var(--adm-radius-sm); font-size:0.82rem;">
                     </div>
 
-                    <div
-                        style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem; border-top:1px solid var(--adm-border); padding-top:1rem;">
+                    <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" onclick="closeModals()">Batal</button>
                         <button type="submit" class="btn btn-primary"
                             style="background:#D4AF37; border-color:#B38F26; color:#0B0F19; font-weight:800;">
@@ -3729,8 +4322,7 @@ Kebutuhan Hospitality:
                 <div class="grid-2col" style="gap:1rem;">
                     <div class="form-group">
                         <label class="form-label">Nominal (Rp) *</label>
-                        <input type="number" class="form-input" id="expenseAmount" placeholder="400000" min="1"
-                            required>
+                        <input type="text" class="form-input" id="expenseAmount" placeholder="400000" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')" onkeydown="if(['-main','.','+','e','E',' '].includes(event.key)) event.preventDefault();" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label" style="display:flex; justify-content:space-between;">
@@ -3741,10 +4333,9 @@ Kebutuhan Hospitality:
                         </select>
                     </div>
                 </div>
-                <div class="form-group" style="margin-top:0.5rem; text-align:right;">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModals()">Batal</button>
-                    <button type="submit" class="btn btn-primary" style="margin-left:0.5rem;">Simpan
-                        Pengeluaran</button>
+                    <button type="submit" class="btn btn-primary">Simpan Pengeluaran</button>
                 </div>
             </form>
         </div>
@@ -3770,7 +4361,7 @@ Kebutuhan Hospitality:
                     </div>
                     <div class="form-group">
                         <label class="form-label">Nominal (Rp) *</label>
-                        <input type="number" class="form-input" id="newCfAmount" placeholder="Contoh: 1500000" required>
+                        <input type="text" class="form-input" id="newCfAmount" placeholder="Contoh: 1500000" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')" onkeydown="if(['-main','.','+','e','E',' '].includes(event.key)) event.preventDefault();" required>
                     </div>
                 </div>
                 <div class="form-group" style="margin-bottom:1rem;">
@@ -3785,7 +4376,7 @@ Kebutuhan Hospitality:
                     <input type="text" class="form-input" id="newCfDesc"
                         placeholder="Misal: Pelunasan klien, bayar transport, dll">
                 </div>
-                <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModals()">Batal</button>
                     <button type="submit" class="btn btn-primary">Simpan Transaksi Kas</button>
                 </div>
@@ -3809,8 +4400,8 @@ Kebutuhan Hospitality:
                 </div>
                 <div class="grid-2col" style="gap:1rem;">
                     <div class="form-group">
-                        <label class="form-label">Harga nvestasi (Rp) *</label>
-                        <input type="number" class="form-input" id="newPkgPrice" placeholder="15000000" required>
+                        <label class="form-label">Harga Investasi (Rp) *</label>
+                        <input type="number" class="form-input" id="newPkgPrice" min="0" oninput="if(this.value < 0) this.value = 0;" placeholder="15000000" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Durasi Layanan *</label>
@@ -3822,7 +4413,7 @@ Kebutuhan Hospitality:
                     <textarea class="form-textarea" id="newPkgFeatures"
                         placeholder="Bilingual Host, Asisten Runner, Wardrobe Matching, Soundboard Trigger"></textarea>
                 </div>
-                <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModals()">Batal</button>
                     <button type="submit" class="btn btn-primary">Simpan Paket</button>
                 </div>
@@ -3831,8 +4422,7 @@ Kebutuhan Hospitality:
     </div>
 
     <!-- FAB Button -->
-    <button class="fab-btn" onclick="document.getElementById('quickEventModal').classList.add('active')"
-        title="Buat Acara aru">+ </button>
+    <!-- FAB button removed to prevent UI overlap on forms and calendar -->
 
     <!-- MODAL: AI Co-Pilot Script Generator -->
     <div class="modal-overlay" id="aiCoPilotModal">
@@ -3877,9 +4467,9 @@ Kebutuhan Hospitality:
                         </select>
                     </div>
                 </div>
-                <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.25rem;">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModals()">Batal</button>
-                    <button type="submit" class="btn btn-primary" id="btnRunAiScript">enerate Naskah (-1 Token)
+                    <button type="submit" class="btn btn-primary" id="btnRunAiScript">Generate Naskah (-1 Token)
                     </button>
                 </div>
             </form>
@@ -3916,7 +4506,7 @@ Kebutuhan Hospitality:
                     </div>
                     <div class="form-group">
                         <label class="form-label">No. WhatsApp *</label>
-                        <input type="text" class="form-input" id="newEventWa" placeholder="081377889900" required>
+                        <input type="text" class="form-input" id="newEventWa" placeholder="081377889900" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')" onkeydown="if(['-','.','+','e','E',' '].includes(event.key)) event.preventDefault();" required>
                     </div>
                 </div>
                 <div class="grid-2col" style="gap:1rem;">
@@ -3940,7 +4530,7 @@ Kebutuhan Hospitality:
                         <input type="time" class="form-input" id="newEventTimeEnd" value="21:00" required>
                     </div>
                 </div>
-                <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModals()">Batal</button>
                     <button type="submit" class="btn btn-primary">Simpan Acara</button>
                 </div>
@@ -4026,7 +4616,7 @@ Kebutuhan Hospitality:
     <div class="modal-overlay" id="editRundownModal">
         <div class="modal-content" style="max-width:660px;">
             <div class="modal-header">
-                <h3 class="modal-title" id="rundownModalTitle">KelolSegmen Rundown</h3>
+                <h3 class="modal-title" id="rundownModalTitle">Kelola Segmen Rundown</h3>
                 <button class="btn-close" onclick="closeModals()">&times;</button>
             </div>
             <form onsubmit="handleSaveRundownItem(event)">
@@ -4109,7 +4699,7 @@ Kebutuhan Hospitality:
                             placeholder="Mis: FOH Sound / Stage Runner">
                     </div>
                 </div>
-                <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModals()">Batal</button>
                     <button type="submit" class="btn btn-primary">Simpan Segmen Rundown</button>
                 </div>
@@ -4117,11 +4707,11 @@ Kebutuhan Hospitality:
         </div>
     </div>
 
-    <!-- MODAL: Tambah / Edit Musik Acar(CRUD Tab 6) -->
+    <!-- MODAL: Tambah / Edit Musik Acara (CRUD Tab 6) -->
     <div class="modal-overlay" id="modalManageMusic">
         <div class="modal-content" style="max-width:640px;">
             <div class="modal-header">
-                <h3 class="modal-title" id="musicModalTitle">KelolMusik Acara</h3>
+                <h3 class="modal-title" id="musicModalTitle">Kelola Musik Acara</h3>
                 <button class="btn-close" onclick="closeModals()">&times;</button>
             </div>
             <form onsubmit="handleSaveMusic(event)">
@@ -4281,7 +4871,7 @@ Kebutuhan Hospitality:
                     </div>
                 </div>
 
-                <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModals()">Batal</button>
                     <button type="submit" class="btn btn-primary">Simpan Musik Acara</button>
                 </div>
@@ -4289,11 +4879,11 @@ Kebutuhan Hospitality:
         </div>
     </div>
 
-    <!-- MODAL: Tambah / Edit Soundboard & SFX Dibaw(CRUD Tab 6 Sub-tab) -->
+    <!-- MODAL: Tambah / Edit Soundboard & SFX Bawaan (CRUD Tab 6 Sub-tab) -->
     <div class="modal-overlay" id="modalManageSoundboard">
         <div class="modal-content" style="max-width:620px;">
             <div class="modal-header">
-                <h3 class="modal-title" id="soundboardModalTitle">KelolSound Effect Panggung</h3>
+                <h3 class="modal-title" id="soundboardModalTitle">Kelola Sound Effect Panggung</h3>
                 <button class="btn-close" onclick="closeModals()">&times;</button>
             </div>
             <form onsubmit="handleSaveSoundboard(event)">
@@ -4316,11 +4906,11 @@ Kebutuhan Hospitality:
                             <option>🎻 Suspense (Biola/ String)</option>
                             <option value="">💨 Whoosh (Transisi Angin)</option>
                             <option value="">Airhorn (Klakson Hype)</option>
-                            <option value="">Laugh Track (TawPenonton)</option>
-                            <option>Magic (Kemilau Sihir)</option>
+                            <option value="">Laugh Track (Tawa Penonton)</option>
+                            <option>✨ Magic (Kemilau Sihir)</option>
                             <option value="">Heartbeat (Detak Jantung)</option>
                             <option value="">Cash Register (Hadiah Uang)</option>
-                            <option>} Target (Tepat Sasaran)</option>
+                            <option>🎯 Target (Tepat Sasaran)</option>
                             <option value="">Fire / Party (Semangat)</option>
                         </select>
                     </div>
@@ -4329,7 +4919,7 @@ Kebutuhan Hospitality:
                 <!-- PILIHAN SUMBER SUARA SFX: PRESET / UPLOAD FILE / INPUT LINK -->
                 <div class="form-group">
                     <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
-                        <span>Pilihan Sumber SuarSFX: *</span>
+                        <span>Pilihan Sumber Suara SFX: *</span>
                         <span style="font-size:0.75rem; color:var(--adm-gold); font-weight:700;">Preset / Upload File /
                             Link URL</span>
                     </label>
@@ -4351,7 +4941,7 @@ Kebutuhan Hospitality:
                     <input type="hidden" id="soundboardExistingStorageId" value="">
                     <input type="hidden" id="soundboardExistingFileName" value="">
 
-                    <!-- Panel 1: Preset 12 SuarBawaan -->
+                    <!-- Panel 1: Preset 12 Suara Bawaan -->
                     <div id="panelSoundboardPreset">
                         <select class="form-select" id="soundboardEditPreset" onchange="onSoundboardPresetChange()">
                             <option value="applause">Applause / Tepuk Tangan Meriah</option>
@@ -4362,13 +4952,13 @@ Kebutuhan Hospitality:
                             <option>🎻 Suspense Mystery Sting (Ketegangan)</option>
                             <option value="whoosh">💨 Whoosh Transisi Cepat</option>
                             <option value="airhorn">Airhorn Hype Panggung</option>
-                            <option value="laugh">Laugh Track / TawPenonton</option>
-                            <option>Magic Sparkle / Kemilau</option>
+                            <option value="laugh">Laugh Track / Tawa Penonton</option>
+                            <option>✨ Magic Sparkle / Kemilau</option>
                             <option value="heartbeat">Heartbeat Ketegangan Kuiz</option>
                             <option value="cash">Cash Register / Hadiah Uang</option>
                         </select>
                         <div style="font-size:0.75rem; color:var(--adm-text-secondary); margin-top:0.35rem;">
-                            Audio sintetis Web Audio API tanpjed(zero latency) dan 100% offline.
+                            Audio sintetis Web Audio API tanpa jeda (zero latency) dan 100% offline.
                         </div>
                     </div>
 
@@ -4378,9 +4968,9 @@ Kebutuhan Hospitality:
                             onclick="document.getElementById('soundboardAudioFileInput').click()">
                             <input type="file" id="soundboardAudioFileInput" accept=".mp3,.wav,.ogg,.m4a,audio/*"
                                 style="display:none;" onchange="handleSoundboardFileSelected(event)">
-                            <div class="audio-dropzone-icon">a</div>
-                            <div class="audio-dropzone-title">Upload File Efek Suar/ Jingle Kustom</div>
-                            <div class="audio-dropzone-hint">Format: MP3, WAV, OGG, M4A " Cocok untuk sound effect khas
+                            <div class="audio-dropzone-icon">📁</div>
+                            <div class="audio-dropzone-title">Upload File Efek Suara / Jingle Kustom</div>
+                            <div class="audio-dropzone-hint">Format: MP3, WAV, OGG, M4A • Cocok untuk sound effect khas
                                 atau rekaman intro MC</div>
                         </div>
                         <div class="audio-file-preview" id="soundboardFilePreview" style="display:none;">
@@ -4428,10 +5018,10 @@ Kebutuhan Hospitality:
                     <label class="form-label">Kategori SFX *</label>
                     <select class="form-select" id="soundboardEditCategory" required>
                         <option value="Reaction">Reaction (Respon Penonton)</option>
-                        <option>ting (Aksen Ketegangan / Momen)</option>
-                        <option value="Alert">Alert (Penand/ Pengingat)</option>
+                        <option value="Sting">Sting (Aksen Ketegangan / Momen)</option>
+                        <option value="Alert">Alert (Penanda / Pengingat)</option>
                         <option value="Celebration">Celebration (Perayaan / Menang)</option>
-                        <option value="Hype">Hype (Pest/ Games Meriah)</option>
+                        <option value="Hype">Hype (Pesta / Games Meriah)</option>
                         <option value="Comedy">Comedy (Lucu / Interaktif)</option>
                     </select>
                 </div>
@@ -4479,7 +5069,7 @@ Kebutuhan Hospitality:
                     style="display:flex; justify-content:space-between; align-items:center; margin-top:1.5rem; flex-wrap:wrap; gap:0.75rem;">
                     <button type="button" class="btn btn-secondary" onclick="testModalSoundboard()"
                         style="border-color:#38BDF8; color:#38BDF8; font-weight:700;">
-                        Pratinjau Suar(Test)
+                        🔊 Pratinjau Suara (Test)
                     </button>
                     <div style="display:flex; gap:0.6rem;">
                         <button type="button" class="btn btn-secondary" onclick="closeModals()">Batal</button>
@@ -4579,7 +5169,7 @@ Kebutuhan Hospitality:
                     </tbody>
                 </table>
 
-                <!-- Kolom TandTangan Konfirmasi -->
+                <!-- Kolom Tanda Tangan Konfirmasi -->
                 <div
                     style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.5rem; margin-top:2rem; padding-top:1rem; border-top:1px dashed #CBD5E1; text-align:center; font-size:0.82rem;">
                     <div>
@@ -4768,13 +5358,13 @@ Kebutuhan Hospitality:
     <div class="modal-overlay" id="cfCategoryModal">
         <div class="modal-content" style="max-width:400px;">
             <div class="modal-header">
-                <h3 class="modal-title">elolKategori</h3>
+                <h3 class="modal-title">Kelola Kategori</h3>
                 <button class="modal-close"
-                    onclick="document.getElementById('cfCategoryModal').classList.remove('active')">S"</button>
+                    onclick="document.getElementById('cfCategoryModal').classList.remove('active')">&times;</button>
             </div>
             <div class="modal-body">
                 <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
-                    <input type="text" id="newCategoryInput" class="form-input" placeholder="Nama ategori Baru"
+                    <input type="text" id="newCategoryInput" class="form-input" placeholder="Nama Kategori Baru"
                         style="flex: 1;">
                     <button class="btn btn-primary" onclick="addCashflowCategory()">+ Tambah</button>
                 </div>
@@ -4847,12 +5437,12 @@ Kebutuhan Hospitality:
                     </div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
                         <div class="form-group">
-                            <label class="form-label">Kode Warn(HEX)</label>
+                            <label class="form-label">Kode Warna (HEX)</label>
                             <input type="color" class="form-input" id="wardrobeColorHex" value="#D4AF37"
                                 style="padding:0; height:42px; width:100%; cursor:pointer;">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Nama arn<span style="color:var(--adm-danger);">*</span></label>
+                            <label class="form-label">Nama Warna <span style="color:var(--adm-danger);">*</span></label>
                             <input type="text" class="form-input" id="wardrobeColorName" required
                                 placeholder="Contoh: Champagne Gold">
                         </div>
@@ -4860,8 +5450,8 @@ Kebutuhan Hospitality:
                     <div class="form-group">
                         <label class="form-label">Status <span style="color:var(--adm-danger);">*</span></label>
                         <select class="form-input" id="wardrobeStatus" required>
-                            <option>iap Pakai</option>
-                            <option>edang di Laundry</option>
+                            <option value="Siap Pakai">Siap Pakai</option>
+                            <option value="Sedang di Laundry">Sedang di Laundry</option>
                             <option value="Perlu Jahit / Fitting">Perlu Jahit / Fitting</option>
                             <option value="Tunggu Konfirmasi Klien">Tunggu Konfirmasi Klien</option>
                         </select>
@@ -4894,17 +5484,29 @@ Kebutuhan Hospitality:
     <script src="js/calendar.js?v=8.18" defer></script>
     <script src="js/customers.js?v=8.11" defer></script>
     <script src="js/app.js?v=8.11" defer></script>
-    <script src="js/admin-core.js?v=8.72" defer></script>
+    <script src="js/admin-core.js?v=8.73" defer></script>
     <script src="js/invoice-modal.js?v=1.20" defer></script>
-    <script src="js/cms-overrides.js?v=8.7" defer></script>
-    </div>
+    <script src="js/cms-overrides.js?v=8.9" defer></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            if (window.SyncEngine) {
-                window.SyncEngine.pullAll().then(() => {
-                    if (typeof initAdminCms === 'function') initAdminCms();
-                    if (typeof loadUnifiedEventsDatabase === 'function') loadUnifiedEventsDatabase();
-                    if (typeof loadCustomersData === 'function') loadCustomersData();
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 1. Direct REST API Load: Only fetch Dashboard & Event Data from MySQL Server
+            try {
+                if (typeof loadUnifiedEventsDatabase === 'function') await loadUnifiedEventsDatabase();
+                if (typeof loadCustomersData === 'function') await loadCustomersData();
+                if (typeof loadCashflowTransactions === 'function') loadCashflowTransactions();
+            } catch(e) {
+                console.warn('Dashboard initial load note:', e);
+            } finally {
+                const loader = document.getElementById('globalAppLoader');
+                if (loader) loader.classList.add('hidden');
+            }
+
+            // 2. PWA Offline Service Worker Registration (Stage Mode)
+            if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/sw.js').then(() => {
+                        console.log('⚡ [PWA] Service Worker aktif untuk offline stage mode.');
+                    }).catch(() => {});
                 });
             }
         });
@@ -4939,7 +5541,7 @@ Kebutuhan Hospitality:
                     </div>
                 </div>
             </div>
-            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:0.5rem;">
+            <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeModals()">Batal</button>
                 <button type="button" class="btn btn-primary" onclick="saveInvoiceItems()">Simpan & Update
                     Invoice</button>
@@ -4959,7 +5561,7 @@ Kebutuhan Hospitality:
                 <input type="hidden" id="riderId">
                 <div class="modal-body">
                     <div class="form-group">
-                        <label class="form-label">Nama ategori Rider *</label>
+                        <label class="form-label">Nama Kategori Rider *</label>
                         <input type="text" class="form-input" id="riderTitle"
                             placeholder="Misal: Audio & Technical Rider" required>
                         <small style="color:var(--adm-text-muted); font-size:0.75rem;">Ini akan menjadi judul baris di

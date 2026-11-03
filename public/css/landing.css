@@ -329,14 +329,58 @@
     gap: 0.5rem;
 }
 
+.cal-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.45rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+}
+
+.cal-nav-btn:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--gold-primary);
+    color: var(--gold-primary);
+    transform: translateY(-1px);
+}
+
+.cal-nav-btn:active {
+    transform: translateY(0);
+}
+
+.cal-nav-arrow {
+    display: inline-block;
+    font-size: 0.85rem;
+    line-height: 1;
+    color: var(--gold-primary);
+}
+
+.cal-nav-text {
+    display: inline;
+}
+
 .calendar-month-title {
     margin: 0;
     text-align: center;
-    font-size: 1.1rem;
+    font-size: clamp(0.95rem, 3.5vw, 1.25rem);
     font-weight: 700;
     color: var(--text-main);
     flex-grow: 1;
+    min-width: 0;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 0.5rem;
 }
 
 .calendar-legend {
@@ -934,6 +978,42 @@
         font-size: 2.5rem;
     }
 }
+@media (max-width: 768px) {
+    .calendar-nav-controls {
+        gap: 0.35rem;
+        margin-bottom: 0.85rem;
+    }
+    .calendar-nav-controls .cal-nav-text {
+        display: none !important;
+    }
+    .calendar-nav-controls .cal-nav-btn {
+        width: 38px;
+        min-width: 38px;
+        height: 38px;
+        padding: 0 !important;
+        font-size: 1rem;
+        border-radius: var(--radius-sm);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .calendar-nav-controls .cal-nav-arrow {
+        font-size: 0.95rem;
+    }
+    .calendar-month-title {
+        font-size: 1.05rem;
+        padding: 0 0.25rem;
+    }
+    .calendar-legend {
+        gap: 0.4rem 0.8rem;
+        font-size: 0.78rem;
+    }
+    .calendar-widget-wrapper {
+        padding: 1rem 0.65rem;
+    }
+}
+
 @media (max-width: 480px) {
     .hero-title {
         font-size: 2rem;
@@ -945,16 +1025,26 @@
         grid-template-columns: 1fr;
     }
     .calendar-widget-wrapper {
-        padding: 1.25rem 0.75rem;
+        padding: 0.85rem 0.5rem;
         overflow: hidden;
     }
+    .calendar-month-title {
+        font-size: 1rem;
+    }
     .calendar-grid {
-        min-width: 500px;
-        font-size: 0.8rem;
+        min-width: 460px;
+        font-size: 0.78rem;
     }
     .calendar-cell {
-        min-height: 70px;
-        padding: 0.4rem;
+        min-height: 60px;
+        padding: 0.3rem 0.25rem;
+    }
+    .calendar-cell-date {
+        font-size: 0.85rem;
+    }
+    .calendar-cell-pill {
+        font-size: 0.62rem;
+        padding: 0.15rem 0.3rem;
     }
     .package-card {
         padding: 1.5rem;
@@ -1037,3 +1127,396 @@
 .lightbox-close:hover {
     color: var(--gold-primary);
 }
+
+/* =========================================================
+   KELEBIHAN & KEUNGGULAN APLIKASI (MC-CONNECT OS) STYLES
+   ========================================================= */
+
+.keunggulan-section {
+    background: radial-gradient(circle at 80% 20%, rgba(212, 175, 55, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
+                var(--bg-main);
+    border-top: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-subtle);
+    position: relative;
+    overflow: hidden;
+    scroll-margin-top: 75px;
+}
+
+/* 4 Portal Overview Grid */
+.portal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3.5rem;
+}
+
+.portal-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem 1.5rem;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.portal-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--border-accent);
+    box-shadow: var(--shadow-md);
+}
+
+.portal-card.featured {
+    border-color: var(--gold-primary);
+    background: linear-gradient(145deg, var(--bg-card), rgba(212, 175, 55, 0.08));
+    box-shadow: 0 0 25px rgba(212, 175, 55, 0.15);
+}
+
+.portal-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.portal-icon {
+    font-size: 2rem;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-subtle);
+}
+
+.portal-card.featured .portal-icon {
+    background: rgba(212, 175, 55, 0.15);
+    border-color: rgba(212, 175, 55, 0.4);
+}
+
+.portal-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.25rem 0.65rem;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+}
+
+.portal-badge.gold {
+    background: rgba(212, 175, 55, 0.15);
+    color: var(--gold-primary);
+    border-color: rgba(212, 175, 55, 0.35);
+}
+
+.portal-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.6rem;
+}
+
+.portal-desc {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin-bottom: 1.25rem;
+    flex-grow: 1;
+}
+
+.portal-highlights {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 1rem;
+}
+
+.portal-highlights li {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.portal-highlights li span {
+    color: var(--gold-primary);
+    font-weight: bold;
+}
+
+/* Advantage Filter Tabs */
+.advantage-filter-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2.5rem;
+}
+
+.advantage-filter-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    background: var(--bg-surface);
+    padding: 0.4rem;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border-subtle);
+    justify-content: center;
+}
+
+.advantage-filter-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 0.5rem 1.15rem;
+    border-radius: var(--radius-full);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+
+.advantage-filter-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.advantage-filter-btn.active {
+    background: var(--gold-primary);
+    color: var(--text-on-accent);
+    box-shadow: 0 2px 10px rgba(212, 175, 55, 0.35);
+}
+
+/* Advantage Cards Grid */
+.advantages-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.75rem;
+    margin-bottom: 4rem;
+}
+
+.advantage-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 2rem 1.75rem;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+}
+
+.advantage-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--gold-primary);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), var(--shadow-gold);
+}
+
+.advantage-card.hidden {
+    display: none !important;
+}
+
+.advantage-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+}
+
+.advantage-icon-box {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--radius-md);
+    background: rgba(212, 175, 55, 0.12);
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+}
+
+.advantage-pill {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--gold-primary);
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    padding: 0.25rem 0.65rem;
+    border-radius: var(--radius-full);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.advantage-title {
+    font-size: 1.22rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    line-height: 1.35;
+}
+
+.advantage-desc {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    line-height: 1.65;
+    margin-bottom: 1.5rem;
+    flex-grow: 1;
+}
+
+.advantage-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.adv-tag {
+    font-size: 0.76rem;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-subtle);
+    padding: 0.25rem 0.55rem;
+    border-radius: var(--radius-sm);
+}
+
+/* Comparison Matrix Box */
+.comparison-section-box {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem 2rem;
+    margin-bottom: 3.5rem;
+}
+
+.comparison-header {
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto 2rem;
+}
+
+.comparison-title {
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.comparison-subtitle {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.comparison-table-wrapper {
+    overflow-x: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+}
+
+.comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.9rem;
+    min-width: 650px;
+}
+
+.comparison-table th {
+    background: var(--bg-card);
+    padding: 1.1rem 1.25rem;
+    color: var(--text-primary);
+    font-weight: 700;
+    border-bottom: 1px solid var(--border-accent);
+}
+
+.comparison-table th.col-mcconnect {
+    background: rgba(212, 175, 55, 0.12);
+    color: var(--gold-primary);
+    border-bottom-color: var(--gold-primary);
+}
+
+.comparison-table td {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border-subtle);
+    line-height: 1.6;
+    vertical-align: top;
+}
+
+.comparison-table tr:last-child td {
+    border-bottom: none;
+}
+
+.comparison-table td.dim-label {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.comparison-table td.col-conventional {
+    color: var(--text-muted);
+}
+
+.comparison-table td.col-mcconnect {
+    color: var(--text-secondary);
+    background: rgba(212, 175, 55, 0.03);
+}
+
+.comparison-table td.col-mcconnect strong {
+    color: var(--gold-primary);
+}
+
+/* Advantage CTA Banner */
+.advantage-cta-banner {
+    background: linear-gradient(135deg, var(--bg-card) 0%, rgba(212, 175, 55, 0.1) 100%);
+    border: 1px solid var(--border-accent);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    box-shadow: var(--shadow-md);
+}
+
+.cta-banner-content h3 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.cta-banner-content p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.cta-banner-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+@media (max-width: 992px) {
+    .advantage-cta-banner {
+        flex-direction: column;
+        text-align: center;
+        padding: 2rem 1.5rem;
+    }
+    .cta-banner-buttons {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+}
+

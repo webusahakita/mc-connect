@@ -319,24 +319,32 @@ function normalizeAndDeduplicateEvents(existingEvents, customers, seedEvents) {
     return result;
 }
 
-async function loadUnifiedEventsDatabase() {
+async function loadUnifiedEventsDatabase(force = false) {
     try {
-        const res = await fetch('/api/cms/events', { cache: 'no-store' });
-        const json = await res.json();
-        
         let events = [];
-        if (json.success && json.data) {
-            events = json.data;
-        } else {
-            console.warn('[Sync] Gagal memuat event dari server.');
+        try {
+            const res = await fetch('/api/cms/events?t=' + Date.now(), { cache: 'no-store' });
+            if (res.ok) {
+                const json = await res.json();
+                if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+                    events = json.data;
+                }
+            }
+        } catch (fetchErr) {
+            console.warn('[Sync] Server unreachable, using local fallback:', fetchErr);
         }
 
-        setTimeout(() => {
-            const loader = document.getElementById('globalAppLoader');
-            if (loader) loader.classList.add('hidden');
-        }, 500);
+        if (!events || events.length === 0) {
+            if (window.adminEventsDb && window.adminEventsDb.length > 0) {
+                events = window.adminEventsDb;
+            } else if (window.AdminDB && AdminDB.getItem("mc_events_db_v1")) {
+                try { events = JSON.parse(AdminDB.getItem("mc_events_db_v1")); } catch (e) {}
+            }
+        }
 
-        // Mapping agar kompatibel dengan UI admin
+        const loader = document.getElementById('globalAppLoader');
+        if (loader) loader.classList.add('hidden');
+
         adminEventsDb = events.map(ev => ({
             id: ev.id,
             dbEventId: ev.id,
@@ -360,11 +368,24 @@ async function loadUnifiedEventsDatabase() {
             expenses: Array.isArray(ev.expenses) ? ev.expenses : [],
             wardrobeIds: Array.isArray(ev.wardrobeIds) ? ev.wardrobeIds : [],
             invoiceItems: ev.invoiceItems || null,
-            metadata: ev.metadata || {},
-            musicList: (ev.metadata && Array.isArray(ev.metadata.music)) ? ev.metadata.music : (Array.isArray(ev.musicList) ? ev.musicList : []),
-            soundboard: (ev.metadata && Array.isArray(ev.metadata.soundboard)) ? ev.metadata.soundboard : (Array.isArray(ev.soundboard) ? ev.soundboard : []),
-            landingMusic: (ev.metadata && Array.isArray(ev.metadata.landingMusic)) ? ev.metadata.landingMusic : (Array.isArray(ev.landingMusic) ? ev.landingMusic : []),
-            rundown: Array.isArray(ev.rundown) ? ev.rundown : ((ev.metadata && Array.isArray(ev.metadata.rundown)) ? ev.metadata.rundown : []),
+            metadata: (typeof ev.metadata === 'string') ? JSON.parse(ev.metadata) : (ev.metadata || {}),
+            musicList: (function() {
+                const m = (typeof ev.metadata === 'string') ? JSON.parse(ev.metadata) : (ev.metadata || {});
+                return (m && Array.isArray(m.music)) ? m.music : (Array.isArray(ev.musicList) ? ev.musicList : []);
+            })(),
+            soundboard: (function() {
+                const m = (typeof ev.metadata === 'string') ? JSON.parse(ev.metadata) : (ev.metadata || {});
+                return (m && Array.isArray(m.soundboard)) ? m.soundboard : (Array.isArray(ev.soundboard) ? ev.soundboard : []);
+            })(),
+            landingMusic: (function() {
+                const m = (typeof ev.metadata === 'string') ? JSON.parse(ev.metadata) : (ev.metadata || {});
+                return (m && Array.isArray(m.landingMusic)) ? m.landingMusic : (Array.isArray(ev.landingMusic) ? ev.landingMusic : []);
+            })(),
+            rundown: (function() {
+                if (Array.isArray(ev.rundown) && ev.rundown.length > 0) return ev.rundown;
+                const m = (typeof ev.metadata === 'string') ? JSON.parse(ev.metadata) : (ev.metadata || {});
+                return (m && Array.isArray(m.rundown)) ? m.rundown : [];
+            })(),
             created_at: ev.created_at || null
         }));
 
@@ -517,12 +538,7 @@ function autoSyncEventsToCustomers(events) {
 let _saveEventsTimer = null;
 function saveUnifiedEventsDatabase(evToSync = null) {
     try {
-        if (evToSync && typeof syncEventMetadata === 'function') {
-            syncEventMetadata(evToSync);
-        }
-        
-        // Hanymemanggil sync ke Data Pelanggan
-        // Selalu pastikan sync ke Data Pelanggan setiap kali Events disimpan
+        // Update data pelanggan terkait jika ada perubahan
         if (typeof autoSyncEventsToCustomers === 'function') {
             autoSyncEventsToCustomers(adminEventsDb);
         }
@@ -541,20 +557,21 @@ function saveUnifiedEventsDatabase(evToSync = null) {
         renderDashEvents();
     }
 
-    // Debounced push to server database
+    // Single debounced save to server database
     clearTimeout(_saveEventsTimer);
-    _saveEventsTimer = setTimeout(() => {
-        pushEventsToServer();
-    }, 1500);
+    _saveEventsTimer = setTimeout(async () => {
+        const ev = evToSync || (typeof _getEv === 'function' ? _getEv() : null);
+        if (ev && typeof window.syncEventMetadata === 'function') {
+            await window.syncEventMetadata(ev);
+        }
+    }, 400);
 }
 
 async function pushEventsToServer() {
     let ev = _getEv();
-    if (ev && typeof window.syncEventMetadata === 'function') {
+    if (!ev) return;
+    if (typeof window.syncEventMetadata === 'function') {
         await window.syncEventMetadata(ev);
-        console.log('[Sync] Event metadata synced via fallback pushEventsToServer.');
-    } else {
-        console.log('[Sync] pushEventsToServer fallback failed: No event selected.');
     }
 }
 
@@ -581,9 +598,9 @@ window.syncEventMetadata = async function(ev) {
             headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
             body: JSON.stringify(payload)
         });
-        console.log('[Sync] Event metadata and rundown synced to server for event ID:', ev.id);
+        console.log('[AutoSave] Data acara dan rundown tersimpan ke database server (ID: ' + ev.id + ')');
     } catch (err) {
-        console.error("Gagal sync event metadata:", err);
+        console.error("Gagal menyimpan event metadata:", err);
     }
 };
 
@@ -1248,13 +1265,31 @@ function loadActiveEventInCommandCenter(eventId) {
     }
 
     const qrisImg = document.getElementById('adminQrisImg');
-    if (qrisImg) {
-        let qrisUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=INV2026${String(ev.id).padStart(4, '0')}`;
-        if (typeof loadPaymentSettings === 'function') {
-            const ps = loadPaymentSettings();
-            if (ps && ps.qrisUrl) qrisUrl = ps.qrisUrl;
-        }
-        qrisImg.src = qrisUrl;
+    const qrisTitle = document.getElementById('adminQrisTitle');
+    const qrisDesc = document.getElementById('adminQrisDesc');
+    
+    function applyAdminQris(ps) {
+        if (!qrisImg) return;
+        const staticUrl = (ps && ps.qrisUrl) ? ps.qrisUrl : '/uploads/qris/qris_static_official.png';
+        qrisImg.src = staticUrl;
+        if (qrisTitle) qrisTitle.textContent = 'Kode QRIS Bisnis (Statis)';
+        if (qrisDesc) qrisDesc.textContent = 'Klien dapat memindai kode QRIS resmi bisnis Anda via BCA, Mandiri, BRI, GoPay, OVO, atau ShopeePay.';
+    }
+
+    if (window.mcGlobalPaymentSettings) {
+        applyAdminQris(window.mcGlobalPaymentSettings);
+    } else {
+        fetch('/api/cms/payment-settings')
+            .then(r => r.json())
+            .then(res => {
+                if (res.success && res.data) {
+                    window.mcGlobalPaymentSettings = res.data;
+                    applyAdminQris(res.data);
+                } else {
+                    applyAdminQris(null);
+                }
+            })
+            .catch(() => applyAdminQris(null));
     }
 
     const expContainer = document.getElementById('adminExpenseList');
@@ -1326,7 +1361,7 @@ function loadActiveEventInCommandCenter(eventId) {
 
     const invQris = document.getElementById('invModalQrisImg');
     if (invQris) {
-        let qrisUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=INV2026${String(ev.id).padStart(4, '0')}`;
+        let qrisUrl = '/uploads/qris/qris_static_official.png';
         if (typeof loadPaymentSettings === 'function') {
             const ps = loadPaymentSettings();
             if (ps && ps.qrisUrl) qrisUrl = ps.qrisUrl;
@@ -1379,7 +1414,9 @@ const sectionBreadcrumbMap = {
     'sec-wardrobe': 'Manajemen Wardrobe Tracker',
     'sec-stage-mode': 'Stage Mode (Teleprompter & Soundboard)',
     'sec-vendor-screen': 'Layar Vendor Musik (FOH Live Cue)',
-    'sec-customers': 'Direktori Data Pelanggan & Klien (CRM)'
+    'sec-customers': 'Direktori Data Pelanggan & Klien (CRM)',
+    'sec-musicbank': 'Master Bank Musik & Koleksi Audio',
+    'sec-guide': 'Pusat Panduan, Fitur Aplikasi & Roadmap SaaS'
 };
 
 function updateAdminClock() {
@@ -1428,9 +1465,9 @@ function navigateToSection(sectionId, menuElement) {
     }
     
     // Scroll to top
-    const mainContent = document.querySelector('.admin-main-content');
+    const mainContent = document.querySelector('.admin-body-content') || document.querySelector('.admin-main-content');
     if (mainContent) mainContent.scrollTop = 0;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'instant' });
 
     // Section-specific initialization
     if (sectionId === 'sec-customers' && typeof window.initCustomersPage === 'function') {
@@ -1453,6 +1490,12 @@ function navigateToSection(sectionId, menuElement) {
     }
     if (sectionId === 'sec-calendar' && window.adminCalendar) {
         window.adminCalendar.render();
+    }
+    if (sectionId === 'sec-landing-settings' && typeof window.initAdminCms === 'function') {
+        window.initAdminCms();
+    }
+    if (sectionId === 'sec-web-settings' && typeof window.loadCmsWebSettings === 'function') {
+        window.loadCmsWebSettings();
     }
 }
 window.navigateToSection = navigateToSection;
@@ -1963,6 +2006,10 @@ function renderAdminAgendaList() {
 window.renderAdminAgendaList = renderAdminAgendaList;
 
 function renderAdminRundownList(ev) {
+    const eventObj = ev || window.activeCommandCenterEvent;
+    if (eventObj) window.activeCommandCenterEvent = eventObj;
+    ev = eventObj;
+
     const titleEl = document.getElementById('rundownActiveEventTitle');
     const metaEl = document.getElementById('rundownActiveEventMeta');
     
@@ -1975,11 +2022,11 @@ function renderAdminRundownList(ev) {
         if (p) p.textContent = '0/0 Selesai (0%)';
         return;
     } else {
-        if (titleEl) titleEl.textContent = ev.title || ev.event || 'Acara Tanpa Judul';
+        if (titleEl) titleEl.textContent = ev.title || ev.event || ev.nama_acara || 'Acara Tanpa Judul';
         if (metaEl) {
-            const date = ev.date || '-';
-            const time = ev.time || '-';
-            const venue = ev.venue || (ev.metadata && ev.metadata.venue) || 'TBD';
+            const date = ev.date || (ev.tanggal_acara ? String(ev.tanggal_acara).substring(0, 10) : '-');
+            const time = ev.time || (ev.startTime ? `${ev.startTime} - ${ev.endTime || ''} WIB` : '-');
+            const venue = ev.venue || ev.lokasi || (ev.metadata && ev.metadata.venue) || 'TBD';
             metaEl.textContent = `📅 ${date} ⏰ ${time} 📍 ${venue}`;
         }
     }
@@ -1987,7 +2034,18 @@ function renderAdminRundownList(ev) {
     const container = document.getElementById('adminRundownTimeline');
     if (!container) return;
     
-    const agenda = ev.rundown || ev.agenda || [];
+    let meta = {};
+    try {
+        meta = (typeof ev.metadata === 'string') ? JSON.parse(ev.metadata) : (ev.metadata || {});
+    } catch (e) {
+        meta = {};
+    }
+    const agenda = (Array.isArray(ev.rundown) && ev.rundown.length > 0)
+        ? ev.rundown
+        : ((Array.isArray(ev.agenda) && ev.agenda.length > 0)
+            ? ev.agenda
+            : (Array.isArray(meta.rundown) ? meta.rundown : []));
+    ev.rundown = agenda;
     const p = document.getElementById('rundownProgressBadge');
     if (p) {
         if (agenda.length === 0) p.textContent = '0/0 Selesai (0%)';
@@ -2031,8 +2089,8 @@ function renderAdminRundownList(ev) {
                 <div style="display:flex; gap:1rem; flex-wrap:wrap; flex-direction:column;">
                     ${(function(){
                         let connectedMusic = [];
-                        if (ev && ev.musicList && Array.isArray(ev.musicList)) {
-                            connectedMusic = ev.musicList.filter(m => {
+                        if (eventObj && eventObj.musicList && Array.isArray(eventObj.musicList)) {
+                            connectedMusic = eventObj.musicList.filter(m => {
                                 if (m.segment_idxs && m.segment_idxs.includes(i)) return true;
                                 if (m.segment_idx === i || m.segment_idx === String(i)) return true;
                                 if (item.cue_music && m.title === item.cue_music) return true;
@@ -2107,6 +2165,9 @@ window.applyDefaultRundown = async function() {
     
     if (typeof window.renderAdminRundownList === 'function') {
         window.renderAdminRundownList(ev);
+    }
+    if (typeof window.renderAdminVendorCollab === 'function') {
+        window.renderAdminVendorCollab(ev);
     }
     
     if (typeof window.pushEventsToServer === 'function') {
@@ -2198,6 +2259,7 @@ window.openAddRundownModal = async function(editIndex = -1) {
         }).catch(e => console.error('Silent save error', e));
         
         renderAdminRundownList(ev);
+        if (typeof window.renderAdminVendorCollab === 'function') window.renderAdminVendorCollab(ev);
         if (typeof window.showToast === 'function') window.showToast('Rundown berhasil disimpan!');
     } catch(err) {
         if (err !== 'CANCEL') {
@@ -2226,6 +2288,7 @@ window.deleteRundownSegment = async function(index) {
     }).catch(e => console.error('Silent save error', e));
     
     renderAdminRundownList(ev);
+    if (typeof window.renderAdminVendorCollab === 'function') window.renderAdminVendorCollab(ev);
     if (typeof window.showToast === 'function') window.showToast('Segmen dihapus!');
 };
 
@@ -2251,6 +2314,7 @@ window.moveRundownSegment = function(index, direction) {
     }).catch(e => console.error('Silent save error', e));
     
     renderAdminRundownList(ev);
+    if (typeof window.renderAdminVendorCollab === 'function') window.renderAdminVendorCollab(ev);
 };
 
 window.openRundownPrintModal = function() {
@@ -2406,39 +2470,143 @@ window.playSoundboardEffect = function(title) {
 
 window.renderAdminSoundboardList = renderAdminSoundboardList;
 
+function renderCueMusicCell(eventObj, item, actualIndex) {
+    let connectedMusic = [];
+    if (eventObj && eventObj.musicList && Array.isArray(eventObj.musicList)) {
+        connectedMusic = eventObj.musicList.filter(m => {
+            if (m.segment_idxs && m.segment_idxs.includes(actualIndex)) return true;
+            if (m.segment_idx === actualIndex || m.segment_idx === String(actualIndex)) return true;
+            if (item.cue_music && m.title === item.cue_music) return true;
+            return false;
+        });
+    }
+    let musicHtml = '';
+    if (connectedMusic.length > 0) {
+        connectedMusic.forEach(m => {
+            musicHtml += `<div style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); padding:0.4rem 0.8rem; border-radius:4px; font-size:0.8rem; color:#38BDF8; font-weight:600; display:inline-block; word-wrap:break-word; margin-bottom:0.4rem;">`;
+            musicHtml += `<div>🎵 ${escapeHtml(m.title)}</div>`;
+            if (m.cue_instruction) {
+                musicHtml += `<div style="color:rgba(255,255,255,0.7); font-weight:normal; margin-top:0.2rem;">📝 Intruksi: ${escapeHtml(m.cue_instruction)}</div>`;
+            }
+            musicHtml += `</div><br>`;
+        });
+    } else if (item.cue_music || item.cue_instruction) {
+        musicHtml = `<div style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); padding:0.4rem 0.8rem; border-radius:4px; font-size:0.8rem; color:#38BDF8; font-weight:600; display:inline-block; word-wrap:break-word;">`;
+        if (item.cue_music) {
+            musicHtml += `<div>🎵 ${escapeHtml(item.cue_music)}</div>`;
+        }
+        if (item.cue_instruction) {
+            musicHtml += `<div style="color:rgba(255,255,255,0.7); font-weight:normal; margin-top:0.2rem;">📝 Intruksi Khusus: ${escapeHtml(item.cue_instruction)}</div>`;
+        }
+        musicHtml += `</div>`;
+    } else {
+        musicHtml = `<span style="color:var(--text-muted); font-size:0.8rem;">(Tidak ada audio khusus)</span>`;
+    }
+    
+    if (connectedMusic.length > 0 && item.cue_instruction) {
+        musicHtml += `<div style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); padding:0.4rem 0.8rem; border-radius:4px; font-size:0.8rem; color:#38BDF8; font-weight:600; display:inline-block; word-wrap:break-word; margin-top:0.4rem;">`;
+        musicHtml += `<div style="color:rgba(255,255,255,0.7); font-weight:normal; margin-top:0.2rem;">📝 Intruksi Khusus Segmen: ${escapeHtml(item.cue_instruction)}</div>`;
+        musicHtml += `</div>`;
+    }
+    return musicHtml;
+}
+let currentVendorCollabPage = 1;
+let currentVendorCollabPageSize = 10;
+
+window.changeVendorCollabPageSize = function(val) {
+    currentVendorCollabPageSize = parseInt(val, 10);
+    currentVendorCollabPage = 1;
+    renderAdminVendorCollab();
+};
+
+window.navigateVendorCollabPage = function(delta) {
+    currentVendorCollabPage += delta;
+    renderAdminVendorCollab();
+};
+
 function renderAdminVendorCollab(ev) {
     try {
+        const eventObj = ev || window.activeCommandCenterEvent;
+        if (eventObj) window.activeCommandCenterEvent = eventObj;
         const container = document.getElementById('vendorCollabTableBody');
         const badge = document.getElementById('vendorCollabCountBadge');
         if (!container) return;
         
-        const rundown = ev.rundown || [];
+        if (!eventObj) {
+            if (badge) badge.textContent = '0 segmen tersedia';
+            container.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:2rem; color:var(--text-muted);">Pilih acara terlebih dahulu di kalender atau command center.</td></tr>';
+            return;
+        }
+
+        const titleEl = document.getElementById('vendorCollabEventTitle');
+        const metaEl = document.getElementById('vendorCollabEventMeta');
+        if (titleEl) titleEl.textContent = eventObj.title || eventObj.nama_acara || 'Acara Panggung';
+        if (metaEl) {
+            const d = eventObj.date || (eventObj.tanggal_acara ? String(eventObj.tanggal_acara).substring(0, 10) : '-');
+            const t = eventObj.time || `${eventObj.startTime || ''} - ${eventObj.endTime || ''} WIB`;
+            const v = eventObj.venue || eventObj.lokasi || '-';
+            metaEl.textContent = `📅 ${d} 🔒 ${t} 📍 ${v}`;
+        }
+        
+        const meta = (typeof eventObj.metadata === 'string') ? JSON.parse(eventObj.metadata) : (eventObj.metadata || {});
+        const rundown = (Array.isArray(eventObj.rundown) && eventObj.rundown.length > 0)
+            ? eventObj.rundown
+            : ((Array.isArray(eventObj.agenda) && eventObj.agenda.length > 0)
+                ? eventObj.agenda
+                : ((meta && Array.isArray(meta.rundown)) ? meta.rundown : []));
+        
+        eventObj.rundown = rundown;
         if (badge) badge.textContent = `${rundown.length} segmen tersedia`;
         
         if (rundown.length === 0) {
-            container.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:2rem; color:var(--text-muted);">Belum ada segmen rundown.</td></tr>';
+            container.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:2rem; color:var(--text-muted);">Belum ada segmen rundown untuk acara ini. Tambahkan segmen pada Tab "Susunan Rundown".</td></tr>';
+            const pageInfo = document.getElementById('vendorCollabPaginationInfo');
+            if (pageInfo) pageInfo.textContent = 'Menampilkan 0 dari total 0 baris data';
             return;
         }
+
+        // Pagination calculation
+        const totalItems = rundown.length;
+        const pageSize = currentVendorCollabPageSize;
+        const totalPages = pageSize === -1 ? 1 : Math.ceil(totalItems / pageSize);
+        if (currentVendorCollabPage > totalPages) currentVendorCollabPage = totalPages;
+        if (currentVendorCollabPage < 1) currentVendorCollabPage = 1;
+
+        const startIndex = pageSize === -1 ? 0 : (currentVendorCollabPage - 1) * pageSize;
+        const endIndex = pageSize === -1 ? totalItems : Math.min(startIndex + pageSize, totalItems);
+        const pagedItems = rundown.slice(startIndex, endIndex);
+
+        const pageInfo = document.getElementById('vendorCollabPaginationInfo');
+        if (pageInfo) {
+            pageInfo.textContent = `Menampilkan baris ${totalItems > 0 ? startIndex + 1 : 0} - ${endIndex} dari total ${totalItems} data | Halaman ${currentVendorCollabPage} dari ${totalPages}`;
+        }
+        const pageInd = document.getElementById('vendorCollabPageIndicator');
+        if (pageInd) pageInd.textContent = `Halaman ${currentVendorCollabPage} / ${totalPages}`;
+        const prevBtn = document.getElementById('btnVendorCollabPrev');
+        const nextBtn = document.getElementById('btnVendorCollabNext');
+        if (prevBtn) prevBtn.disabled = (currentVendorCollabPage <= 1);
+        if (nextBtn) nextBtn.disabled = (currentVendorCollabPage >= totalPages);
         
-        container.innerHTML = rundown.map((item, i) => {
+        container.innerHTML = pagedItems.map((item, idx) => {
+            const actualIndex = startIndex + idx;
             return `
             <tr style="border-bottom: 1px solid var(--border-subtle);">
-                <td style="text-align: center; color: var(--gold-primary); font-weight: bold; padding: 1rem 0.5rem; vertical-align: top;">${i+1}</td>
+                <td style="text-align: center; color: var(--gold-primary); font-weight: bold; padding: 1rem 0.5rem; vertical-align: top;">${actualIndex + 1}</td>
                 <td style="padding: 1rem 0.5rem; vertical-align: top; white-space: nowrap; min-width: 120px;">
                     <div style="font-weight:600;">${item.start_time || ''} - ${item.end_time || ''}</div>
                     <div style="font-size:0.75rem; color:var(--text-muted);">${item.time || ''}</div>
                 </td>
                 <td style="padding: 1rem 0.5rem; vertical-align: top; white-space: normal; word-wrap: break-word; min-width: 300px; max-width: 600px;">
                     <div style="font-weight:700; color:var(--text-primary); margin-bottom:0.25rem; font-size:1.05rem;">${escapeHtml(item.title || 'Segmen')}</div>
-                    <div style="font-size:0.85rem; color:var(--text-secondary); line-height:1.6;">${escapeHtml(item.prompter || '')}</div>
+                    <div style="font-size:0.85rem; color:var(--text-secondary); line-height:1.6;">${escapeHtml(item.prompter || item.naskah_prompter || '')}</div>
                 </td>
                 <td style="padding: 1rem 0.5rem; vertical-align: top; white-space: normal; min-width: 180px;">
                     ${(function(){
                         let connectedMusic = [];
-                        if (ev && ev.musicList && Array.isArray(ev.musicList)) {
-                            connectedMusic = ev.musicList.filter(m => {
-                                if (m.segment_idxs && m.segment_idxs.includes(i)) return true;
-                                if (m.segment_idx === i || m.segment_idx === String(i)) return true;
+                        if (eventObj && eventObj.musicList && Array.isArray(eventObj.musicList)) {
+                            connectedMusic = eventObj.musicList.filter(m => {
+                                if (m.segment_idxs && m.segment_idxs.includes(actualIndex)) return true;
+                                if (m.segment_idx === actualIndex || m.segment_idx === String(actualIndex)) return true;
                                 if (item.cue_music && m.title === item.cue_music) return true;
                                 return false;
                             });
@@ -3110,7 +3278,7 @@ window.openAddPackageModal = function() {
     let pkgs = window.cmsConfig.pkgs || [];
     pkgs.push({
         name: n,
-        price: p,
+        price: Math.max(0, parseFloat(p) || 0),
         category: c,
         duration: d,
         features: f.split(',').map(x=>x.trim())
@@ -3126,7 +3294,7 @@ window.editPackage = function(i) {
     let n = prompt("Nama Paket:", p.name); if(n===null) return;
     let pr = prompt("Harga:", p.price);
     let f = prompt("Fitur (Pisahkan dengan koma):", (p.features||[]).join(', '));
-    p.name = n; p.price = pr; p.features = f.split(',').map(x=>x.trim());
+    p.name = n; p.price = Math.max(0, parseFloat(pr) || 0); p.features = f.split(',').map(x=>x.trim());
     renderAdminPackages(pkgs);
     handleSavePackage();
 };
@@ -3341,32 +3509,51 @@ window.renderAdminRiders = function(riders) {
     });
     body.innerHTML = html;
 };
-window.openRiderModal = function() {
-    let t = prompt("Judul Rider (misal: Hospitality):"); if(!t) return;
-    let n = prompt("Catatan (misal: 1x Ruang Tunggu):"); if(!n) return;
-    fetch('/api/cms/riders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: t, notes: n })
-    }).then(r=>r.json()).then(res => {
-        initAdminCms(); // reload everything
-    });
+window.openRiderModal = async function() {
+    if (typeof window.uiCustomForm === 'function') {
+        const res = await window.uiCustomForm([
+            { id: 't', label: 'Judul Rider (misal: Hospitality)', type: 'text' },
+            { id: 'n', label: 'Catatan (misal: 1x Ruang Tunggu)', type: 'textarea' }
+        ], 'Tambah Rider');
+        if (!res || !res.t) return;
+        fetch('/api/cms/riders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': window.CSRF_TOKEN || '' },
+            body: JSON.stringify({ title: res.t, notes: res.n })
+        }).then(r=>r.json()).then(() => initAdminCms(true));
+    }
 };
-window.editRider = function(i) {
-    let r = window.cmsConfig.riders[i];
-    let t = prompt("Judul Rider:", r.title); if(t===null) return;
-    let n = prompt("Catatan:", r.notes); if(n===null) return;
-    fetch('/api/cms/riders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ db_id: r.db_id, title: t, notes: n })
-    }).then(res=>res.json()).then(() => initAdminCms());
+window.editRider = async function(i) {
+    let r = window.cmsConfig && window.cmsConfig.riders ? window.cmsConfig.riders[i] : null;
+    if (!r) return;
+    if (typeof window.uiCustomForm === 'function') {
+        const res = await window.uiCustomForm([
+            { id: 't', label: 'Judul Rider', type: 'text', value: r.title || '' },
+            { id: 'n', label: 'Catatan', type: 'textarea', value: r.notes || '' }
+        ], 'Edit Rider');
+        if (!res || !res.t) return;
+        fetch('/api/cms/riders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': window.CSRF_TOKEN || '' },
+            body: JSON.stringify({ db_id: r.db_id, title: res.t, notes: res.n })
+        }).then(res=>res.json()).then(() => initAdminCms(true));
+    }
 };
 window.deleteRider = async function(i) {
-    let r = window.cmsConfig.riders[i];
-    if(!(await window.uiConfirm('Hapus rider ini?'))) return;
-    fetch('/api/cms/riders/' + r.db_id, { method: 'DELETE' })
-        .then(res=>res.json()).then(() => initAdminCms());
+    let r = window.cmsConfig && window.cmsConfig.riders ? window.cmsConfig.riders[i] : null;
+    if (!r) return;
+    if (!(await window.uiConfirm(`Hapus rider "${r.title || 'ini'}"?`))) return;
+    if (r.db_id) {
+        await fetch('/api/cms/riders/' + r.db_id, {
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': window.CSRF_TOKEN || '' }
+        });
+    }
+    if (window.cmsConfig && window.cmsConfig.riders) {
+        window.cmsConfig.riders.splice(i, 1);
+        if (typeof renderAdminRiders === 'function') renderAdminRiders(window.cmsConfig.riders);
+    }
+    initAdminCms(true);
 };
 
 window.getAdminGalleryData = function() { return window.cmsConfig.gallery || []; };
@@ -3424,9 +3611,13 @@ window.filterCashFlowTable = function(val) {
     window.renderCashflowTable();
 };
 
+let _cfSearchTimer = null;
 window.searchCashFlowTable = function(val) {
-    window.cashflowSearchQuery = (val || '').toLowerCase().trim();
-    window.renderCashflowTable();
+    clearTimeout(_cfSearchTimer);
+    _cfSearchTimer = setTimeout(() => {
+        window.cashflowSearchQuery = (val || '').toLowerCase().trim();
+        window.renderCashflowTable();
+    }, 200);
 };
 
 window.exportCashFlowCsv = function() {
@@ -3784,7 +3975,7 @@ window.openAddCashModal = async function(existingData = null) {
     const dataPromise = window.uiCustomForm([
         { id: 'type', label: 'Tipe Kas', type: 'select', options: [{value: '', label: '-- Pilih Tipe Kas --'}, {value: 'in', label: 'Kas Masuk (+)'}, {value: 'out', label: 'Kas Keluar (-)'}], value: isEdit ? existingData.type : '' },
         { id: 'category', label: 'Kategori', type: 'select', options: defaultCatOpts, value: isEdit ? existingData.category : '' },
-        { id: 'amount', label: 'Nominal (Rp)' + (isAutoSync ? ' (Auto-Sync: Tidak dapat diedit)' : ''), type: 'number', value: isEdit ? existingData.amount : '', readonly: isAutoSync },
+        { id: 'amount', label: 'Nominal (Rp)' + (isAutoSync ? ' (Auto-Sync: Tidak dapat diedit)' : ''), type: 'number', onlyDigits: true, min: 1, value: isEdit ? existingData.amount : '', readonly: isAutoSync },
         { id: 'date', label: 'Tanggal', type: 'date', value: isEdit ? existingData.date : new Date().toISOString().split('T')[0] },
         { id: 'desc', label: 'Deskripsi', type: 'textarea', value: isEdit ? existingData.desc : '' },
         { id: 'proof', label: 'Bukti (Opsional)', type: 'file' }
@@ -3816,15 +4007,16 @@ window.openAddCashModal = async function(existingData = null) {
 
     const data = await dataPromise;
     if (!data) return; // User cancelled
-    if (!data.type || !data.category || !data.amount || !data.desc) {
-        uiAlert('Tipe, Kategori, Nominal dan Deskripsi wajib diisi!');
+    const cleanAmount = parseInt(String(data.amount).replace(/[^0-9]/g, ''), 10) || 0;
+    if (!data.type || !data.category || !data.desc || cleanAmount <= 0) {
+        uiAlert('Tipe, Kategori, Deskripsi, dan Nominal (hanya angka positif > 0, tanpa minus) wajib diisi!');
         return;
     }
 
     const formData = new FormData();
     formData.append('type', data.type);
     formData.append('category', data.category);
-    formData.append('amount', data.amount);
+    formData.append('amount', cleanAmount);
     formData.append('date', data.date);
     formData.append('desc', data.desc);
     if (isEdit) formData.append('id', existingData.id);
@@ -3856,16 +4048,17 @@ window.handleSaveCashEntry = function(e) {
     e.preventDefault();
     const type = document.getElementById('newCfType')?.value;
     const category = document.getElementById('newCfCategory')?.value;
-    const amount = document.getElementById('newCfAmount')?.value;
+    const rawAmount = document.getElementById('newCfAmount')?.value;
     const desc = document.getElementById('newCfDesc')?.value;
-    const date = document.getElementById('newCfDate')?.value;
+    const date = document.getElementById('newCfDate')?.value || new Date().toISOString().split('T')[0];
     
-    if (!type || !category || !amount || !desc || !date) {
-        uiAlert('Semua kolom wajib diisi!');
+    const cleanAmount = parseInt(String(rawAmount).replace(/\D/g, ''), 10) || 0;
+    if (!type || !category || cleanAmount <= 0 || !desc) {
+        uiAlert('Semua kolom wajib diisi dan Nominal (Rp) harus berupa angka positif murni lebih dari 0!');
         return;
     }
 
-    const payload = { type, category, amount, date, desc };
+    const payload = { type, category, amount: cleanAmount, date, desc };
 
     const btn = e.target.querySelector('button[type="submit"]');
     if (btn) btn.disabled = true;
@@ -5603,11 +5796,15 @@ window.resetCurrentEventMusic = async function() {
     }
 };
 
+let _musicSearchTimer = null;
 window.filterMusicList = function() {
-    let ev = _getEv();
-    if (ev && typeof window.renderAdminMusicListWrapper === 'function') {
-        window.renderAdminMusicListWrapper(ev);
-    }
+    clearTimeout(_musicSearchTimer);
+    _musicSearchTimer = setTimeout(() => {
+        let ev = _getEv();
+        if (ev && typeof window.renderAdminMusicListWrapper === 'function') {
+            window.renderAdminMusicListWrapper(ev);
+        }
+    }, 200);
 };
 
 window.openAddLandingMusicModal = async function(editIndex = -1) {

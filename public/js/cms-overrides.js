@@ -1,108 +1,113 @@
-window.initAdminCms = function() {
+window.applyCmsConfigToUi = function(cfg) {
+    if (!cfg) return;
+    const bioData = cfg.bio || {};
+    const evtCats = cfg.eventCategories || [];
+    const pkgsData = cfg.pkgs || [];
+    const polData = cfg.policies || {};
+    const galData = cfg.gallery || [];
+    const pkData = cfg.presskit || {};
+    const ridersData = cfg.riders || [];
+    const testData = cfg.testimonials || [];
+
+    const mapVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && val !== undefined && val !== null) el.value = val;
+    };
+
+    // Biodata
+    mapVal('cmsNamaPanggung', bioData.name);
+    mapVal('cmsEmail', bioData.email);
+    mapVal('cmsBioText', bioData.bio);
+    mapVal('cmsStatEvents', bioData.statEvents);
+    mapVal('cmsStatYears', bioData.statYears);
+    mapVal('cmsSpesialisasi', bioData.spec);
+    mapVal('cmsFotoUrl', bioData.photo);
+    mapVal('cmsIg', bioData.ig);
+    mapVal('cmsTiktok', bioData.tiktok);
+    mapVal('cmsFb', bioData.fb);
+
+    if (bioData.photo) {
+        const preview = document.getElementById('cmsFotoPreview');
+        if (preview) preview.src = bioData.photo;
+        const sidebarImg = document.getElementById('sidebarAvatarImg');
+        if (sidebarImg) { sidebarImg.src = bioData.photo; sidebarImg.style.opacity = '1'; }
+    }
+    if (bioData.name) {
+        const sidebarName = document.getElementById('sidebarMcName');
+        if (sidebarName) sidebarName.textContent = bioData.name;
+        const dashName = document.getElementById('dashWelcomeName');
+        if (dashName) dashName.textContent = bioData.name;
+    }
+
+    if (bioData.calendarConfig) {
+        mapVal('cfgCalBuffer', bioData.calendarConfig.buffer);
+        mapVal('cfgCalMode', bioData.calendarConfig.mode);
+        mapVal('cfgCalNotice', bioData.calendarConfig.notice);
+    }
+
+    // Packages (Layanan)
+    if (typeof renderAdminPackages === "function") renderAdminPackages(pkgsData);
+
+    // Policies (Terms, Refund, Riders, FAQ)
+    mapVal('cmsTermsText', polData.terms);
+    mapVal('cmsRefundText', polData.refund);
+    mapVal('cmsRidersText', polData.riders);
+    if (typeof renderAdminFaqs === "function") renderAdminFaqs(polData.faqs || []);
+    if (typeof renderAdminTestimonials === "function") renderAdminTestimonials(testData);
+
+    // Press Kit
+    mapVal('pk_stageName', pkData.stageName);
+    mapVal('pk_spesialisasi', pkData.spesialisasi);
+    mapVal('pk_tagline', pkData.tagline);
+    mapVal('pk_bio', pkData.bio);
+    mapVal('pk_pic', pkData.pic);
+    mapVal('pk_wa', pkData.wa);
+    mapVal('pk_email', pkData.email);
+    mapVal('pk_sosmed', pkData.sosmed);
+    mapVal('pk_domisili', pkData.domisili);
+    mapVal('pk_scope1', pkData.scope1);
+    mapVal('pk_scope2', pkData.scope2);
+    mapVal('pk_scope3', pkData.scope3);
+    mapVal('pk_scope4', pkData.scope4);
+    mapVal('pk_footerNote', pkData.footerNote);
+    mapVal('riders_footerNote', pkData.ridersFooter);
+
+    // Gallery
+    if (typeof renderAdminGallery === "function") renderAdminGallery(galData);
+
+    // Riders (Table)
+    if (typeof renderAdminRiders === "function") renderAdminRiders(ridersData);
+};
+
+window.initAdminCms = function(force = false) {
     try {
+        if (!force && window.cmsConfig && window.cmsConfig.bio && Object.keys(window.cmsConfig.bio).length > 0) {
+            window.applyCmsConfigToUi(window.cmsConfig);
+            return;
+        }
         const ts = Date.now();
-        Promise.all([
-            fetch('/api/cms/biodata?t=' + ts).then(r => r.json()).catch(()=>({})),
-            fetch('/api/cms/event-categories?t=' + ts).then(r => r.json()).catch(()=>({})),
-            fetch('/api/cms/packages?t=' + ts).then(r => r.json()).catch(()=>({})),
-            fetch('/api/cms/policies?t=' + ts).then(r => r.json()).catch(()=>({})),
-            fetch('/api/cms/gallery?t=' + ts).then(r => r.json()).catch(()=>({})),
-            fetch('/api/cms/presskit?t=' + ts).then(r => r.json()).catch(()=>({})),
-            fetch('/api/cms/riders?t=' + ts).then(r => r.json()).catch(()=>({})),
-            fetch('/api/cms/testimonials?t=' + ts).then(r => r.json()).catch(()=>({}))
-        ]).then(results => {
-            const bioData = results[0]?.data || {};
-            const evtCats = results[1]?.data || [];
-            const pkgsData = results[2]?.data || [];
-            const polData = results[3]?.data || {};
-            const galData = results[4]?.data || [];
-            const pkData = results[5]?.data || {};
-            const ridersData = results[6]?.data || [];
-            const testData = results[7]?.data || [];
-            
-            window.cmsConfig = window.cmsConfig || {};
-            window.cmsConfig.bio = bioData;
-            window.cmsConfig.eventCategories = evtCats;
-            window.cmsConfig.pkgs = pkgsData;
-            window.cmsConfig.policies = polData;
-            window.cmsConfig.gallery = galData;
-            window.cmsConfig.presskit = pkData;
-            window.cmsConfig.riders = ridersData;
-            window.cmsConfig.testimonials = testData;
-            
-            const mapVal = (id, val) => {
-                const el = document.getElementById(id);
-                if (el && val !== undefined && val !== null) el.value = val;
-            };
-            
-            // Biodata
-            mapVal('cmsNamaPanggung', bioData.name);
-            mapVal('cmsEmail', bioData.email);
-            mapVal('cmsBioText', bioData.bio);
-            mapVal('cmsStatEvents', bioData.statEvents);
-            mapVal('cmsStatYears', bioData.statYears);
-            mapVal('cmsSpesialisasi', bioData.spec);
-            mapVal('cmsFotoUrl', bioData.photo);
-            mapVal('cmsIg', bioData.ig);
-            mapVal('cmsTiktok', bioData.tiktok);
-            mapVal('cmsFb', bioData.fb);
-            
-            if (bioData.photo) {
-                const preview = document.getElementById('cmsFotoPreview');
-                if (preview) preview.src = bioData.photo;
-                const sidebarImg = document.getElementById('sidebarAvatarImg');
-                if (sidebarImg) { sidebarImg.src = bioData.photo; sidebarImg.style.opacity = '1'; }
-            }
-            if (bioData.name) {
-                const sidebarName = document.getElementById('sidebarMcName');
-                if (sidebarName) sidebarName.textContent = bioData.name;
-                const dashName = document.getElementById('dashWelcomeName');
-                if (dashName) dashName.textContent = bioData.name;
-            }
-            
-            if (bioData.calendarConfig) {
-                mapVal('cfgCalBuffer', bioData.calendarConfig.buffer);
-                mapVal('cfgCalMode', bioData.calendarConfig.mode);
-                mapVal('cfgCalNotice', bioData.calendarConfig.notice);
-            }
-
-            // Packages (Layanan)
-            renderAdminPackages(pkgsData);
-
-            // Policies (Terms, Refund, Riders, FAQ)
-            mapVal('cmsTermsText', polData.terms);
-            mapVal('cmsRefundText', polData.refund);
-            mapVal('cmsRidersText', polData.riders);
-            renderAdminFaqs(polData.faqs || []);
-            renderAdminTestimonials(testData);
-
-            // Press Kit
-            mapVal('pk_stageName', pkData.stageName);
-            mapVal('pk_spesialisasi', pkData.spesialisasi);
-            mapVal('pk_tagline', pkData.tagline);
-            mapVal('pk_bio', pkData.bio);
-            mapVal('pk_pic', pkData.pic);
-            mapVal('pk_wa', pkData.wa);
-            mapVal('pk_email', pkData.email);
-            mapVal('pk_sosmed', pkData.sosmed);
-            mapVal('pk_domisili', pkData.domisili);
-            mapVal('pk_scope1', pkData.scope1);
-            mapVal('pk_scope2', pkData.scope2);
-            mapVal('pk_scope3', pkData.scope3);
-            mapVal('pk_scope4', pkData.scope4);
-            mapVal('pk_footerNote', pkData.footerNote);
-            mapVal('riders_footerNote', pkData.ridersFooter);
-
-            // Gallery
-            renderAdminGallery(galData);
-            
-            // Riders (Table)
-            renderAdminRiders(ridersData);
-        });
+        fetch('/api/cms/bootstrap?t=' + ts)
+            .then(r => r.json())
+            .then(res => {
+                if (res.success && res.data) {
+                    const d = res.data;
+                    window.cmsConfig = window.cmsConfig || {};
+                    window.cmsConfig.bio = d.biodata || {};
+                    window.cmsConfig.eventCategories = d.event_categories || [];
+                    window.cmsConfig.pkgs = d.packages || [];
+                    window.cmsConfig.policies = d.policies || {};
+                    window.cmsConfig.gallery = d.gallery || [];
+                    window.cmsConfig.presskit = d.presskit || {};
+                    window.cmsConfig.riders = d.riders || [];
+                    window.cmsConfig.testimonials = d.testimonials || [];
+                    window.applyCmsConfigToUi(window.cmsConfig);
+                }
+            })
+            .catch(e => console.warn('CMS init fallback:', e.message));
     } catch(e) {
         console.warn('CMS init skipped:', e.message);
     }
-}
+};
 
 // Packages Implementation
 window.renderAdminPackages = function(pkgs) {
@@ -138,7 +143,7 @@ window.renderAdminPackages = function(pkgs) {
 };
 
 window.getPackageFormFields = function(p = null) {
-    let catOptions = (window.cmsConfig.eventCategories || []).map(c => ({ value: c.name, label: c.name }));
+    let catOptions = (window.cmsConfig && window.cmsConfig.eventCategories || []).map(c => ({ value: c.name, label: c.name }));
     if(catOptions.length === 0) catOptions = [{value:'Wedding', label:'Wedding'}, {value:'Corporate', label:'Corporate'}];
     
     let badgeOptions = [
@@ -152,7 +157,7 @@ window.getPackageFormFields = function(p = null) {
     return [
         { id: 'name', label: 'Nama Paket', type: 'text', value: p ? p.name : '' },
         { id: 'badge', label: 'Badge Khusus', type: 'select', options: badgeOptions, value: p ? (p.badge||'') : '' },
-        { id: 'price', label: 'Harga (Angka saja)', type: 'number', value: p ? p.price : '0' },
+        { id: 'price', label: 'Harga (Angka saja)', type: 'number', min: 0, value: p ? Math.max(0, parseFloat(p.price) || 0) : '0' },
         { id: 'category', label: 'Kategori Acara', type: 'select', options: catOptions, value: p ? p.category : (catOptions[0].value) },
         { id: 'duration', label: 'Durasi (misal: 4 Jam)', type: 'text', value: p ? p.duration : '4 Jam' },
         { id: 'features', label: 'Fitur (Pisahkan dengan koma)', type: 'textarea', value: p ? (p.features||[]).join(', ') : 'Fitur 1, Fitur 2' }
@@ -168,10 +173,10 @@ window.openAddPackageModal = async function() {
     pkgs.push({
         name: res.name,
         badge: res.badge,
-        price: res.price,
+        price: Math.max(0, parseFloat(res.price) || 0),
         category: res.category,
         duration: res.duration,
-        features: res.features.split(',').map(x=>x.trim())
+        features: res.features.split(',').map(x=>x.trim()).filter(Boolean)
     });
     window.cmsConfig.pkgs = pkgs;
     renderAdminPackages(pkgs);
@@ -187,10 +192,10 @@ window.editPackage = async function(i) {
     
     p.name = res.name;
     p.badge = res.badge;
-    p.price = res.price;
+    p.price = Math.max(0, parseFloat(res.price) || 0);
     p.category = res.category;
     p.duration = res.duration;
-    p.features = res.features.split(',').map(x=>x.trim());
+    p.features = res.features.split(',').map(x=>x.trim()).filter(Boolean);
     
     renderAdminPackages(pkgs);
     handleSavePackage();
@@ -453,63 +458,135 @@ window.openRiderModal = async function() {
         { id: 'n', label: 'Catatan (misal: 1x Ruang Tunggu)', type: 'textarea' }
     ], 'Tambah Rider');
     if (!res || !res.t) return;
-    fetch('/api/cms/riders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: res.t, notes: res.n })
-    }).then(r=>r.json()).then(result => {
-        initAdminCms(); // reload everything
-    });
+    try {
+        const resp = await fetch('/api/cms/riders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': window.CSRF_TOKEN || '' },
+            body: JSON.stringify({ title: res.t, notes: res.n })
+        });
+        const result = await resp.json();
+        if (result && result.success) {
+            if (typeof window.showToast === 'function') window.showToast('Rider berhasil ditambahkan!', 'gold');
+        }
+        initAdminCms(true);
+    } catch (err) {
+        console.error('Error saving rider', err);
+        if (typeof window.showToast === 'function') window.showToast('Gagal menambahkan rider', 'red');
+    }
 };
 window.editRider = async function(i) {
-    let r = window.cmsConfig.riders[i];
+    let r = window.cmsConfig && window.cmsConfig.riders ? window.cmsConfig.riders[i] : null;
+    if (!r) return;
     const res = await window.uiCustomForm([
-        { id: 't', label: 'Judul Rider', type: 'text', value: r.title },
-        { id: 'n', label: 'Catatan', type: 'textarea', value: r.notes }
+        { id: 't', label: 'Judul Rider', type: 'text', value: r.title || '' },
+        { id: 'n', label: 'Catatan', type: 'textarea', value: r.notes || '' }
     ], 'Edit Rider');
     if (!res || !res.t) return;
-    fetch('/api/cms/riders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ db_id: r.db_id, title: res.t, notes: res.n })
-    }).then(r=>r.json()).then(() => initAdminCms());
+    try {
+        const resp = await fetch('/api/cms/riders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': window.CSRF_TOKEN || '' },
+            body: JSON.stringify({ db_id: r.db_id, title: res.t, notes: res.n })
+        });
+        const result = await resp.json();
+        if (result && result.success) {
+            r.title = res.t;
+            r.notes = res.n;
+            if (typeof window.showToast === 'function') window.showToast('Rider berhasil diperbarui!', 'gold');
+        }
+        initAdminCms(true);
+    } catch (err) {
+        console.error('Error editing rider', err);
+        if (typeof window.showToast === 'function') window.showToast('Gagal memperbarui rider', 'red');
+    }
 };
 window.deleteRider = async function(i) {
-    let r = window.cmsConfig.riders[i];
-    if(!(await window.uiConfirm('Hapus rider ini?'))) return;
-    fetch('/api/cms/riders/' + r.db_id, { method: 'DELETE' })
-        .then(res=>res.json()).then(() => initAdminCms());
+    let r = window.cmsConfig && window.cmsConfig.riders ? window.cmsConfig.riders[i] : null;
+    if (!r) return;
+    if (!(await window.uiConfirm(`Hapus rider "${r.title || 'ini'}"?`))) return;
+    try {
+        if (r.db_id) {
+            await fetch('/api/cms/riders/' + r.db_id, {
+                method: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': window.CSRF_TOKEN || '' }
+            });
+        }
+        if (window.cmsConfig && window.cmsConfig.riders) {
+            window.cmsConfig.riders.splice(i, 1);
+            if (typeof renderAdminRiders === 'function') renderAdminRiders(window.cmsConfig.riders);
+        }
+        if (typeof window.showToast === 'function') window.showToast('Rider berhasil dihapus!', 'gold');
+        initAdminCms(true);
+    } catch (err) {
+        console.error('Error deleting rider', err);
+        if (typeof window.showToast === 'function') window.showToast('Gagal menghapus rider', 'red');
+    }
 };
 
 
-// Trigger initial load
-document.addEventListener("DOMContentLoaded", window.initAdminCms);
+// Initial load is now lazy-loaded on demand when navigating to CMS section
+// (document.addEventListener removed for sub-second dashboard performance)
 
 
 window.handleCmsPhotoUpload = function(e) {
     const file = e.target.files[0];
     if (!file) return;
     
-    if (file.size > 2 * 1024 * 1024) {
-        if(typeof window.showToast==='function') window.showToast('Ukuran foto maksimal 2MB', 'red');
+    if (file.size > 5 * 1024 * 1024) {
+        if (typeof window.showToast === 'function') window.showToast('Ukuran foto maksimal 5MB', 'red');
         return;
     }
     
+    // Preview langsung di UI
     const reader = new FileReader();
     reader.onload = function(evt) {
-        const base64Data = evt.target.result;
         const preview = document.getElementById('cmsFotoPreview');
-        if (preview) preview.src = base64Data;
-        const urlInput = document.getElementById('cmsFotoUrl');
-        if (urlInput) urlInput.value = base64Data;
+        if (preview) preview.src = evt.target.result;
+        const sidebarImg = document.getElementById('sidebarAvatarImg');
+        if (sidebarImg) { sidebarImg.src = evt.target.result; sidebarImg.style.opacity = '1'; }
     };
     reader.readAsDataURL(file);
+
+    // Langsung upload file ke backend
+    const formData = new FormData();
+    formData.append('photo_file', file);
+    if (typeof window.showToast === 'function') window.showToast('Mengunggah foto profil...', 'info');
+
+    fetch('/api/cms/biodata', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': window.CSRF_TOKEN || ''
+        },
+        body: formData
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res && res.success && res.data && res.data.photo) {
+            const photoUrl = res.data.photo;
+            const urlInput = document.getElementById('cmsFotoUrl');
+            if (urlInput) urlInput.value = photoUrl;
+            const preview = document.getElementById('cmsFotoPreview');
+            if (preview) preview.src = photoUrl;
+            const sidebarImg = document.getElementById('sidebarAvatarImg');
+            if (sidebarImg) { sidebarImg.src = photoUrl; sidebarImg.style.opacity = '1'; }
+            if (window.cmsConfig && window.cmsConfig.bio) {
+                window.cmsConfig.bio.photo = photoUrl;
+            }
+            if (typeof window.showToast === 'function') window.showToast('Foto profil berhasil diunggah & tersimpan!', 'gold');
+        } else {
+            if (typeof window.showToast === 'function') window.showToast('Gagal mengunggah foto profil', 'red');
+        }
+    })
+    .catch(err => {
+        console.error('Upload error', err);
+        if (typeof window.showToast === 'function') window.showToast('Gagal mengunggah foto profil', 'red');
+    });
 };
 
 window.handleSaveCmsBio = function(e) {
     if (e) e.preventDefault();
     
-    const btn = e.target.querySelector('button[type="submit"]');
+    const btn = e.target ? e.target.querySelector('button[type="submit"]') : null;
     const originalText = btn ? btn.innerHTML : 'Simpan Biodata & Sosmed';
     if(btn) { btn.disabled = true; btn.innerHTML = 'Menyimpan...'; }
     
@@ -532,12 +609,31 @@ window.handleSaveCmsBio = function(e) {
     
     fetch('/api/cms/biodata', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': window.CSRF_TOKEN || ''
+        },
         body: JSON.stringify(bioData)
     }).then(r => r.json()).then(res => {
         if(btn) { btn.disabled = false; btn.innerHTML = originalText; }
-        if (typeof window.showToast === 'function') window.showToast('Biodata berhasil disimpan ke database!', 'gold');
-        initAdminCms();
+        if (res && res.success) {
+            if (typeof window.showToast === 'function') window.showToast('Biodata berhasil disimpan ke database!', 'gold');
+            const savedPhoto = res.data?.photo;
+            if (savedPhoto) {
+                if (window.cmsConfig && window.cmsConfig.bio) {
+                    window.cmsConfig.bio.photo = savedPhoto;
+                }
+                const preview = document.getElementById('cmsFotoPreview');
+                if (preview) preview.src = savedPhoto;
+                const urlInput = document.getElementById('cmsFotoUrl');
+                if (urlInput) urlInput.value = savedPhoto;
+                const sidebarImg = document.getElementById('sidebarAvatarImg');
+                if (sidebarImg) { sidebarImg.src = savedPhoto; sidebarImg.style.opacity = '1'; }
+            }
+            initAdminCms(true);
+        } else {
+            if (typeof window.showToast === 'function') window.showToast(res.message || 'Gagal menyimpan biodata', 'red');
+        }
     }).catch(err => {
         if(btn) { btn.disabled = false; btn.innerHTML = originalText; }
         if (typeof window.showToast === 'function') window.showToast('Gagal menyimpan biodata', 'red');
@@ -789,14 +885,17 @@ window.addBankAccount = function(bankName = '', accNumber = '', accName = '') {
     div.style.border = '1px solid rgba(255,255,255,0.1)';
     div.style.borderRadius = 'var(--adm-radius-sm)';
     
+    // Pastikan nomor rekening awal hanya angka
+    const cleanNumber = String(accNumber || '').replace(/[^0-9]/g, '');
+
     div.innerHTML = `
         <div style="flex:1; min-width:150px;">
             <label style="display:block; margin-bottom:0.5rem; font-size:0.8rem; color:var(--text-secondary);">Nama Bank</label>
             <input type="text" class="form-input bank-name" placeholder="BCA / Mandiri" value="${bankName}">
         </div>
         <div style="flex:1; min-width:200px;">
-            <label style="display:block; margin-bottom:0.5rem; font-size:0.8rem; color:var(--text-secondary);">Nomor Rekening</label>
-            <input type="text" class="form-input bank-number" placeholder="1234567890" value="${accNumber}">
+            <label style="display:block; margin-bottom:0.5rem; font-size:0.8rem; color:var(--text-secondary);">Nomor Rekening (Angka Saja)</label>
+            <input type="text" inputmode="numeric" pattern="[0-9]*" class="form-input bank-number" placeholder="1234567890" value="${cleanNumber}" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
         </div>
         <div style="flex:1; min-width:200px;">
             <label style="display:block; margin-bottom:0.5rem; font-size:0.8rem; color:var(--text-secondary);">Atas Nama</label>
@@ -814,24 +913,56 @@ window.handleQrisPhotoUpload = function(event) {
     if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            document.getElementById('previewQrisImg').src = e.target.result;
-            document.getElementById('paymentQrisUrl').value = e.target.result; 
-        }
+            const preview = document.getElementById('previewQrisImg');
+            const hiddenUrl = document.getElementById('paymentQrisUrl');
+            const btnRemove = document.getElementById('btnRemoveQris');
+            if (preview) preview.src = e.target.result;
+            if (hiddenUrl) hiddenUrl.value = e.target.result; 
+            if (btnRemove) btnRemove.style.display = 'inline-flex';
+        };
         reader.readAsDataURL(file);
     }
+};
+
+window.removeQrisImage = function() {
+    const preview = document.getElementById('previewQrisImg');
+    const hiddenUrl = document.getElementById('paymentQrisUrl');
+    const fileInput = document.getElementById('paymentQrisFile');
+    const btnRemove = document.getElementById('btnRemoveQris');
+    if (hiddenUrl) hiddenUrl.value = '';
+    if (fileInput) fileInput.value = '';
+    if (preview) {
+        preview.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22200%22%20height%3D%22200%22%3E%3Crect%20width%3D%22200%22%20height%3D%22200%22%20fill%3D%22%23e2e8f0%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20font-family%3D%22sans-serif%22%20font-size%3D%2214%22%20font-weight%3D%22bold%22%20fill%3D%22%2364748b%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22middle%22%3EQRIS%20Preview%3C%2Ftext%3E%3C%2Fsvg%3E';
+    }
+    if (btnRemove) btnRemove.style.display = 'none';
 };
 
 window.savePaymentSettings = async function() {
     const container = document.getElementById('bankAccountsContainer');
     const items = container ? container.querySelectorAll('.bank-account-item') : [];
+    let hasInvalidNumber = false;
     const accounts = Array.from(items).map(item => {
+        const rawNum = item.querySelector('.bank-number')?.value || '';
+        const cleanNum = rawNum.replace(/[^0-9]/g, '').trim();
+        if (rawNum.trim() !== '' && cleanNum === '') {
+            hasInvalidNumber = true;
+        }
         return {
-            bank: item.querySelector('.bank-name').value.trim(),
-            number: item.querySelector('.bank-number').value.trim(),
-            name: item.querySelector('.bank-owner').value.trim()
+            bank: item.querySelector('.bank-name')?.value.trim() || '',
+            number: cleanNum,
+            name: item.querySelector('.bank-owner')?.value.trim() || ''
         };
     }).filter(acc => acc.bank && acc.number);
     
+    if (hasInvalidNumber) {
+        if (typeof window.uiAlert === 'function') {
+            window.uiAlert('Nomor rekening hanya boleh berisi angka (digit 0-9). Silakan periksa kembali nomor rekening Anda.', 'Peringatan');
+        } else {
+            alert('Nomor rekening hanya boleh berisi angka.');
+        }
+        return;
+    }
+
     const qrisUrl = document.getElementById('paymentQrisUrl')?.value || '';
     const logoUrl = document.getElementById('ws_logo_url')?.value || ''; // gabung dengan web logo
     
@@ -839,13 +970,33 @@ window.savePaymentSettings = async function() {
     try {
         const res = await fetch('/api/cms/payment-settings', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': window.CSRF_TOKEN || ''
+            },
             body: JSON.stringify(data)
         });
-        if (res.ok) { if (typeof window.uiAlert === 'function') window.uiAlert('Pengaturan Pembayaran & QRIS berhasil disimpan ke Server!', 'Sukses'); else { if (typeof window.uiAlert === 'function') window.uiAlert('Pengaturan Pembayaran & QRIS berhasil disimpan ke Server!', 'Gagal'); else alert('Pengaturan Pembayaran & QRIS berhasil disimpan ke Server!'); } }
-        else { if (typeof window.uiAlert === 'function') window.uiAlert('Gagal menyimpan ke server: ' + res.statusText, 'Gagal'); else alert('Gagal menyimpan ke server: ' + res.statusText); }
+        if (res.ok) {
+            try {
+                const resJson = await res.json();
+                if (resJson && resJson.qrisUrl) {
+                    const qUrl = document.getElementById('paymentQrisUrl');
+                    const qImg = document.getElementById('previewQrisImg');
+                    const btnRemove = document.getElementById('btnRemoveQris');
+                    if (qUrl) qUrl.value = resJson.qrisUrl;
+                    if (qImg) qImg.src = resJson.qrisUrl;
+                    if (btnRemove) btnRemove.style.display = 'inline-flex';
+                }
+            } catch(e) {}
+            if (typeof window.uiAlert === 'function') window.uiAlert('Pengaturan Pembayaran & QRIS berhasil disimpan ke Server!', 'Sukses');
+            else alert('Pengaturan Pembayaran & QRIS berhasil disimpan ke Server!');
+        } else {
+            if (typeof window.uiAlert === 'function') window.uiAlert('Gagal menyimpan ke server: ' + res.statusText, 'Gagal');
+            else alert('Gagal menyimpan ke server: ' + res.statusText);
+        }
     } catch(e) {
-        if (typeof window.uiAlert === 'function') window.uiAlert('Gagal menyambung ke server. Pastikan server aktif.', 'Notifikasi'); else alert('Gagal menyambung ke server. Pastikan server aktif.');
+        if (typeof window.uiAlert === 'function') window.uiAlert('Gagal menyambung ke server. Pastikan server aktif.', 'Notifikasi');
+        else alert('Gagal menyambung ke server. Pastikan server aktif.');
     }
 };
 
@@ -892,6 +1043,7 @@ window.addCashflowIncomeCategoryInput = function(val = '', warna = '#10B981') {
     const list = document.getElementById('cmsIncomeCategoriesList');
     if (!list) return;
     const div = document.createElement('div');
+    div.className = 'cashflow-category-row';
     div.style.display = 'flex';
     div.style.gap = '0.5rem';
     div.style.alignItems = 'center';
@@ -925,6 +1077,7 @@ window.addCashflowExpenseCategoryInput = function(val = '', warna = '#EF4444') {
     const list = document.getElementById('cmsExpenseCategoriesList');
     if (!list) return;
     const div = document.createElement('div');
+    div.className = 'cashflow-category-row';
     div.style.display = 'flex';
     div.style.gap = '0.5rem';
     div.style.alignItems = 'center';
@@ -955,33 +1108,53 @@ window.handleSaveExpenseCategories = async function() {
 
 async function saveCashflowCategoriesBulk() {
     const categories = [];
-    const inList = document.getElementById('cmsIncomeCategoriesList')?.querySelectorAll('div');
-    if (inList) {
-        inList.forEach(div => {
-            const name = div.querySelector('.name-input').value.trim();
-            const warna = div.querySelector('.color-input').value;
-            if (name) categories.push({ nama: name, tipe: 'in', warna });
+    const inContainer = document.getElementById('cmsIncomeCategoriesList');
+    if (inContainer) {
+        const inRows = inContainer.querySelectorAll('.cashflow-category-row, :scope > div');
+        inRows.forEach(div => {
+            const nameEl = div.querySelector('.name-input');
+            const colorEl = div.querySelector('.color-input');
+            if (nameEl && colorEl) {
+                const name = nameEl.value.trim();
+                const warna = colorEl.value || '#10B981';
+                if (name) categories.push({ nama: name, tipe: 'in', warna });
+            }
         });
     }
-    const outList = document.getElementById('cmsExpenseCategoriesList')?.querySelectorAll('div');
-    if (outList) {
-        outList.forEach(div => {
-            const name = div.querySelector('.name-input').value.trim();
-            const warna = div.querySelector('.color-input').value;
-            if (name) categories.push({ nama: name, tipe: 'out', warna });
+    const outContainer = document.getElementById('cmsExpenseCategoriesList');
+    if (outContainer) {
+        const outRows = outContainer.querySelectorAll('.cashflow-category-row, :scope > div');
+        outRows.forEach(div => {
+            const nameEl = div.querySelector('.name-input');
+            const colorEl = div.querySelector('.color-input');
+            if (nameEl && colorEl) {
+                const name = nameEl.value.trim();
+                const warna = colorEl.value || '#EF4444';
+                if (name) categories.push({ nama: name, tipe: 'out', warna });
+            }
         });
     }
     
     try {
         const res = await fetch('/api/cms/cashflow-categories', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': window.CSRF_TOKEN || ''
+            },
             body: JSON.stringify({ categories })
         });
-        if (res.ok) { if (typeof window.uiAlert === 'function') window.uiAlert('Kategori arus kas berhasil disimpan ke Server!', 'Sukses'); else { if (typeof window.uiAlert === 'function') window.uiAlert('Kategori arus kas berhasil disimpan ke Server!', 'Gagal'); else alert('Kategori arus kas berhasil disimpan ke Server!'); } }
-        else { if (typeof window.uiAlert === 'function') window.uiAlert('Gagal menyimpan kategori ke server.', 'Gagal'); else alert('Gagal menyimpan kategori ke server.'); }
+        if (res.ok) {
+            window.cmsCashflowCategories = categories;
+            if (typeof window.uiAlert === 'function') window.uiAlert('Kategori arus kas berhasil disimpan ke Server!', 'Sukses');
+            else alert('Kategori arus kas berhasil disimpan ke Server!');
+        } else {
+            if (typeof window.uiAlert === 'function') window.uiAlert('Gagal menyimpan kategori ke server.', 'Gagal');
+            else alert('Gagal menyimpan kategori ke server.');
+        }
     } catch (e) {
-        if (typeof window.uiAlert === 'function') window.uiAlert('Koneksi server terputus.', 'Notifikasi'); else alert('Koneksi server terputus.');
+        if (typeof window.uiAlert === 'function') window.uiAlert('Koneksi server terputus.', 'Notifikasi');
+        else alert('Koneksi server terputus.');
     }
 }
 
@@ -990,6 +1163,7 @@ window.addClientCategoryInput = function(val = '', icon = '⭐') {
     const list = document.getElementById('cmsClientCategoriesList');
     if (!list) return;
     const div = document.createElement('div');
+    div.className = 'client-category-row';
     div.style.display = 'flex';
     div.style.gap = '10px';
     div.innerHTML = `
@@ -1003,22 +1177,51 @@ window.addClientCategoryInput = function(val = '', icon = '⭐') {
 window.handleSaveClientCategories = async function() {
     const list = document.getElementById('cmsClientCategoriesList');
     if (!list) return;
-    const items = list.querySelectorAll('div');
+    const items = list.querySelectorAll('.client-category-row, :scope > div');
     const categories = Array.from(items).map(div => {
-        const inputs = div.querySelectorAll('input');
-        return { name: inputs[0].value.trim(), icon: inputs[1]?.value.trim() || '⭐' };
+        const input = div.querySelector('input');
+        const select = div.querySelector('select');
+        return {
+            name: input ? input.value.trim() : '',
+            icon: select ? select.value.trim() : '⭐'
+        };
     }).filter(c => c.name);
     
     try {
         const res = await fetch('/api/cms/client-categories', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': window.CSRF_TOKEN || ''
+            },
             body: JSON.stringify({ categories })
         });
-        if (res.ok) { if (typeof window.uiAlert === 'function') window.uiAlert('Kategori klien berhasil disimpan ke Server!', 'Sukses'); else { if (typeof window.uiAlert === 'function') window.uiAlert('Kategori klien berhasil disimpan ke Server!', 'Gagal'); else alert('Kategori klien berhasil disimpan ke Server!'); } }
-        else { if (typeof window.uiAlert === 'function') window.uiAlert('Server gagal memproses.', 'Gagal'); else alert('Server gagal memproses.'); }
+        if (res.ok) {
+            window.currentClientCategories = categories;
+            if (window.cmsConfig) window.cmsConfig.client_categories = categories;
+            const clientCatEl = document.getElementById('newCustClientCategory');
+            if (clientCatEl) {
+                const curVal = clientCatEl.value;
+                clientCatEl.innerHTML = '<option value="" disabled selected>-- Pilih Kategori Klien --</option>';
+                categories.forEach(cat => {
+                    const catName = typeof cat === 'object' ? cat.name : cat;
+                    const catIcon = typeof cat === 'object' ? cat.icon + ' ' : '';
+                    clientCatEl.innerHTML += `<option value="${catName}">${catIcon}${catName}</option>`;
+                });
+                if (curVal) clientCatEl.value = curVal;
+            }
+            if (typeof window.renderCategoryFilters === 'function') window.renderCategoryFilters();
+            if (typeof window.renderCustomersTable === 'function') window.renderCustomersTable();
+            if (typeof window.updateCustomerMetrics === 'function') window.updateCustomerMetrics();
+            if (typeof window.uiAlert === 'function') window.uiAlert('Kategori klien berhasil disimpan ke Server!', 'Sukses');
+            else alert('Kategori klien berhasil disimpan ke Server!');
+        } else {
+            if (typeof window.uiAlert === 'function') window.uiAlert('Server gagal memproses.', 'Gagal');
+            else alert('Server gagal memproses.');
+        }
     } catch (e) {
-        if (typeof window.uiAlert === 'function') window.uiAlert('Tidak ada koneksi ke server.', 'Notifikasi'); else alert('Tidak ada koneksi ke server.');
+        if (typeof window.uiAlert === 'function') window.uiAlert('Tidak ada koneksi ke server.', 'Notifikasi');
+        else alert('Tidak ada koneksi ke server.');
     }
 };
 
@@ -1099,7 +1302,8 @@ window.saveWebSettings = async function() {
 // ==========================================
 // LOAD DATA FROM SERVER ONLY (NO LOCAL STORAGE)
 // ==========================================
-window.loadCmsWebSettings = async function() {
+window.loadCmsWebSettings = async function(force = false) {
+    if (!force && window._webSettingsLoaded) return;
     // Bersihkan local storage yang lama agar tidak nyangkut
     localStorage.removeItem('cms_event_categories');
     localStorage.removeItem('cms_client_categories');
@@ -1190,8 +1394,10 @@ window.loadCmsWebSettings = async function() {
             if (paySet.qrisUrl) {
                 const qUrl = document.getElementById('paymentQrisUrl');
                 const qImg = document.getElementById('previewQrisImg');
+                const btnRemove = document.getElementById('btnRemoveQris');
                 if (qUrl) qUrl.value = paySet.qrisUrl;
                 if (qImg) qImg.src = paySet.qrisUrl;
+                if (btnRemove) btnRemove.style.display = 'inline-flex';
             }
             
             if (paySet.logoUrl) {
@@ -1202,15 +1408,11 @@ window.loadCmsWebSettings = async function() {
             }
         }
 
+        window._webSettingsLoaded = true;
     } catch (e) {
         console.error('Error fetching settings data from server:', e);
         if (typeof window.uiAlert === 'function') window.uiAlert('Gagal memuat beberapa data pengaturan dari server.', 'Notifikasi'); else alert('Gagal memuat beberapa data pengaturan dari server.');
     }
 };
 
-// Call loading when page is ready
-setTimeout(() => {
-    if (typeof window.loadCmsWebSettings === 'function') {
-        window.loadCmsWebSettings();
-    }
-}, 1500);
+// Web settings now loaded on demand when opening Pengaturan Web (sec-web-settings)

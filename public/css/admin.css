@@ -911,23 +911,59 @@ body {
         padding-top: 52px !important;
     }
 
-    /* Form Actions & Presskit/Riders full-width stack on mobile */
+    /* Modal Overlay & Modal Content Mobile Constrain */
+    .modal-overlay {
+        padding: 0.75rem 0.5rem !important;
+        align-items: center !important;
+        overflow-x: hidden !important;
+    }
+    .modal-content {
+        padding: 1.25rem 1rem !important;
+        border-radius: var(--adm-radius-md, 12px) !important;
+        max-height: 92vh !important;
+        width: 100% !important;
+        max-width: calc(100vw - 1rem) !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+    }
+
+    .grid-time-row {
+        grid-template-columns: 1fr !important;
+        gap: 0.5rem !important;
+    }
+
+    /* Form Actions & Presskit/Riders & Modal Footer full-width stack on mobile */
     .form-actions-bar,
-    .presskit-actions-bar {
+    .presskit-actions-bar,
+    .modal-footer {
         flex-direction: column-reverse !important;
         align-items: stretch !important;
         gap: 0.65rem !important;
         width: 100% !important;
-        margin-top: 1.5rem !important;
+        margin-top: 1.25rem !important;
+        padding-top: 0.85rem !important;
+        box-sizing: border-box !important;
     }
     .form-actions-bar .btn,
-    .presskit-actions-bar .btn {
+    .presskit-actions-bar .btn,
+    .modal-footer .btn,
+    .modal-footer button {
         width: 100% !important;
+        flex: 1 1 100% !important;
+        max-width: 100% !important;
         text-align: center !important;
         justify-content: center !important;
         white-space: normal !important;
-        padding: 0.65rem 1rem !important;
-        font-size: 0.88rem !important;
+        padding: 0.75rem 1rem !important;
+        font-size: 0.92rem !important;
+        line-height: 1.3 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        box-sizing: border-box !important;
+    }
+    .modal-footer .btn-secondary {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-color: rgba(255, 255, 255, 0.15) !important;
     }
 
     .riders-header-actions {
@@ -1045,6 +1081,27 @@ body {
     margin-bottom: 1rem !important;
     gap: 0.5rem !important;
     flex-wrap: nowrap !important;
+}
+
+.cal-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.45rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: var(--adm-radius-sm, 6px);
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.cal-nav-arrow {
+    display: inline-block;
+    font-size: 0.85rem;
+    line-height: 1;
+    color: var(--adm-gold, #D4AF37);
 }
 
 .calendar-month-title {
@@ -1278,28 +1335,57 @@ body {
         padding-bottom: 1rem;
     }
     .calendar-nav-controls {
-        gap: 0.35rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        gap: 0.5rem !important;
+        margin-bottom: 0.75rem !important;
     }
+    .calendar-nav-controls .cal-nav-text {
+        display: none !important;
+    }
+    .calendar-nav-controls .cal-nav-btn,
     .calendar-nav-controls .btn {
-        padding: 0.35rem 0.55rem !important;
-        font-size: 0.78rem !important;
-        white-space: nowrap !important;
+        width: 38px !important;
+        min-width: 38px !important;
+        height: 38px !important;
+        padding: 0 !important;
+        font-size: 1rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: var(--adm-radius-sm, 6px) !important;
+        flex-shrink: 0 !important;
+    }
+    .calendar-nav-controls .cal-nav-arrow {
+        font-size: 0.95rem !important;
+        line-height: 1 !important;
     }
     .calendar-month-title {
-        font-size: 0.95rem !important;
+        font-size: clamp(0.95rem, 4.2vw, 1.2rem) !important;
+        text-align: center !important;
+        flex: 1 !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        padding: 0 0.25rem !important;
+        margin: 0 !important;
     }
     .calendar-legend {
-        font-size: 0.75rem !important;
-        gap: 0.65rem !important;
+        font-size: 0.72rem !important;
+        gap: 0.4rem 0.75rem !important;
+        flex-wrap: wrap !important;
     }
     .calendar-grid {
         min-width: 500px !important;
-        font-size: 0.8rem !important;
-        gap: 6px !important;
+        font-size: 0.78rem !important;
+        gap: 4px !important;
     }
     .calendar-cell {
-        min-height: 75px !important;
-        padding: 0.45rem !important;
+        min-height: 68px !important;
+        padding: 0.35rem 0.25rem !important;
     }
     .calendar-cell-pill {
         font-size: 0.65rem !important;
@@ -1602,10 +1688,11 @@ body {
 
 
 /* =========================================================
-   FORM ACTIONS & PRESS KIT / RIDERS RESPONSIVE BUTTONS
+   FORM ACTIONS & PRESS KIT / RIDERS & MODAL FOOTER RESPONSIVE BUTTONS
    ========================================================= */
 .form-actions-bar,
-.presskit-actions-bar {
+.presskit-actions-bar,
+.modal-footer {
     display: flex;
     justify-content: flex-end;
     align-items: center;
@@ -1616,9 +1703,346 @@ body {
     box-sizing: border-box;
 }
 
+.modal-footer {
+    padding-top: 1rem;
+    border-top: 1px solid var(--adm-border, rgba(255, 255, 255, 0.08));
+}
+
+.grid-time-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.75rem;
+}
+
 .riders-header-actions {
     display: flex;
     align-items: center;
     gap: 0.6rem;
     flex-wrap: wrap;
+}
+
+/* =========================================================
+   RESPONSIVE ENHANCEMENTS: CALENDAR, SOCIAL CMS & GALLERY
+   ========================================================= */
+.calendar-actions-bar {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.cms-social-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    width: 100%;
+}
+
+.gallery-footer-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--adm-border, rgba(255, 255, 255, 0.08));
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.gallery-btn-group {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .calendar-section-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.85rem !important;
+    }
+
+    .calendar-actions-bar {
+        width: 100% !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+    }
+
+    .calendar-actions-bar .btn {
+        flex: 1 1 calc(50% - 0.5rem) !important;
+        min-width: 0 !important;
+        justify-content: center !important;
+        text-align: center !important;
+        padding: 0.5rem 0.5rem !important;
+        font-size: 0.8rem !important;
+        box-sizing: border-box !important;
+        white-space: normal !important;
+    }
+
+    .cms-social-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.85rem !important;
+    }
+
+    .cms-bio-submit-wrapper {
+        width: 100% !important;
+        justify-content: stretch !important;
+    }
+
+    .btn-save-cms-bio {
+        width: 100% !important;
+        justify-content: center !important;
+        text-align: center !important;
+    }
+
+    .gallery-footer-actions {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.75rem !important;
+    }
+
+    .gallery-btn-group {
+        width: 100% !important;
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+    }
+
+    .gallery-btn-group .btn {
+        width: 100% !important;
+        justify-content: center !important;
+        text-align: center !important;
+    }
+
+    .calendar-section-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.85rem !important;
+    }
+
+    .calendar-actions-bar {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 0.5rem !important;
+    }
+
+    .calendar-actions-bar .btn {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+        justify-content: center !important;
+        text-align: center !important;
+        white-space: normal !important;
+        min-height: 40px !important;
+    }
+}
+
+@media (max-width: 900px) {
+    /* Hide floating action button on mobile/tablet so it never blocks inputs, calendar, or submit buttons */
+    .fab-btn {
+        display: none !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .calendar-actions-bar {
+        flex-direction: column !important;
+    }
+
+    .calendar-actions-bar .btn {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+    }
+}
+
+/* Completely disable floating action button to prevent overlaying inputs or dates */
+.fab-btn {
+    display: none !important;
+}
+
+.calendar-actions-bar .btn {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    white-space: nowrap !important;
+}
+
+/* ==========================================================================
+   Pusat Panduan, Direktori Fitur & Roadmap SaaS (sec-guide)
+   ========================================================================== */
+.guide-hero-banner {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(15, 23, 42, 0.95) 70%);
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    border-radius: var(--adm-radius-lg, 12px);
+    padding: 1.75rem;
+    margin-bottom: 1.75rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    position: relative;
+    overflow: hidden;
+}
+
+.guide-step-card {
+    background: var(--adm-bg-card, #1E293B);
+    border: 1px solid var(--adm-border, rgba(255, 255, 255, 0.08));
+    border-radius: var(--adm-radius-md, 10px);
+    padding: 1.4rem;
+    transition: all 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+}
+
+.guide-step-card:hover {
+    border-color: rgba(212, 175, 55, 0.5);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 16px rgba(212, 175, 55, 0.1);
+}
+
+.guide-step-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    margin-bottom: 0.75rem;
+    width: fit-content;
+}
+
+.guide-step-badge.phase1 { background: rgba(59, 130, 246, 0.2); color: #93C5FD; border: 1px solid rgba(59, 130, 246, 0.4); }
+.guide-step-badge.phase2 { background: rgba(234, 179, 8, 0.2); color: #FDE047; border: 1px solid rgba(234, 179, 8, 0.4); }
+.guide-step-badge.phase3 { background: rgba(168, 85, 247, 0.2); color: #D8B4FE; border: 1px solid rgba(168, 85, 247, 0.4); }
+.guide-step-badge.phase4 { background: rgba(239, 68, 68, 0.2); color: #FCA5A5; border: 1px solid rgba(239, 68, 68, 0.4); }
+.guide-step-badge.phase5 { background: rgba(34, 197, 94, 0.2); color: #86EFAC; border: 1px solid rgba(34, 197, 94, 0.4); }
+
+.guide-portal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.guide-portal-card {
+    background: var(--adm-bg-card, #1E293B);
+    border: 1px solid var(--adm-border, rgba(255, 255, 255, 0.08));
+    border-radius: var(--adm-radius-md, 10px);
+    padding: 1.35rem;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.guide-portal-card:hover {
+    border-color: rgba(212, 175, 55, 0.45);
+    background: rgba(212, 175, 55, 0.02);
+}
+
+.saas-tier-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.saas-tier-card {
+    background: var(--adm-bg-card, #1E293B);
+    border: 1px solid var(--adm-border, rgba(255, 255, 255, 0.08));
+    border-radius: var(--adm-radius-lg, 12px);
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    transition: all 0.25s ease;
+}
+
+.saas-tier-card.featured {
+    border: 2px solid var(--adm-gold, #D4AF37);
+    background: linear-gradient(180deg, rgba(212, 175, 55, 0.08) 0%, var(--adm-bg-card, #1E293B) 100%);
+    box-shadow: 0 0 25px rgba(212, 175, 55, 0.15);
+}
+
+.saas-tier-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+}
+
+.saas-tier-badge {
+    position: absolute;
+    top: -12px;
+    right: 20px;
+    background: linear-gradient(135deg, #F59E0B, #D4AF37);
+    color: #000;
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.4);
+    text-transform: uppercase;
+}
+
+.saas-tier-price {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--adm-text-primary, #F8FAFC);
+    margin: 0.8rem 0;
+}
+
+.saas-tier-price span {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary, #94A3B8);
+}
+
+.saas-feature-list {
+    list-style: none;
+    padding: 0;
+    margin: 1.25rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    font-size: 0.88rem;
+    color: var(--text-secondary, #CBD5E1);
+}
+
+.saas-feature-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.saas-feature-list li span.check {
+    color: #22C55E;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.guide-action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.guide-action-card {
+    background: var(--adm-bg-card, #1E293B);
+    border: 1px solid var(--adm-border, rgba(255, 255, 255, 0.08));
+    border-radius: var(--adm-radius-md, 10px);
+    padding: 1.2rem;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.guide-action-card:hover {
+    border-color: var(--adm-gold, #D4AF37);
+    background: rgba(212, 175, 55, 0.05);
+    transform: translateX(4px);
 }

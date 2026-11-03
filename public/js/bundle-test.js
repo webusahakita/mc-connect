@@ -808,7 +808,17 @@
             clientCatEl.value = '';
         }
         const waEl = document.getElementById('newCustWa');
-        if (waEl) waEl.value = '';
+        if (waEl) {
+            waEl.value = '';
+            waEl.setAttribute('inputmode', 'numeric');
+            waEl.oninput = function() { this.value = this.value.replace(/[^0-9]/g, ''); };
+            waEl.onkeydown = function(e) { if (['-', '.', '+', 'e', 'E', ' '].includes(e.key)) e.preventDefault(); };
+            waEl.onpaste = function(e) {
+                e.preventDefault();
+                const t = (e.clipboardData || window.clipboardData).getData('text');
+                this.value = t.replace(/[^0-9]/g, '');
+            };
+        }
         const emailEl = document.getElementById('newCustEmail');
         if (emailEl) emailEl.value = '';
         const eventEl = document.getElementById('newCustEvent');
@@ -825,7 +835,17 @@
         if (endEl) endEl.value = '22:00';
 
         const priceEl = document.getElementById('newCustPrice');
-        if (priceEl) priceEl.value = '';
+        if (priceEl) {
+            priceEl.value = '';
+            priceEl.setAttribute('inputmode', 'numeric');
+            priceEl.oninput = function() { this.value = this.value.replace(/[^0-9]/g, ''); };
+            priceEl.onkeydown = function(e) { if (['-', '.', '+', 'e', 'E'].includes(e.key)) e.preventDefault(); };
+            priceEl.onpaste = function(e) {
+                e.preventDefault();
+                const t = (e.clipboardData || window.clipboardData).getData('text');
+                this.value = t.replace(/[^0-9]/g, '');
+            };
+        }
         const payEl = document.getElementById('newCustPayment');
         if (payEl) payEl.value = 'DP 50% Paid';
         const notesEl = document.getElementById('newCustNotes');
@@ -890,7 +910,17 @@
         }
 
         const waEl = document.getElementById('newCustWa');
-        if (waEl) waEl.value = cust.wa || '';
+        if (waEl) {
+            waEl.value = (cust.wa || '').replace(/[^0-9]/g, '');
+            waEl.setAttribute('inputmode', 'numeric');
+            waEl.oninput = function() { this.value = this.value.replace(/[^0-9]/g, ''); };
+            waEl.onkeydown = function(e) { if (['-', '.', '+', 'e', 'E', ' '].includes(e.key)) e.preventDefault(); };
+            waEl.onpaste = function(e) {
+                e.preventDefault();
+                const t = (e.clipboardData || window.clipboardData).getData('text');
+                this.value = t.replace(/[^0-9]/g, '');
+            };
+        }
         const emailEl = document.getElementById('newCustEmail');
         if (emailEl) emailEl.value = cust.email || '';
         const eventEl = document.getElementById('newCustEvent');
@@ -927,7 +957,18 @@
         const name = (document.getElementById('newCustName')?.value || '').trim();
         const category = document.getElementById('newCustCategory')?.value || 'Wedding';
         const clientCategory = document.getElementById('newCustClientCategory')?.value || 'Reguler';
-        const wa = (document.getElementById('newCustWa')?.value || '').trim();
+        const rawWa = (document.getElementById('newCustWa')?.value || '').trim();
+        const cleanWa = rawWa.replace(/[^0-9]/g, '');
+        if (!rawWa || cleanWa === '' || /[^0-9]/.test(rawWa) || cleanWa.length < 8) {
+            if (typeof uiAlert === 'function') {
+                uiAlert("No. WhatsApp hanya boleh berisi angka (minimal 8 digit, tanpa huruf, spasi, atau karakter tanda minus).");
+            } else {
+                alert("No. WhatsApp hanya boleh berisi angka (minimal 8 digit, tanpa huruf, spasi, atau karakter tanda minus).");
+            }
+            document.getElementById('newCustWa')?.focus();
+            return;
+        }
+        const wa = cleanWa;
         const email = (document.getElementById('newCustEmail')?.value || '').trim();
         const eventName = (document.getElementById('newCustEvent')?.value || '').trim();
         const date = document.getElementById('newCustDate')?.value || '';
@@ -1371,6 +1412,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (targetBtn) targetBtn.classList.add('active');
         if (targetPanel) targetPanel.classList.add('active');
+
+        if (tabId === 'tab-vendor' && typeof renderAdminVendorCollab === 'function') {
+            renderAdminVendorCollab(window.activeCommandCenterEvent);
+        }
+        if (tabId === 'tab-rundown' && typeof renderAdminRundownList === 'function' && window.activeCommandCenterEvent) {
+            renderAdminRundownList(window.activeCommandCenterEvent);
+        }
     };
 
     // 4. Toast Notification

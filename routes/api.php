@@ -16,6 +16,7 @@ Route::post('/mc/login', [ProfileApiController::class, 'login'])->middleware('th
 Route::get('/calendar/availability', [PublicController::class, 'getCalendarEvents']);
 Route::post('/book/request', [PublicController::class, 'submitBookingRequest']);
 Route::get('/event-categories', [CmsApiController::class, 'getEventCategories']);
+Route::get('/cms/public-bootstrap', [CmsApiController::class, 'getPublicBootstrap']);
 foreach ([
     'biodata' => 'getBiodata',
     'gallery' => 'getGallery',
@@ -30,6 +31,7 @@ foreach ([
 }
 
 Route::middleware(EnsureMcAuthenticated::class)->group(function () {
+    Route::get('/cms/bootstrap', [CmsApiController::class, 'getBootstrap']);
     Route::get('/mc/session', [ProfileApiController::class, 'session']);
     Route::post('/mc/logout', [ProfileApiController::class, 'logout']);
     Route::get('/mc/profile', [ProfileApiController::class, 'getProfile']);

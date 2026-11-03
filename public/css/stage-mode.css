@@ -164,11 +164,15 @@
 }
 
 .stage-clock {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 2.5rem;
+    font-size: clamp(1.6rem, 3.2vw, 2.6rem);
     font-weight: 800;
-    color: #F8FAFC;
-    letter-spacing: 0.05em;
+    font-family: 'JetBrains Mono', monospace, sans-serif;
+    letter-spacing: 1px;
+    color: #FFFFFF;
+    margin-bottom: 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .stage-stopwatch-label {
@@ -179,11 +183,12 @@
 }
 
 .stage-stopwatch {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: var(--color-available);
-    margin-top: 0.2rem;
+    font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace, sans-serif;
+    color: #34D399;
+    margin-bottom: 1rem;
+    white-space: nowrap;
 }
 
 .stage-timer-controls {
@@ -310,20 +315,275 @@
     border-left: 6px solid var(--gold-primary);
 }
 
-@media (max-width: 900px) {
+/* Mobile Bottom Navigation (Hidden on desktop) */
+.stage-mobile-bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: #0B0F19;
+    border-top: 1px solid #1E293B;
+    z-index: 9999;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.6);
+}
+
+.stage-mob-nav-btn {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-weight: 800;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+}
+
+.stage-mob-nav-btn.mob-btn-prev {
+    background: #1E293B;
+    color: #94A3B8;
+    border-right: 1px solid #334155;
+}
+.stage-mob-nav-btn.mob-btn-prev:active {
+    background: #334155;
+    color: #FFFFFF;
+}
+.stage-mob-nav-btn.mob-btn-prev:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.stage-mob-nav-btn.mob-btn-next {
+    background: var(--gold-primary);
+    color: #000000;
+}
+.stage-mob-nav-btn.mob-btn-next:active {
+    filter: brightness(1.15);
+}
+.stage-mob-nav-btn.mob-btn-next:disabled {
+    background: #475569;
+    color: #94A3B8;
+    cursor: not-allowed;
+}
+
+/* Mobile View Switcher Tabs */
+.stage-mob-view-tabs {
+    display: none;
+    background: #111827;
+    border-radius: var(--radius-sm);
+    padding: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stage-mob-tab-btn {
+    border: none;
+    background: transparent;
+    color: #94A3B8;
+    font-weight: 700;
+    font-size: 0.78rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.stage-mob-tab-btn.active {
+    background: var(--gold-primary);
+    color: #000000;
+}
+
+@media screen and (max-width: 1279px) {
+    /* Hide desktop giant side nav bars */
+    .giant-nav-zone {
+        display: none !important;
+    }
+
+    /* Show mobile bottom navigation */
+    .stage-mobile-bottom-nav {
+        display: flex !important;
+    }
+
+    /* Show mobile view tabs */
+    .stage-mob-view-tabs {
+        display: inline-flex !important;
+    }
+
+    /* Desktop only controls hidden on mobile */
+    .desktop-only {
+        display: none !important;
+    }
+
     .stage-container {
-        flex-direction: column;
+        flex-direction: column !important;
+        height: 100vh !important;
+        width: 100vw !important;
+        overflow: hidden !important;
     }
+
+    .stage-center-wrapper {
+        flex-direction: column !important;
+        height: calc(100vh - 56px) !important;
+        position: relative !important;
+        width: 100% !important;
+    }
+
+    /* Prompter & Sidebar switching on mobile */
     .stage-prompter-pane {
-        width: 100%;
-        height: 60vh;
+        width: 100% !important;
+        height: 100% !important;
+        border-right: none !important;
+        flex: 1 !important;
+        display: flex !important;
     }
+
+    .stage-prompter-pane.mobile-hidden {
+        display: none !important;
+    }
+
     .stage-sidebar-pane {
-        width: 100%;
-        height: 40vh;
+        width: 100% !important;
+        height: 100% !important;
+        display: none !important;
+        padding: 1rem !important;
+        padding-bottom: 5rem !important;
+        overflow-y: auto !important;
     }
+
+    .stage-sidebar-pane.mobile-visible {
+        display: flex !important;
+    }
+
+    /* Top Bar Mobile Optimization */
+    .prompter-top-bar {
+        padding: 0.5rem 0.75rem !important;
+        flex-wrap: wrap !important;
+        gap: 0.4rem !important;
+        justify-content: space-between !important;
+    }
+
+    .prompter-top-left {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .prompter-top-center {
+        display: flex;
+        align-items: center;
+        max-width: 100%;
+        order: 3;
+        width: 100%;
+        margin-top: 0.2rem;
+    }
+
+    .prompter-segment-badge {
+        font-size: 0.8rem !important;
+        padding: 0.3rem 0.6rem !important;
+        max-width: 100% !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        display: block !important;
+        width: 100% !important;
+        text-align: center !important;
+    }
+
+    .prompter-controls {
+        gap: 0.35rem !important;
+    }
+
+    .prompter-ctrl-btn {
+        padding: 0.35rem 0.55rem !important;
+        font-size: 0.75rem !important;
+    }
+
+    .btn-exit-stage {
+        padding: 0.35rem 0.55rem !important;
+        font-size: 0.75rem !important;
+    }
+
+    .exit-text {
+        display: none !important;
+    }
+
+    /* Anticipation Bar Mobile */
+    .stage-anticipation-bar {
+        flex-direction: column !important;
+    }
+
+    .anticipation-box {
+        padding: 0.5rem 0.75rem !important;
+        border-right: none !important;
+        border-bottom: 1px solid #1E293B !important;
+    }
+
+    .anticipation-box.prev-box {
+        display: none !important;
+    }
+
+    .anticipation-label {
+        font-size: 0.68rem !important;
+        margin-bottom: 0.2rem !important;
+    }
+
+    .anticipation-title {
+        font-size: 0.82rem !important;
+    }
+
+    .anticipation-cue {
+        font-size: 0.75rem !important;
+    }
+
+    .anticipation-peek-script {
+        display: none !important;
+    }
+
+    /* Prompter Viewport & Text */
+    .prompter-viewport {
+        padding: 1rem 1rem 5.5rem 1rem !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
     .prompter-text {
-        font-size: 1.6rem;
+        font-size: clamp(1.3rem, 4.5vw, 1.8rem) !important;
+        line-height: 1.55 !important;
+        max-width: 100% !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+    }
+
+    .prompter-music-hint {
+        font-size: 0.85rem !important;
+        padding: 0.5rem 0.75rem !important;
+        margin-bottom: 1rem !important;
+    }
+
+    .hotkey-hint-bar {
+        display: none !important;
+    }
+
+    /* Soundboard & Timer on Mobile */
+    .stage-clock {
+        font-size: 1.8rem !important;
+    }
+    .stage-stopwatch {
+        font-size: 1.3rem !important;
+    }
+    .soundboard-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.5rem !important;
+    }
+    .sound-pad {
+        padding: 0.85rem 0.5rem !important;
+        font-size: 0.8rem !important;
+    }
+    .sound-pad-icon {
+        font-size: 1.3rem !important;
     }
 }
 
@@ -401,4 +661,34 @@
 .stage-nav-arrow-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
+}
+
+
+/* Sidebar Mobile Header */
+.sidebar-mobile-header {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media screen and (max-width: 1279px) {
+    .sidebar-mobile-header {
+        display: flex !important;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .prompter-top-bar {
+        padding: 0.35rem 0.5rem !important;
+    }
+    .prompter-ctrl-btn {
+        padding: 0.3rem 0.45rem !important;
+        font-size: 0.72rem !important;
+    }
+    .btn-scroll-text {
+        display: none !important;
+    }
 }

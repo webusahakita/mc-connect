@@ -11,6 +11,14 @@ Route::get('/login', function () {
     return file_get_contents(public_path('login.html'));
 })->name('login');
 
+Route::get('/keunggulan', function () {
+    return file_get_contents(public_path('keunggulan.html'));
+});
+
+Route::get('/keunggulan.html', function () {
+    return file_get_contents(public_path('keunggulan.html'));
+});
+
 Route::middleware(EnsureMcAuthenticated::class)->group(function () {
     foreach (['admin', 'stage', 'vendor'] as $page) {
         $handler = fn () => response(file_get_contents(resource_path('views/workspace/'.$page.'.html')));

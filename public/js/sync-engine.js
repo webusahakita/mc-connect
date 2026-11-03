@@ -48,13 +48,81 @@ window.AdminDB = {
 
 window.SyncEngine = {
     async pullAll() {
-        console.log('[Sync Engine] Menarik data dari database MySQL...');
-        
-        // Flush queue pertama kali sebelum tarik data agar server mendapat update terbaru!
+        console.log('[Sync Engine] Menarik data terpadu dari database...');
         await this.flushOfflineQueue();
         
         try {
-            // Ambil CSRF Token
+            const res = await fetch('/api/cms/bootstrap', {
+                headers: { 'Accept': 'application/json' }
+            });
+            
+            if (res.ok) {
+                const json = await res.json();
+                if (json.success && json.data) {
+                    if (json.csrf_token) window.CSRF_TOKEN = json.csrf_token;
+                    const d = json.data;
+
+                    window._isSyncing = true;
+
+                    // 1. Events
+                    if (Array.isArray(d.events)) {
+                        d.events = d.events.map(ev => ({
+                            ...ev,
+                            _dbEventId: ev.id,
+                        }));
+                    }
+                    AdminDB.setItem('mc_events_db_v1', JSON.stringify(d.events || []));
+
+                    // 2. Customers
+                    AdminDB.setItem('mc_customers_db_v1', JSON.stringify(d.customers || []));
+
+                    // 3. Configurations
+                    AdminDB.setItem('mc_biodata_config', JSON.stringify(d.biodata || {}));
+                    AdminDB.setItem('mc_gallery_config', JSON.stringify(d.gallery || []));
+                    AdminDB.setItem('mc_packages_config', JSON.stringify(d.packages || []));
+                    AdminDB.setItem('mc_policies_config', JSON.stringify(d.policies || {}));
+                    AdminDB.setItem('mc_testimonials_config', JSON.stringify(d.testimonials || []));
+                    AdminDB.setItem('mc_presskit_v2', JSON.stringify(d.presskit || {}));
+                    AdminDB.setItem('appRidersData', JSON.stringify(d.riders || []));
+                    AdminDB.setItem('mc_wardrobe_catalog', JSON.stringify(d.wardrobe_catalog || []));
+                    AdminDB.setItem('mc_cashflow_categories', JSON.stringify(d.cashflow_categories || []));
+                    AdminDB.setItem('mc_payment_settings', JSON.stringify(d.payment_settings || {}));
+                    AdminDB.setItem('mc_music_bank_data', JSON.stringify(d.music_bank || []));
+
+                    if (d.presskit) {
+                        AdminDB.setItem('mc_presskit_config', JSON.stringify({
+                            title: d.presskit.stageName,
+                            url: window.location.origin + '/storage/presskit.pdf',
+                            note: d.presskit.ridersFooter
+                        }));
+                    }
+
+                    window._isSyncing = false;
+
+                    // Set global runtime state
+                    window.currentEventCategories = d.event_categories || [];
+                    window.currentClientCategories = d.client_categories || [];
+                    window.mcCustomers = d.customers || [];
+                    window.adminEventsDb = d.events || [];
+                    window.cmsConfig = window.cmsConfig || {};
+                    window.cmsConfig.bio = d.biodata || {};
+                    window.cmsConfig.eventCategories = d.event_categories || [];
+                    window.cmsConfig.pkgs = d.packages || [];
+                    window.cmsConfig.policies = d.policies || {};
+                    window.cmsConfig.gallery = d.gallery || [];
+                    window.cmsConfig.presskit = d.presskit || {};
+                    window.cmsConfig.riders = d.riders || [];
+                    window.cmsConfig.testimonials = d.testimonials || [];
+
+                    console.log('[Sync Engine] Tarikan data terpadu selesai dalam 1 request.');
+                    const loader = document.getElementById('globalAppLoader');
+                    if (loader) loader.classList.add('hidden');
+                    return;
+                }
+            }
+            
+            // Fallback
+            console.warn('[Sync Engine] Bootstrap gagal, beralih ke fallback...');
             const tRes = await fetch('/api/csrf-token');
             const tData = await tRes.json();
             window.CSRF_TOKEN = tData.token;
@@ -75,50 +143,28 @@ window.SyncEngine = {
                 { ep: '/api/cms/music-bank', key: 'mc_music_bank_data' }
             ];
 
-            for (const item of endpoints) {
+            await Promise.all(endpoints.map(async item => {
                 try {
-                    const res = await fetch(item.ep, { headers: { 'Accept': 'application/json' } });
-                    if (!res.ok) continue;
-                    const json = await res.json();
-                    
-                    if (json.success && json.data !== null) {
-                        // For events: stamp _dbEventId so frontend can push updates back
-                        if (item.key === 'mc_events_db_v1' && Array.isArray(json.data)) {
-                            json.data = json.data.map(ev => ({
-                                ...ev,
-                                _dbEventId: ev.id, // Server DB ID for PUT/DELETE
-                            }));
+                    const r = await fetch(item.ep, { headers: { 'Accept': 'application/json' } });
+                    if (!r.ok) return;
+                    const j = await r.json();
+                    if (j.success && j.data !== null) {
+                        if (item.key === 'mc_events_db_v1' && Array.isArray(j.data)) {
+                            j.data = j.data.map(ev => ({ ...ev, _dbEventId: ev.id }));
                         }
-                        
-                        // Disable sync trigger saat pulling
                         window._isSyncing = true;
-                        AdminDB.setItem(item.key, JSON.stringify(json.data));
-                        
-                        // Compatibility aliases
-                        if (item.key === 'mc_presskit_v2') {
-                            AdminDB.setItem('mc_presskit_config', JSON.stringify({
-                                title: json.data.stageName,
-                                url: window.location.origin + '/storage/presskit.pdf',
-                                note: json.data.ridersFooter
-                            }));
-                        }
+                        AdminDB.setItem(item.key, JSON.stringify(j.data));
                         window._isSyncing = false;
                     }
-                } catch(e) {
-                    console.warn(`[Sync] Failed endpoint ${item.ep}`);
-                }
-            }
-            console.log('[Sync Engine] Tarikan data dari DB selesai.');
-            setTimeout(() => {
-                const loader = document.getElementById('globalAppLoader');
-                if (loader) loader.classList.add('hidden');
-            }, 500); // Give a little buffer for other async UI updates
+                } catch (e) {}
+            }));
+
+            const loader = document.getElementById('globalAppLoader');
+            if (loader) loader.classList.add('hidden');
         } catch(e) {
             console.error('[Sync Engine] Error:', e);
-            setTimeout(() => {
-                const loader = document.getElementById('globalAppLoader');
-                if (loader) loader.classList.add('hidden');
-            }, 1000);
+            const loader = document.getElementById('globalAppLoader');
+            if (loader) loader.classList.add('hidden');
         }
     },
 

@@ -25,6 +25,7 @@ class UserMCSeeder extends Seeder
             'showreel_youtube_id' => 'dQw4w9WgXcQ',
             'instagram_handle' => '@vanyaarsyad.mc',
             'tiktok_handle' => '@vanyastage_official',
+            'facebook_handle' => 'https://facebook.com/vanyaarsyad.mc',
         ]);
 
         CmsArticle::create([
