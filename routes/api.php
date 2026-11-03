@@ -13,6 +13,30 @@ Route::get('/csrf-token', fn () => response()->json(['token' => csrf_token()])
 Route::post('/mc/login', [ProfileApiController::class, 'login'])->middleware('throttle:10,1');
 
 // Public booking and published website content.
+Route::get('/system/version', function () {
+    $versionFile = public_path('version.json');
+    $data = file_exists($versionFile) ? json_decode(file_get_contents($versionFile), true) : [
+        'version' => '2.5.0',
+        'commit_short' => 'latest',
+        'commit_message' => 'Pembaruan Fitur SaaS',
+    ];
+
+    try {
+        $gitCommit = trim(@shell_exec('git log -1 --pretty=format:%H;;;%h;;;%s;;;%an;;;%cI 2>&1') ?: '');
+        if ($gitCommit && !str_contains($gitCommit, 'not recognized') && !str_contains($gitCommit, 'fatal') && !str_contains($gitCommit, 'error:')) {
+            $parts = explode(';;;', $gitCommit);
+            if (count($parts) >= 4) {
+                $data['commit_hash'] = $parts[0];
+                $data['commit_short'] = $parts[1];
+                $data['commit_message'] = $parts[2];
+                $data['commit_author'] = $parts[3];
+                $data['commit_date'] = $parts[4] ?? ($data['commit_date'] ?? date('c'));
+            }
+        }
+    } catch (\Throwable $e) {}
+
+    return response()->json($data)->header('Cache-Control', 'no-cache, no-store, must-revalidate');
+});
 Route::get('/calendar/availability', [PublicController::class, 'getCalendarEvents']);
 Route::post('/book/request', [PublicController::class, 'submitBookingRequest']);
 Route::get('/event-categories', [CmsApiController::class, 'getEventCategories']);

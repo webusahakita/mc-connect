@@ -1,0 +1,38 @@
+{
+  "version": "2.5.0",
+  "commit_hash": "47d329b3bf8493c77466a14ce07b29a9dedcb48d",
+  "commit_short": "47d329b",
+  "commit_message": "feat: add keunggulan sales landing page with SEO and direct WhatsApp integration",
+  "commit_author": "MC Connect",
+  "commit_date": "2026-11-03T22:46:01+07:00",
+  "recent_commits": [
+    {
+      "hash": "47d329b",
+      "message": "feat: add keunggulan sales landing page with SEO and direct WhatsApp integration",
+      "date": "2026-11-03T22:46:01+07:00"
+    },
+    {
+      "hash": "3e4a1af",
+      "message": "test: add automated test suites for password change, WA gateway, and command center",
+      "date": "2026-10-31T10:44:47+07:00"
+    },
+    {
+      "hash": "79f572b",
+      "message": "Merge branch 'main' of https://github.com/webusahakita/mc-connect into main",
+      "date": "2026-10-31T10:32:35+07:00"
+    },
+    {
+      "hash": "cea898c",
+      "message": "fix(command-center): remove Post-Event Review and streamline WhatsApp Automation Gateway",
+      "date": "2026-10-31T10:27:40+07:00"
+    },
+    {
+      "hash": "10341d3",
+      "message": "feat: add change password feature, fix mobile responsive header, calendar layout and autofill buttons",
+      "date": "2026-10-31T10:08:49+07:00"
+    }
+  ],
+  "updated_at": "2026-11-03T16:01:01.741Z",
+  "release_title": "Pembaruan: feat: add keunggulan sales landing page with SEO and direct WhatsApp integration",
+  "notification_active": true
+}

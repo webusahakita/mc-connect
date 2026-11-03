@@ -64,6 +64,7 @@
     <!-- Scripts -->
     <script src="{{ asset('js/calendar.js') }}"></script>
     <script src="{{ asset('js/app.js') }}"></script>
+    <script src="{{ asset('js/saas-update-notifier.js') }}"></script>
     @yield('extra_js')
 </body>
 </html>

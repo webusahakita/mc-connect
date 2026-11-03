@@ -1,0 +1,42 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { syncSaasVersion } from '../../scripts/sync-saas-version.mjs';
+
+test('SaaS Update Notifier 1: Version file and sync script work correctly', () => {
+    // 1. Run sync
+    const synced = syncSaasVersion();
+    assert.ok(synced, 'syncSaasVersion must return payload');
+    assert.ok(synced.commit_short, 'Commit short hash must exist');
+    assert.ok(synced.commit_message, 'Commit message must exist');
+
+    // 2. Read public/version.json
+    const rawVersion = fs.readFileSync('public/version.json', 'utf8');
+    const versionData = JSON.parse(rawVersion);
+    assert.equal(versionData.commit_short, synced.commit_short, 'version.json short hash must match synced hash');
+    assert.ok(Array.isArray(versionData.recent_commits), 'recent_commits must be an array');
+});
+
+test('SaaS Update Notifier 2: Script and hook configurations exist', () => {
+    // 1. Script file exists
+    assert.ok(fs.existsSync('public/js/saas-update-notifier.js'), 'saas-update-notifier.js must exist');
+    const scriptContent = fs.readFileSync('public/js/saas-update-notifier.js', 'utf8');
+    assert.ok(scriptContent.includes('window.saasNotifier'), 'window.saasNotifier API must exist');
+    assert.ok(scriptContent.includes('saasUpdateBanner'), 'Update banner DOM element must be defined');
+    assert.ok(scriptContent.includes('saasChangelogModal'), 'Changelog modal DOM element must be defined');
+
+    // 2. Git hook exists
+    assert.ok(fs.existsSync('.git/hooks/post-commit'), '.git/hooks/post-commit must exist');
+    const hookContent = fs.readFileSync('.git/hooks/post-commit', 'utf8');
+    assert.ok(hookContent.includes('sync-saas-version.mjs'), 'Hook must trigger sync-saas-version.mjs');
+
+    // 3. Script tags exist in key layouts
+    const adminHtml = fs.readFileSync('resources/views/workspace/admin.html', 'utf8');
+    assert.ok(adminHtml.includes('saas-update-notifier.js'), 'admin.html must load saas-update-notifier.js');
+
+    const indexHtml = fs.readFileSync('public/index.html', 'utf8');
+    assert.ok(indexHtml.includes('saas-update-notifier.js'), 'index.html must load saas-update-notifier.js');
+
+    const keunggulanHtml = fs.readFileSync('public/keunggulan.html', 'utf8');
+    assert.ok(keunggulanHtml.includes('saas-update-notifier.js'), 'keunggulan.html must load saas-update-notifier.js');
+});
