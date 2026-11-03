@@ -1,11 +1,16 @@
 {
   "version": "2.5.0",
-  "commit_hash": "aad70b4c1ca4137e544b3d3e6430ce474dc3d9d7",
-  "commit_short": "aad70b4",
-  "commit_message": "feat: complete saas update notification hook and automated versioning",
+  "commit_hash": "83de23b0e27ac46b517204e447d238ba488bae00",
+  "commit_short": "83de23b",
+  "commit_message": "fix(saas): restrict update notifier and changelog strictly to admin workspace",
   "commit_author": "MC Connect",
-  "commit_date": "2026-11-03T23:03:19+07:00",
+  "commit_date": "2026-11-03T23:11:16+07:00",
   "recent_commits": [
+    {
+      "hash": "83de23b",
+      "message": "fix(saas): restrict update notifier and changelog strictly to admin workspace",
+      "date": "2026-11-03T23:11:16+07:00"
+    },
     {
       "hash": "aad70b4",
       "message": "feat: complete saas update notification hook and automated versioning",
@@ -25,14 +30,9 @@
       "hash": "3e4a1af",
       "message": "test: add automated test suites for password change, WA gateway, and command center",
       "date": "2026-10-31T10:44:47+07:00"
-    },
-    {
-      "hash": "79f572b",
-      "message": "Merge branch 'main' of https://github.com/webusahakita/mc-connect into main",
-      "date": "2026-10-31T10:32:35+07:00"
     }
   ],
-  "updated_at": "2026-11-03T16:11:16.966Z",
-  "release_title": "Pembaruan: feat: complete saas update notification hook and automated versioning",
+  "updated_at": "2026-11-03T16:12:32.028Z",
+  "release_title": "Pembaruan: fix(saas): restrict update notifier and changelog strictly to admin workspace",
   "notification_active": true
 }
