@@ -1,11 +1,16 @@
 {
   "version": "2.5.0",
-  "commit_hash": "47d329b3bf8493c77466a14ce07b29a9dedcb48d",
-  "commit_short": "47d329b",
-  "commit_message": "feat: add keunggulan sales landing page with SEO and direct WhatsApp integration",
+  "commit_hash": "0a1397a4d218bb15795f9dbdde0a4d854f52bd3c",
+  "commit_short": "0a1397a",
+  "commit_message": "feat(saas): add automated commit-triggered update notification and changelog system",
   "commit_author": "MC Connect",
-  "commit_date": "2026-11-03T22:46:01+07:00",
+  "commit_date": "2026-11-03T23:01:29+07:00",
   "recent_commits": [
+    {
+      "hash": "0a1397a",
+      "message": "feat(saas): add automated commit-triggered update notification and changelog system",
+      "date": "2026-11-03T23:01:29+07:00"
+    },
     {
       "hash": "47d329b",
       "message": "feat: add keunggulan sales landing page with SEO and direct WhatsApp integration",
@@ -25,14 +30,9 @@
       "hash": "cea898c",
       "message": "fix(command-center): remove Post-Event Review and streamline WhatsApp Automation Gateway",
       "date": "2026-10-31T10:27:40+07:00"
-    },
-    {
-      "hash": "10341d3",
-      "message": "feat: add change password feature, fix mobile responsive header, calendar layout and autofill buttons",
-      "date": "2026-10-31T10:08:49+07:00"
     }
   ],
-  "updated_at": "2026-11-03T16:01:01.741Z",
-  "release_title": "Pembaruan: feat: add keunggulan sales landing page with SEO and direct WhatsApp integration",
+  "updated_at": "2026-11-03T16:03:19.244Z",
+  "release_title": "Pembaruan: feat(saas): add automated commit-triggered update notification and changelog system",
   "notification_active": true
 }
