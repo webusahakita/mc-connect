@@ -10,6 +10,35 @@
     let currentVersionData = null;
     let pollInterval = null;
 
+    // 0. Admin Workspace Guard: Strictly restricted to Admin Workspace
+    function isAdminContext() {
+        if (typeof window === 'undefined' || typeof document === 'undefined') return false;
+
+        const path = (window.location && window.location.pathname) ? window.location.pathname.toLowerCase() : '';
+
+        // Explicitly reject known public landing & sales pages
+        if (path === '/' ||
+            path.endsWith('/index.html') ||
+            path.endsWith('/keunggulan.html') ||
+            path.endsWith('/login.html') ||
+            document.querySelector('.hero-section') !== null ||
+            document.querySelector('.landing-header') !== null) {
+            return false;
+        }
+
+        // Must be within Admin Workspace shell or on /admin route
+        const hasAdminShell = Boolean(
+            document.querySelector('.admin-shell') ||
+            document.querySelector('.admin-topbar') ||
+            document.querySelector('.admin-topbar-actions') ||
+            document.querySelector('.admin-sidebar')
+        );
+
+        const isAdminPath = path.includes('/admin') || path.endsWith('admin.html');
+
+        return hasAdminShell || isAdminPath;
+    }
+
     // 1. Inject Styles Self-Contained
     function injectStyles() {
         if (document.getElementById('saas-notifier-styles')) return;
@@ -336,6 +365,7 @@
 
     // 4. Show Floating Update Banner
     function showUpdateBanner(versionData) {
+        if (!isAdminContext()) return;
         // If user dismissed this exact commit in this browser session, don't nag
         const dismissed = sessionStorage.getItem(DISMISSED_TEMP_KEY);
         if (dismissed === versionData.commit_short) return;
@@ -373,6 +403,7 @@
 
     // 5. Build & Show Changelog Modal
     function showChangelogModal(versionData) {
+        if (!isAdminContext()) return;
         let modal = document.getElementById('saasChangelogModal');
         if (!modal) {
             modal = document.createElement('div');
@@ -448,6 +479,8 @@
 
     // 6. Check Logic
     async function checkVersion(isSilent = false) {
+        if (!isAdminContext()) return;
+
         const data = await fetchLatestVersion();
         if (!data || !data.commit_short) return;
         currentVersionData = data;
@@ -470,8 +503,13 @@
 
     // 7. Public API
     window.saasNotifier = {
-        checkNow: () => checkVersion(false),
+        isAdminContext: () => isAdminContext(),
+        checkNow: () => {
+            if (!isAdminContext()) return;
+            return checkVersion(false);
+        },
         openChangelogModal: () => {
+            if (!isAdminContext()) return;
             if (currentVersionData) {
                 showChangelogModal(currentVersionData);
             } else {
@@ -504,6 +542,7 @@
             renderTopbarBell(false);
         },
         applyUpdateAndReload: () => {
+            if (!isAdminContext()) return;
             if (currentVersionData) {
                 localStorage.setItem(STORAGE_KEY, currentVersionData.commit_short);
             }
@@ -517,21 +556,28 @@
         }
     };
 
-    // Auto Init on DOMContentLoaded
+    // Auto Init on DOMContentLoaded (Exclusively in Admin Workspace)
     document.addEventListener('DOMContentLoaded', () => {
+        if (!isAdminContext()) {
+            return;
+        }
+
         injectStyles();
         checkVersion(true);
 
         // Polling check every 40 seconds
         if (!pollInterval) {
-            pollInterval = setInterval(() => checkVersion(true), 40000);
+            pollInterval = setInterval(() => {
+                if (isAdminContext()) checkVersion(true);
+            }, 40000);
         }
 
         // Re-check when user switches back to tab
         document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
+            if (document.visibilityState === 'visible' && isAdminContext()) {
                 checkVersion(true);
             }
         });
     });
 })();
+
