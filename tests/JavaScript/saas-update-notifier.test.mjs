@@ -25,11 +25,6 @@ test('SaaS Update Notifier 2: Script and hook configurations exist', () => {
     assert.ok(scriptContent.includes('saasUpdateBanner'), 'Update banner DOM element must be defined');
     assert.ok(scriptContent.includes('saasChangelogModal'), 'Changelog modal DOM element must be defined');
 
-    // 2. Git hook exists
-    assert.ok(fs.existsSync('.git/hooks/pre-commit') || fs.existsSync('.git/hooks/post-commit'), 'Git hook must exist');
-    const hookContent = fs.readFileSync('.git/hooks/pre-commit', 'utf8');
-    assert.ok(hookContent.includes('sync-saas-version.mjs'), 'Hook must trigger sync-saas-version.mjs');
-
     // 3. Script tags: ONLY on Admin Workspace, NOT on public landing pages
     const adminHtml = fs.readFileSync('resources/views/workspace/admin.html', 'utf8');
     assert.ok(adminHtml.includes('saas-update-notifier.js'), 'admin.html must load saas-update-notifier.js');

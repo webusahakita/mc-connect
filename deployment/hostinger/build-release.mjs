@@ -43,8 +43,8 @@ export function buildRelease({ projectRoot = path.resolve(here, '../..'), output
     }
     fs.mkdirSync(path.join(app, 'database'), { recursive: true });
     copy(path.join(projectRoot, 'database/migrations'), path.join(app, 'database/migrations'));
-    for (const directory of ['css', 'js', 'build']) copy(path.join(projectRoot, 'public', directory), path.join(web, directory));
-    for (const name of ['.htaccess', 'index.html', 'keunggulan.html', 'login.html', 'favicon.jpg', 'manifest.json', 'sw.js', 'version.json']) {
+    for (const directory of ['css', 'js', 'build', 'icons']) copy(path.join(projectRoot, 'public', directory), path.join(web, directory));
+    for (const name of ['.htaccess', 'index.html', 'keunggulan.html', 'login.html', 'favicon.jpg', 'favicon.ico', 'manifest.json', 'sw.js', 'version.json']) {
         if (fs.existsSync(path.join(projectRoot, 'public', name))) {
             copy(path.join(projectRoot, 'public', name), path.join(web, name));
         }

@@ -28,6 +28,7 @@ jobs:
         with:
           node-version: '22'
       - run: composer install --prefer-dist --no-interaction
+      - run: npm ci
       - run: php vendor/bin/phpunit
       - run: node --test tests/JavaScript/*.test.mjs
 

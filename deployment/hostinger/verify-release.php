@@ -9,7 +9,7 @@ $manifest = json_decode(file_get_contents($root.'/release.json'), true, 512, JSO
 if (($manifest['revision'] ?? '') !== $revision || empty($manifest['files'])) {
     throw new RuntimeException('Release revision or file inventory does not match.');
 }
-$allowed = '~^(?:mc-connect/(?:app/|config/|resources/|routes/|deployment/|database/migrations/|bootstrap/(?!cache/)[^/]+\.php$|artisan$|composer\.(?:json|lock)$|\.env\.production\.example$)|public_html/(?:css/|js/|build/|uploads/\.htaccess$|(?:\.htaccess|index\.(?:php|html)|login\.html|favicon\.jpg|manifest\.json|sw\.js)$))~';
+$allowed = '~^(?:mc-connect/(?:app/|config/|resources/|routes/|deployment/|database/migrations/|bootstrap/(?!cache/)[^/]+\.php$|artisan$|composer\.(?:json|lock)$|\.env\.production\.example$)|public_html/(?:css/|js/|build/|icons/|uploads/\.htaccess$|(?:\.htaccess|index\.(?:php|html)|keunggulan\.html|login\.html|favicon\.(?:jpg|ico)|manifest\.json|sw\.js|version\.json)$))~';
 $actual = [];
 $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS));
 foreach ($iterator as $entry) {
