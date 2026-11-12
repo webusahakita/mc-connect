@@ -1520,3 +1520,78 @@
     }
 }
 
+/* =========================================================
+   TOMBOL SPESIAL "BUAT WEB MC" (SAAS CONVERSION CTA)
+   ========================================================= */
+.nav-cta-buat-web {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 1rem !important;
+    border-radius: 9999px !important;
+    background: linear-gradient(135deg, #FF6B35 0%, #FFAE00 45%, #FFD700 100%) !important;
+    color: #0B0F17 !important;
+    font-size: 0.86rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.02em;
+    text-decoration: none !important;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    box-shadow: 0 0 16px rgba(255, 174, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.35);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: ctaPulseGlow 3s infinite ease-in-out;
+}
+
+.nav-cta-buat-web::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -70%;
+    width: 45%;
+    height: 200%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+    transform: rotate(25deg);
+    animation: ctaShimmerSweep 3.5s infinite ease-in-out;
+    pointer-events: none;
+}
+
+.nav-cta-buat-web:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 0 26px rgba(255, 174, 0, 0.85), 0 6px 16px rgba(0, 0, 0, 0.4);
+    color: #000000 !important;
+    border-color: rgba(255, 255, 255, 0.9);
+}
+
+.nav-cta-buat-web .cta-badge-glow {
+    background: #0B0F17;
+    color: #FFD700;
+    font-size: 0.65rem;
+    font-weight: 900;
+    padding: 0.12rem 0.45rem;
+    border-radius: 9999px;
+    letter-spacing: 0.05em;
+    line-height: 1;
+    display: inline-block;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes ctaPulseGlow {
+    0%, 100% {
+        box-shadow: 0 0 14px rgba(255, 174, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 22px rgba(255, 174, 0, 0.75), 0 3px 10px rgba(255, 110, 0, 0.4);
+    }
+}
+
+@keyframes ctaShimmerSweep {
+    0% {
+        left: -80%;
+    }
+    30%, 100% {
+        left: 150%;
+    }
+}
+
+

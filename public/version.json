@@ -1,11 +1,21 @@
 {
   "version": "2.5.0",
-  "commit_hash": "83de23b0e27ac46b517204e447d238ba488bae00",
-  "commit_short": "83de23b",
-  "commit_message": "fix(saas): restrict update notifier and changelog strictly to admin workspace",
-  "commit_author": "MC Connect",
-  "commit_date": "2026-11-03T23:11:16+07:00",
+  "commit_hash": "13850bb18dfc790c57ec0debf20a7eb07f2d5465",
+  "commit_short": "13850bb",
+  "commit_message": "Fix production deployment pipeline",
+  "commit_author": "dimasachmad2",
+  "commit_date": "2026-11-11T07:54:56+07:00",
   "recent_commits": [
+    {
+      "hash": "13850bb",
+      "message": "Fix production deployment pipeline",
+      "date": "2026-11-11T07:54:56+07:00"
+    },
+    {
+      "hash": "c7f8101",
+      "message": "chore(version): sync version metadata for commit 83de23b",
+      "date": "2026-11-03T23:12:31+07:00"
+    },
     {
       "hash": "83de23b",
       "message": "fix(saas): restrict update notifier and changelog strictly to admin workspace",
@@ -20,19 +30,9 @@
       "hash": "0a1397a",
       "message": "feat(saas): add automated commit-triggered update notification and changelog system",
       "date": "2026-11-03T23:01:29+07:00"
-    },
-    {
-      "hash": "47d329b",
-      "message": "feat: add keunggulan sales landing page with SEO and direct WhatsApp integration",
-      "date": "2026-11-03T22:46:01+07:00"
-    },
-    {
-      "hash": "3e4a1af",
-      "message": "test: add automated test suites for password change, WA gateway, and command center",
-      "date": "2026-10-31T10:44:47+07:00"
     }
   ],
-  "updated_at": "2026-11-03T16:12:32.028Z",
-  "release_title": "Pembaruan: fix(saas): restrict update notifier and changelog strictly to admin workspace",
+  "updated_at": "2026-11-12T23:56:05.442Z",
+  "release_title": "Pembaruan: Fix production deployment pipeline",
   "notification_active": true
 }
