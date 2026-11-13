@@ -1,11 +1,16 @@
 {
   "version": "2.5.0",
-  "commit_hash": "3699bddd756fb9d1c8917102e6ff57176a6b5e9d",
-  "commit_short": "3699bdd",
-  "commit_message": "fix: stage teleprompter font controls & auto-scroll, login text overflow, and navbar responsive styling",
+  "commit_hash": "d96130598be0721356b852de2d5f57b9ae55de7b",
+  "commit_short": "d961305",
+  "commit_message": "fix(mobile): resolve admin dashboard horizontal overflow, layout cutoff, and black blank void",
   "commit_author": "MC Connect",
-  "commit_date": "2026-11-13T23:31:40+07:00",
+  "commit_date": "2026-11-13T23:55:56+07:00",
   "recent_commits": [
+    {
+      "hash": "d961305",
+      "message": "fix(mobile): resolve admin dashboard horizontal overflow, layout cutoff, and black blank void",
+      "date": "2026-11-13T23:55:56+07:00"
+    },
     {
       "hash": "3699bdd",
       "message": "fix: stage teleprompter font controls & auto-scroll, login text overflow, and navbar responsive styling",
@@ -25,14 +30,9 @@
       "hash": "13850bb",
       "message": "Fix production deployment pipeline",
       "date": "2026-11-11T07:54:56+07:00"
-    },
-    {
-      "hash": "c7f8101",
-      "message": "chore(version): sync version metadata for commit 83de23b",
-      "date": "2026-11-03T23:12:31+07:00"
     }
   ],
-  "updated_at": "2026-11-13T16:55:58.353Z",
-  "release_title": "Pembaruan: fix: stage teleprompter font controls & auto-scroll, login text overflow, and navbar responsive styling",
+  "updated_at": "2026-11-13T17:00:44.375Z",
+  "release_title": "Pembaruan: fix(mobile): resolve admin dashboard horizontal overflow, layout cutoff, and black blank void",
   "notification_active": true
 }
