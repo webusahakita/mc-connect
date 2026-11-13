@@ -31,8 +31,8 @@ test('Skenario 1: Portal Publik memiliki navigasi mulus, sosmed lengkap, riders 
     assert.ok(indexHtml.includes('pubHeroSosmed'), 'pubHeroSosmed container must exist');
     assert.ok(indexHtml.includes('exportPressKitPDF()') || indexHtml.includes('Press Kit'), 'Press kit / riders download button must exist');
 
-    // 1b. Menu Tab Kelebihan & Keunggulan Aplikasi (Opens in new tab, not inside main landing page)
-    assert.ok(indexHtml.includes('href="keunggulan.html"'), 'Menu tab must link to keunggulan.html');
+    // 1b. Menu Tab Buat Web MC / Bisnis (Opens in new tab, not inside main landing page)
+    assert.ok(indexHtml.includes('href="/bisnis"'), 'Menu tab must link to /bisnis');
     assert.ok(indexHtml.includes('target="_blank"'), 'Menu tab must open in a new tab');
     assert.ok(!indexHtml.includes('<section class="section-padding keunggulan-section" id="keunggulan">'), 'Section should not clutter main landing page');
     

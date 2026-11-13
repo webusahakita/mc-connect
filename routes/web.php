@@ -4,20 +4,28 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\EnsureMcAuthenticated;
 
 Route::get('/', function () {
-    return file_get_contents(public_path('index.html'));
+    return response(file_get_contents(public_path('index.html')), 200)
+        ->header('Content-Type', 'text/html; charset=UTF-8');
 });
+
+Route::get('/index.html', fn () => redirect('/', 301));
 
 Route::get('/login', function () {
-    return file_get_contents(public_path('login.html'));
+    return response(file_get_contents(public_path('login.html')), 200)
+        ->header('Content-Type', 'text/html; charset=UTF-8');
 })->name('login');
 
-Route::get('/keunggulan', function () {
-    return file_get_contents(public_path('keunggulan.html'));
-});
+Route::get('/login.html', fn () => redirect('/login', 301));
 
-Route::get('/keunggulan.html', function () {
-    return file_get_contents(public_path('keunggulan.html'));
-});
+Route::get('/bisnis', function () {
+    return response(file_get_contents(public_path('keunggulan.html')), 200)
+        ->header('Content-Type', 'text/html; charset=UTF-8');
+})->name('bisnis');
+
+// Redirect legacy /keunggulan and *.html variants to /bisnis
+Route::get('/keunggulan', fn () => redirect('/bisnis', 301));
+Route::get('/keunggulan.html', fn () => redirect('/bisnis', 301));
+Route::get('/bisnis.html', fn () => redirect('/bisnis', 301));
 
 Route::middleware(EnsureMcAuthenticated::class)->group(function () {
     foreach (['admin', 'stage', 'vendor'] as $page) {

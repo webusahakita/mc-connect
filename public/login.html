@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+    <script>
+        if (window.location.pathname.toLowerCase().endsWith('/login.html')) {
+            window.location.replace('/login' + window.location.search);
+        }
+    </script>
     <script src="/js/session-client.js?v=1.0"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -60,7 +65,7 @@
     <div class="auth-wrapper">
         <div class="auth-card">
             <div class="auth-header">
-                <a href="index.html" class="brand-logo">
+                <a href="/" class="brand-logo">
                     <div class="brand-icon">MC</div>
                     <div class="brand-text">MC-<span>Connect</span></div>
                 </a>
@@ -102,7 +107,7 @@
                 </button>
 
                 <div style="text-align:center; margin-top:1.5rem; font-size:0.85rem;">
-                    <a href="index.html" style="color:var(--text-muted);">
+                    <a href="/" style="color:var(--text-muted);">
                         ◀ Kembali ke Portal Publik
                     </a>
                 </div>

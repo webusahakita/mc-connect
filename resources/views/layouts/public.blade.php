@@ -29,8 +29,8 @@
                 <li><a href="#showreel">Showreel</a></li>
                 <li><a href="#katalog">Paket Layanan</a></li>
                 <li><a href="#kalender">Kalender Jadwal</a></li>
-                <li><a href="{{ url('/keunggulan.html') }}" target="_blank" rel="noopener" class="nav-cta-buat-web"><span>✨ Buat Web MC</span><span class="cta-badge-glow">PRO</span></a></li>
                 <li><a href="#kebijakan">T&C & FAQ</a></li>
+                <li><a href="{{ url('/bisnis') }}" target="_blank" rel="noopener" class="nav-cta-buat-web"><span>✨ Buat Web MC</span><span class="cta-badge-glow">PRO</span></a></li>
             </ul>
 
             <div class="nav-actions">

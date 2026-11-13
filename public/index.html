@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+    <script>
+        if (window.location.pathname.toLowerCase().endsWith('/index.html')) {
+            window.location.replace('/' + window.location.search);
+        }
+    </script>
     <script src="/js/session-client.js?v=1.0"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -26,7 +31,7 @@
     <!-- Public Site Navigation -->
     <nav class="site-nav">
         <div class="container nav-wrapper">
-            <a href="index.html" class="brand-logo">
+            <a href="/" class="brand-logo">
                 <div class="brand-icon">MC</div>
                 <div class="brand-text">MC-<span>Connect</span></div>
             </a>
@@ -41,8 +46,8 @@
                 <li><a href="#biodata">Profil</a></li>
                 <li><a href="#katalog">Paket Layanan</a></li>
                 <li><a href="#kalender">Kalender Jadwal</a></li>
-                <li><a href="keunggulan.html" target="_blank" rel="noopener" class="nav-cta-buat-web"><span>✨ Buat Web MC</span><span class="cta-badge-glow">PRO</span></a></li>
                 <li><a href="#kebijakan">T&C & Riders</a></li>
+                <li><a href="/bisnis" target="_blank" rel="noopener" class="nav-cta-buat-web"><span>✨ Buat Web MC</span><span class="cta-badge-glow">PRO</span></a></li>
             </ul>
 
             <div class="nav-actions">
@@ -56,7 +61,7 @@
                 </button>
                 <a href="#kalender" class="btn btn-primary btn-sm">Request to Book</a>
                 <!-- Link Akses Khusus Admin MC -->
-                <a href="login.html" class="btn btn-secondary btn-sm" title="Khusus Manajemen MC">
+                <a href="/login" class="btn btn-secondary btn-sm" title="Khusus Manajemen MC">
                     🔐 Login Admin MC
                 </a>
             </div>
@@ -278,9 +283,9 @@ Kebutuhan Hospitality:
                 <a href="#biodata">Profil</a>
                 <a href="#katalog">Paket Layanan</a>
                 <a href="#kalender">Jadwal Kalender</a>
-                <a href="keunggulan.html" target="_blank" rel="noopener" style="color:var(--gold-primary); font-weight:700;">✨ Buat Web MC Sendiri</a>
+                <a href="/bisnis" target="_blank" rel="noopener" style="color:var(--gold-primary); font-weight:700;">✨ Buat Web MC Sendiri</a>
                 <a href="#kebijakan">Syarat & Ketentuan</a>
-                <a href="admin.html" style="color:var(--gold-primary);">Area Khusus Admin MC 🔐</a>
+                <a href="/admin" style="color:var(--gold-primary);">Area Khusus Admin MC 🔐</a>
             </div>
             <p style="color:var(--text-muted); font-size:0.8rem;">
                 &copy; <span id="footerYear">2026</span> <span id="footerName">MC Management</span>. All rights reserved.
@@ -787,7 +792,7 @@ Kebutuhan Hospitality:
             e.preventDefault();
             showToast('Autentikasi berhasil! Mengarahkan ke Portal Admin MC...', 'gold');
             setTimeout(() => {
-                window.location.href = 'admin.html';
+                window.location.href = '/admin';
             }, 800);
         }
 

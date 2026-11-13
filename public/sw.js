@@ -46,7 +46,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   if (event.request.method !== 'GET' || url.pathname.startsWith('/api/') ||
-      /^\/(admin|stage|vendor|login)(\.html)?\/?$/.test(url.pathname)) {
+      /^\/(admin|stage|vendor|login|bisnis|keunggulan)(\.html)?\/?$/.test(url.pathname)) {
     return; // Session responses must always come from the server.
   }
   // Network first for CSS & JS to ensure immediate updates in browser

@@ -7,6 +7,25 @@ DirectoryIndex index.php index.html
 
     RewriteEngine On
 
+    # ----------------------------------------------------------------------
+    # Clean URL Security & SEO: Enforce extensionless URLs (strip .html)
+    # ----------------------------------------------------------------------
+    # 1. Canonical redirect /keunggulan and /keunggulan.html to /bisnis
+    RewriteCond %{THE_REQUEST} \s/keunggulan(?:\.html)?[\s?] [NC]
+    RewriteRule ^ /bisnis [R=301,L]
+
+    # 2. Canonical redirect /bisnis.html to /bisnis
+    RewriteCond %{THE_REQUEST} \s/bisnis\.html[\s?] [NC]
+    RewriteRule ^ /bisnis [R=301,L]
+
+    # 3. Canonical redirect /index.html to /
+    RewriteCond %{THE_REQUEST} \s/index\.html[\s?] [NC]
+    RewriteRule ^ / [R=301,L]
+
+    # 4. Canonical redirect any other *.html (e.g. /login.html -> /login)
+    RewriteCond %{THE_REQUEST} \s/+(.+?)\.html[\s?] [NC]
+    RewriteRule ^ /%1 [R=301,L]
+
     # Do not publish local backups, test pages, or hidden configuration files.
     RewriteRule (^|/)\.(?!well-known(?:/|$)) - [F,L]
     RewriteRule ^(?:admin_test\.html|.*\.bak|hot)$ - [F,L,NC]

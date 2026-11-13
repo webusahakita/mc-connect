@@ -1,11 +1,16 @@
 {
   "version": "2.5.0",
-  "commit_hash": "13850bb18dfc790c57ec0debf20a7eb07f2d5465",
-  "commit_short": "13850bb",
-  "commit_message": "Fix production deployment pipeline",
-  "commit_author": "dimasachmad2",
-  "commit_date": "2026-11-11T07:54:56+07:00",
+  "commit_hash": "2f85f8f4006884e8393ef18bf2c86d6ca575c8ae",
+  "commit_short": "2f85f8f",
+  "commit_message": "feat(saas): update keunggulan page to saas model, remove ai references, and add animated buat web mc cta",
+  "commit_author": "MC Connect",
+  "commit_date": "2026-11-13T06:56:04+07:00",
   "recent_commits": [
+    {
+      "hash": "2f85f8f",
+      "message": "feat(saas): update keunggulan page to saas model, remove ai references, and add animated buat web mc cta",
+      "date": "2026-11-13T06:56:04+07:00"
+    },
     {
       "hash": "13850bb",
       "message": "Fix production deployment pipeline",
@@ -25,14 +30,9 @@
       "hash": "aad70b4",
       "message": "feat: complete saas update notification hook and automated versioning",
       "date": "2026-11-03T23:03:19+07:00"
-    },
-    {
-      "hash": "0a1397a",
-      "message": "feat(saas): add automated commit-triggered update notification and changelog system",
-      "date": "2026-11-03T23:01:29+07:00"
     }
   ],
-  "updated_at": "2026-11-12T23:56:05.442Z",
-  "release_title": "Pembaruan: Fix production deployment pipeline",
+  "updated_at": "2026-11-13T00:57:13.312Z",
+  "release_title": "Pembaruan: feat(saas): update keunggulan page to saas model, remove ai references, and add animated buat web mc cta",
   "notification_active": true
 }

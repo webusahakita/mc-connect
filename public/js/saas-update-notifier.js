@@ -18,8 +18,11 @@
 
         // Explicitly reject known public landing & sales pages
         if (path === '/' ||
+            path === '/bisnis' ||
+            path.endsWith('/bisnis') ||
             path.endsWith('/index.html') ||
             path.endsWith('/keunggulan.html') ||
+            path === '/login' ||
             path.endsWith('/login.html') ||
             document.querySelector('.hero-section') !== null ||
             document.querySelector('.landing-header') !== null) {
