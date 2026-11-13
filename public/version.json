@@ -1,11 +1,16 @@
 {
   "version": "2.5.0",
-  "commit_hash": "064498ce2a77017c72168783a6455a83c6e39442",
-  "commit_short": "064498c",
-  "commit_message": "feat(navigation): replace keunggulan link with /bisnis, swap cta position, and enforce clean extensionless urls",
+  "commit_hash": "3699bddd756fb9d1c8917102e6ff57176a6b5e9d",
+  "commit_short": "3699bdd",
+  "commit_message": "fix: stage teleprompter font controls & auto-scroll, login text overflow, and navbar responsive styling",
   "commit_author": "MC Connect",
-  "commit_date": "2026-11-13T07:57:12+07:00",
+  "commit_date": "2026-11-13T23:31:40+07:00",
   "recent_commits": [
+    {
+      "hash": "3699bdd",
+      "message": "fix: stage teleprompter font controls & auto-scroll, login text overflow, and navbar responsive styling",
+      "date": "2026-11-13T23:31:40+07:00"
+    },
     {
       "hash": "064498c",
       "message": "feat(navigation): replace keunggulan link with /bisnis, swap cta position, and enforce clean extensionless urls",
@@ -25,14 +30,9 @@
       "hash": "c7f8101",
       "message": "chore(version): sync version metadata for commit 83de23b",
       "date": "2026-11-03T23:12:31+07:00"
-    },
-    {
-      "hash": "83de23b",
-      "message": "fix(saas): restrict update notifier and changelog strictly to admin workspace",
-      "date": "2026-11-03T23:11:16+07:00"
     }
   ],
-  "updated_at": "2026-11-13T16:31:42.254Z",
-  "release_title": "Pembaruan: feat(navigation): replace keunggulan link with /bisnis, swap cta position, and enforce clean extensionless urls",
+  "updated_at": "2026-11-13T16:55:58.353Z",
+  "release_title": "Pembaruan: fix: stage teleprompter font controls & auto-scroll, login text overflow, and navbar responsive styling",
   "notification_active": true
 }

@@ -73,21 +73,36 @@
     --adm-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
-/* Base resets & layout */
+/* Base resets & layout - Strict viewport containment to eliminate blank voids & horizontal cutoff on mobile */
+html {
+    max-width: 100%;
+    overflow-x: hidden !important;
+    -webkit-text-size-adjust: 100%;
+}
+
 body {
     background-color: var(--adm-bg-base) !important;
     color: var(--adm-text-primary) !important;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     margin: 0;
     padding: 0;
-    overflow-x: clip;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    position: relative;
+    -webkit-font-smoothing: antialiased;
 }
 
 .admin-shell {
     display: flex;
     min-height: 100vh;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
     background: var(--adm-bg-base);
     position: relative;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
 }
 
 /* =========================================================
@@ -403,10 +418,14 @@ body {
 .admin-body-content {
     flex: 1;
     min-width: 0;
+    max-width: 100%;
+    width: 100%;
     padding: 0;
     display: flex;
     flex-direction: column;
     position: relative;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
 }
 
 .admin-topbar {
@@ -471,6 +490,11 @@ body {
 .admin-content-pad {
     padding: 3.5rem 2.5rem 5rem;
     flex: 1;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
 }
 
 /* =========================================================
@@ -484,6 +508,10 @@ body {
     box-shadow: var(--adm-shadow-sm);
     transition: all 0.25s ease;
     position: relative;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box !important;
 }
 
 .ecc-card:hover {
@@ -807,8 +835,12 @@ body {
    CLEAN TABLES (CASHFLOW & AGENDA)
    ========================================================= */
 .table-clean-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
     border-radius: var(--adm-radius-md);
     border: 1px solid var(--adm-border);
 }
@@ -852,6 +884,11 @@ body {
     .admin-shell {
         flex-direction: row;
         position: relative;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
     }
     .admin-sidebar {
         position: fixed !important;
@@ -874,9 +911,12 @@ body {
     }
     .admin-body-content {
         width: 100% !important;
+        max-width: 100% !important;
         min-width: 0 !important;
         flex: 1 !important;
         padding-top: 60px !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
     }
     .admin-topbar {
         position: fixed !important;
@@ -884,6 +924,7 @@ body {
         left: 0 !important;
         right: 0 !important;
         width: 100% !important;
+        max-width: 100% !important;
         height: 60px !important;
         box-sizing: border-box !important;
         z-index: 1000 !important;
@@ -897,6 +938,11 @@ body {
     }
     .admin-content-pad {
         padding: 1.25rem 1rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
     }
 }
 
@@ -1525,13 +1571,49 @@ body {
 @media (max-width: 768px) {
     .ecc-card {
         padding: 1.25rem 1rem !important;
-        overflow: hidden;
+        overflow: hidden !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
     }
     .ecc-card-header {
         flex-direction: column !important;
         align-items: stretch !important;
         gap: 0.85rem !important;
     }
+
+    /* Hero card mobile */
+    .dash-hero-card {
+        padding: 1.25rem 1rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+    .dash-hero-card h1 {
+        font-size: 1.35rem !important;
+        line-height: 1.3 !important;
+    }
+    .dash-hero-card p {
+        font-size: 0.85rem !important;
+    }
+
+    /* KPI cards mobile */
+    .dash-kpi-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+        margin-bottom: 1.5rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
+    .stat-metric-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        padding: 1.1rem 1.25rem !important;
+    }
+
     .filter-tabs-scrollable {
         width: 100% !important;
         padding: 0.3rem !important;
@@ -1545,16 +1627,46 @@ body {
     .dash-revenue-grid .dash-grid-chart,
     .dash-expense-grid .dash-grid-chart {
         grid-column: auto !important;
-        height: 140px;
+        height: 140px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+    }
+    .dash-grid-chart {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
+    .dash-grid-chart svg {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
     }
     .dash-grid-highlights {
         border-left: none !important;
         padding-left: 0 !important;
         border-top: 1px solid var(--adm-border);
         padding-top: 1.25rem;
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 0.75rem;
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 0.5rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
+    .dash-grid-highlights > div {
+        min-width: 0 !important;
+        overflow: hidden !important;
+    }
+    .dash-grid-highlights > div > div {
+        font-size: clamp(0.88rem, 3.2vw, 1.15rem) !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
     }
     .dash-grid-highlights.expense-border {
         border-top-color: rgba(239, 68, 68, 0.2);
@@ -1566,12 +1678,15 @@ body {
         padding-top: 1.25rem;
         width: 100% !important;
         max-width: 100% !important;
+        box-sizing: border-box !important;
     }
     .dash-grid-pie.expense-border {
         border-top-color: rgba(239, 68, 68, 0.2);
     }
     .dash-header-actions {
-        width: 100%;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
     }
     .dash-header-actions .btn {
         flex: 1 1 auto;
@@ -1579,20 +1694,29 @@ body {
         text-align: center;
         min-width: 130px;
     }
+    #dashEventsGrid {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
 }
 
-/* Small mobile (<= 480px) */
-@media (max-width: 480px) {
+/* Small mobile (<= 540px) */
+@media (max-width: 540px) {
     .dash-grid-highlights {
-        grid-template-columns: 1fr;
-        gap: 0.85rem;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.75rem !important;
+    }
+    .dash-grid-highlights > div:last-child {
+        grid-column: 1 / -1 !important;
     }
     .dash-header-actions {
-        flex-direction: column;
-        align-items: stretch;
+        flex-direction: column !important;
+        align-items: stretch !important;
     }
     .dash-header-actions .btn {
-        width: 100%;
+        width: 100% !important;
     }
 }
 
