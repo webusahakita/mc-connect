@@ -15,6 +15,7 @@
             background: radial-gradient(circle at 50% 30%, rgba(212, 175, 55, 0.12) 0%, transparent 60%),
                         radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
                         var(--bg-main);
+            box-sizing: border-box;
         }
         .auth-card {
             width: 100%;
@@ -24,6 +25,7 @@
             border-radius: var(--radius-lg);
             padding: 2.5rem 2rem;
             box-shadow: var(--shadow-gold), var(--shadow-lg);
+            box-sizing: border-box;
         }
         .auth-header {
             text-align: center;
@@ -50,6 +52,39 @@
             border-radius: var(--radius-sm);
             font-size: 0.85rem;
             margin-bottom: 1.25rem;
+        }
+        .auth-card .btn-primary {
+            width: 100% !important;
+            min-height: 48px;
+            padding: 0.8rem 1rem !important;
+            font-size: 0.95rem !important;
+            font-weight: 700;
+            white-space: normal !important;
+            word-break: normal !important;
+            line-height: 1.35 !important;
+            text-align: center !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 0.45rem !important;
+            box-sizing: border-box !important;
+            border-radius: var(--radius-md) !important;
+        }
+        @media (max-width: 480px) {
+            .auth-wrapper {
+                padding: 1rem 0.75rem;
+            }
+            .auth-card {
+                padding: 1.75rem 1.25rem;
+                border-radius: var(--radius-md);
+            }
+            .auth-title {
+                font-size: 1.25rem;
+            }
+            .auth-card .btn-primary {
+                font-size: 0.9rem !important;
+                padding: 0.75rem 0.65rem !important;
+            }
         }
         .quick-demo-pill {
             background: rgba(212, 175, 55, 0.1);
@@ -107,8 +142,9 @@
                     </label>
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="width:100%;">
-                    Masuk ke Admin Workspace ➔
+                <button type="submit" class="btn btn-primary">
+                    <span>Masuk ke Admin Workspace</span>
+                    <span>➔</span>
                 </button>
 
                 <div style="text-align:center; margin-top:1.5rem; font-size:0.85rem;">

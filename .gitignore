@@ -16,6 +16,7 @@ public/uploads/expenses/*
 /vendor/
 /public/hot
 /chrome_snap_profile/
+/chrome_temp_profile/
 /temp-app/
 /public/*.bak
 /public/admin_test.html

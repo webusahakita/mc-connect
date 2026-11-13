@@ -1,11 +1,16 @@
 {
   "version": "2.5.0",
-  "commit_hash": "2f85f8f4006884e8393ef18bf2c86d6ca575c8ae",
-  "commit_short": "2f85f8f",
-  "commit_message": "feat(saas): update keunggulan page to saas model, remove ai references, and add animated buat web mc cta",
+  "commit_hash": "064498ce2a77017c72168783a6455a83c6e39442",
+  "commit_short": "064498c",
+  "commit_message": "feat(navigation): replace keunggulan link with /bisnis, swap cta position, and enforce clean extensionless urls",
   "commit_author": "MC Connect",
-  "commit_date": "2026-11-13T06:56:04+07:00",
+  "commit_date": "2026-11-13T07:57:12+07:00",
   "recent_commits": [
+    {
+      "hash": "064498c",
+      "message": "feat(navigation): replace keunggulan link with /bisnis, swap cta position, and enforce clean extensionless urls",
+      "date": "2026-11-13T07:57:12+07:00"
+    },
     {
       "hash": "2f85f8f",
       "message": "feat(saas): update keunggulan page to saas model, remove ai references, and add animated buat web mc cta",
@@ -25,14 +30,9 @@
       "hash": "83de23b",
       "message": "fix(saas): restrict update notifier and changelog strictly to admin workspace",
       "date": "2026-11-03T23:11:16+07:00"
-    },
-    {
-      "hash": "aad70b4",
-      "message": "feat: complete saas update notification hook and automated versioning",
-      "date": "2026-11-03T23:03:19+07:00"
     }
   ],
-  "updated_at": "2026-11-13T00:57:13.312Z",
-  "release_title": "Pembaruan: feat(saas): update keunggulan page to saas model, remove ai references, and add animated buat web mc cta",
+  "updated_at": "2026-11-13T16:31:42.254Z",
+  "release_title": "Pembaruan: feat(navigation): replace keunggulan link with /bisnis, swap cta position, and enforce clean extensionless urls",
   "notification_active": true
 }

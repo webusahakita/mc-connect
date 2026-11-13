@@ -159,6 +159,23 @@ button {
     box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
 }
 
+.auth-card .btn-primary {
+    width: 100%;
+    min-height: 48px;
+    padding: 0.8rem 1rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    white-space: normal;
+    word-break: normal;
+    line-height: 1.35;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    box-sizing: border-box;
+}
+
 .btn-secondary {
     background: var(--bg-card);
     color: var(--text-primary);

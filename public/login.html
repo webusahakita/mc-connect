@@ -22,6 +22,7 @@
             background: radial-gradient(circle at 50% 25%, rgba(212, 175, 55, 0.12) 0%, transparent 60%),
                         radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
                         var(--bg-main);
+            box-sizing: border-box;
         }
         .auth-card {
             width: 100%;
@@ -31,6 +32,7 @@
             border-radius: var(--radius-lg);
             padding: 2.5rem 2rem;
             box-shadow: var(--shadow-gold), var(--shadow-lg);
+            box-sizing: border-box;
         }
         .auth-header {
             text-align: center;
@@ -59,6 +61,39 @@
             font-size: 0.85rem;
             margin-bottom: 1.25rem;
         }
+        #btnLoginSubmit {
+            width: 100% !important;
+            min-height: 48px;
+            padding: 0.8rem 1rem !important;
+            font-size: 0.95rem !important;
+            font-weight: 700;
+            white-space: normal !important;
+            word-break: normal !important;
+            line-height: 1.35 !important;
+            text-align: center !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 0.45rem !important;
+            box-sizing: border-box !important;
+            border-radius: var(--radius-md) !important;
+        }
+        @media (max-width: 480px) {
+            .auth-wrapper {
+                padding: 1rem 0.75rem;
+            }
+            .auth-card {
+                padding: 1.75rem 1.25rem;
+                border-radius: var(--radius-md);
+            }
+            .auth-title {
+                font-size: 1.25rem;
+            }
+            #btnLoginSubmit {
+                font-size: 0.9rem !important;
+                padding: 0.75rem 0.65rem !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -77,10 +112,21 @@
                 Email atau kata sandi tidak cocok.
             </div>
 
+            <div class="quick-demo-pill" style="display:flex; justify-content:space-between; align-items:center; background:rgba(212,175,55,0.08); border:1px dashed var(--border-accent); padding:0.75rem 1rem; border-radius:var(--radius-sm); font-size:0.83rem; margin-bottom:1.5rem;">
+                <div>
+                    <span style="color:var(--gold-primary); font-weight:700;">Demo Kredensial MC:</span><br>
+                    <span style="color:var(--text-secondary);">Email:</span> <code style="color:var(--text-primary);">vanya@mcconnect.id</code><br>
+                    <span style="color:var(--text-secondary);">Sandi:</span> <code style="color:var(--text-primary);">password123</code>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="quickFillCredentials()" style="padding:0.35rem 0.65rem; font-size:0.78rem; border-radius:var(--radius-sm); background:rgba(255,255,255,0.06);" title="Isi otomatis kredensial">
+                    Isi Cepat
+                </button>
+            </div>
+
             <form onsubmit="handleAuthSubmit(event)">
                 <div class="form-group">
                     <label class="form-label">Email Master of Ceremony *</label>
-                    <input type="email" class="form-input" id="authEmail" autocomplete="username" required autofocus>
+                    <input type="email" class="form-input" id="authEmail" value="vanya@mcconnect.id" autocomplete="username" required autofocus>
                 </div>
 
                 <div class="form-group">
@@ -88,7 +134,7 @@
                         <label class="form-label" style="margin-bottom:0;">Kata Sandi *</label>
                     </div>
                     <div style="position: relative;">
-                        <input type="password" class="form-input" id="authPassword" autocomplete="current-password" required style="padding-right: 40px;">
+                        <input type="password" class="form-input" id="authPassword" value="password123" autocomplete="current-password" required style="padding-right: 40px;">
                         <button type="button" id="togglePassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center;">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         </button>
@@ -102,8 +148,9 @@
                     </label>
                 </div>
 
-                <button type="submit" class="btn btn-primary" id="btnLoginSubmit" style="width:100%;">
-                    Masuk ke Admin Workspace ➔
+                <button type="submit" class="btn btn-primary" id="btnLoginSubmit">
+                    <span>Masuk ke Admin Workspace</span>
+                    <span>➔</span>
                 </button>
 
                 <div style="text-align:center; margin-top:1.5rem; font-size:0.85rem;">
@@ -128,6 +175,11 @@
                 this.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
             }
         });
+
+        function quickFillCredentials() {
+            document.getElementById('authEmail').value = 'vanya@mcconnect.id';
+            document.getElementById('authPassword').value = 'password123';
+        }
 
         async function handleAuthSubmit(e) {
             e.preventDefault();

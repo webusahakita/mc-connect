@@ -99,6 +99,7 @@
     max-width: 900px;
     margin: 0 auto;
     transition: font-size 0.2s ease;
+    padding-bottom: 60vh;
 }
 
 .prompter-text p {
@@ -550,11 +551,12 @@
     }
 
     .prompter-text {
-        font-size: clamp(1.3rem, 4.5vw, 1.8rem) !important;
+        font-size: clamp(1.3rem, 4.5vw, 1.8rem);
         line-height: 1.55 !important;
         max-width: 100% !important;
         word-break: break-word !important;
         overflow-wrap: break-word !important;
+        padding-bottom: 60vh;
     }
 
     .prompter-music-hint {

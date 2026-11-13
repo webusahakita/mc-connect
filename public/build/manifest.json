@@ -1,6 +1,6 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-U7uqaK8z.css",
+    "file": "assets/app-oPyCSUez.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
@@ -10,17 +10,17 @@
     "isEntry": true
   },
   "resources/css/landing.css": {
-    "file": "assets/landing-D5toosv7.css",
+    "file": "assets/landing-BzhPBaQO.css",
     "src": "resources/css/landing.css",
     "isEntry": true
   },
   "resources/css/stage-mode.css": {
-    "file": "assets/stage-mode-Dpb9HeLz.css",
+    "file": "assets/stage-mode-CazFyW5e.css",
     "src": "resources/css/stage-mode.css",
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-BtL9602h.js",
+    "file": "assets/app-CIJJ4x8a.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true
@@ -44,7 +44,7 @@
     "isEntry": true
   },
   "resources/js/teleprompter.js": {
-    "file": "assets/teleprompter-DD_WMbhW.js",
+    "file": "assets/teleprompter-DZYQhXXg.js",
     "name": "teleprompter",
     "src": "resources/js/teleprompter.js",
     "isEntry": true

@@ -418,12 +418,13 @@
             }
 
             .prompter-text {
-                font-size: clamp(1.25rem, 4.5vw, 1.85rem) !important;
+                font-size: clamp(1.25rem, 4.5vw, 1.85rem);
                 line-height: 1.55 !important;
                 max-width: 100% !important;
                 word-break: break-word !important;
                 overflow-wrap: break-word !important;
                 margin: 0 !important;
+                padding-bottom: 60vh;
             }
 
             .prompter-music-hint {
@@ -666,6 +667,9 @@
         document.addEventListener('DOMContentLoaded', async () => {
             if (window.teleprompter && typeof window.teleprompter.init === 'function') {
                 window.teleprompter.init('prompterViewport', 'prompterTextContainer');
+                window.teleprompter.onScrollChange = function(isScrolling) {
+                    updateScrollButton(isScrolling);
+                };
             }
             startClock();
             
@@ -1067,7 +1071,10 @@
             const stageProgressBar = document.getElementById('stageProgressBar');
             if (stageProgressBar) stageProgressBar.style.width = `${progPercent}%`;
 
-            // 5. Reset Prompter Scroll to Top
+            // 5. Reset Prompter Scroll to Top & Stop Any Running Auto-Scroll
+            if (window.teleprompter && typeof window.teleprompter.stopScroll === 'function') {
+                window.teleprompter.stopScroll();
+            }
             const vp = document.getElementById('prompterViewport');
             if (vp) vp.scrollTop = 0;
 
@@ -1095,21 +1102,27 @@
             }
         }
 
-        function toggleAutoScroll() {
-            if (!window.teleprompter) return;
-            const isScrolling = window.teleprompter.toggleScroll();
+        function updateScrollButton(isScrolling) {
             const btn = document.getElementById('btnScrollToggle');
             if (btn) {
                 if (isScrolling) {
-                    btn.textContent = '⏸ Pause Scroll';
+                    btn.innerHTML = '⏸ <span class="btn-scroll-text">Pause Scroll</span>';
                     btn.style.background = '#EF4444';
                     btn.style.color = '#FFF';
+                    btn.setAttribute('title', 'Hentikan Gulir Otomatis (Hotkeys: Space)');
                 } else {
-                    btn.textContent = '▶ <span class="btn-scroll-text">Auto-Scroll</span>';
+                    btn.innerHTML = '▶ <span class="btn-scroll-text">Auto-Scroll</span>';
                     btn.style.background = 'var(--gold-primary)';
                     btn.style.color = '#000';
+                    btn.setAttribute('title', 'Mulai Gulir Otomatis (Hotkeys: Space)');
                 }
             }
+        }
+
+        function toggleAutoScroll() {
+            if (!window.teleprompter) return;
+            const isScrolling = window.teleprompter.toggleScroll();
+            updateScrollButton(isScrolling);
         }
 
         function toggleVoiceMode() {

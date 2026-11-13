@@ -26,6 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleMobileMenu();
         });
 
+        if (window.location.search.includes('open_menu=1')) {
+            toggleMobileMenu();
+        }
+
         // Close menu automatically on mobile when a navigation link or action button is clicked
         navLinks?.querySelectorAll('a').forEach(link => {
             link.addEventListener('click', closeMobileMenu);

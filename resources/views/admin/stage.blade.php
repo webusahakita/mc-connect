@@ -115,6 +115,9 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         window.teleprompter.init('prompterViewport', 'prompterTextContainer');
+        window.teleprompter.onScrollChange = function(isScrolling) {
+            updateScrollButton(isScrolling);
+        };
         startClock();
         loadSegment(0);
     });
@@ -160,18 +163,24 @@
         }
     }
 
+    function updateScrollButton(isScrolling) {
+        const btn = document.getElementById('btnScrollToggle');
+        if (btn) {
+            if (isScrolling) {
+                btn.innerHTML = '⏸ <span class="btn-scroll-text">Pause Scroll</span>';
+                btn.style.background = '#EF4444';
+                btn.style.color = '#FFF';
+            } else {
+                btn.innerHTML = '▶ <span class="btn-scroll-text">Auto-Scroll</span>';
+                btn.style.background = 'var(--gold-primary)';
+                btn.style.color = '#000';
+            }
+        }
+    }
+
     function toggleAutoScroll() {
         const isScrolling = window.teleprompter.toggleScroll();
-        const btn = document.getElementById('btnScrollToggle');
-        if (isScrolling) {
-            btn.textContent = '⏸ Pause Scroll';
-            btn.style.background = '#EF4444';
-            btn.style.color = '#FFF';
-        } else {
-            btn.textContent = '▶ Auto-Scroll';
-            btn.style.background = 'var(--gold-primary)';
-            btn.style.color = '#000';
-        }
+        updateScrollButton(isScrolling);
     }
 
     function toggleVoiceMode() {
