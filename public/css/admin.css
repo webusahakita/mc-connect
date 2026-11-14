@@ -76,7 +76,7 @@
 /* Base resets & layout - Strict viewport containment to eliminate blank voids & horizontal cutoff on mobile */
 html {
     max-width: 100%;
-    overflow-x: hidden !important;
+    overflow-x: clip !important; /* clip (not hidden): no root scroll-container -> avoids Chrome Android scroll flicker */
     -webkit-text-size-adjust: 100%;
 }
 
@@ -88,7 +88,7 @@ body {
     padding: 0;
     width: 100% !important;
     max-width: 100% !important;
-    overflow-x: hidden !important;
+    overflow-x: clip !important; /* clip (not hidden): keeps horizontal containment without a root scroll-container */
     position: relative;
     -webkit-font-smoothing: antialiased;
 }
