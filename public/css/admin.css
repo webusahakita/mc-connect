@@ -930,11 +930,16 @@ body {
         z-index: 1000 !important;
         padding: 0.75rem 1.25rem !important;
         gap: 0.75rem !important;
-        background: rgba(11, 16, 30, 0.98) !important;
-        backdrop-filter: blur(16px) !important;
-        -webkit-backdrop-filter: blur(16px) !important;
+        background: rgb(11, 16, 30) !important; /* fully opaque: no per-frame backdrop sampling while scrolling */
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
         border-bottom: 1px solid var(--adm-border) !important;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+        box-shadow: none !important;
+        /* Promote the fixed topbar to its own GPU layer so it stops re-rasterizing
+           together with the content scrolling behind it (root cause of mobile flicker). */
+        transform: translateZ(0) !important;
+        will-change: transform !important;
+        backface-visibility: hidden !important;
     }
     .admin-content-pad {
         padding: 1.25rem 1rem !important;
