@@ -1468,6 +1468,18 @@ body {
         transform: rotate(-90deg) !important;
         filter: none !important;
     }
+    /* Keep scrolling simple on mobile GPUs without disabling interactive controls. */
+    .admin-section {
+        animation: none !important;
+    }
+    .admin-section *,
+    .admin-section *::before,
+    .admin-section *::after {
+        box-shadow: none !important;
+        text-shadow: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
 }
 
 /* Grid 2 Column for forms */
