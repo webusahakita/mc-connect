@@ -1453,6 +1453,23 @@ body {
     filter: drop-shadow(0px 20px 15px rgba(0,0,0,0.8)) drop-shadow(0px -3px 3px rgba(255,255,255,0.3)) !important;
 }
 
+/* Reduce expensive compositing while scrolling on touch devices. */
+@media (max-width: 1024px) and (hover: none) and (pointer: coarse) {
+    .admin-topbar {
+        background: var(--adm-bg-base) !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+    .mini-chart-svg {
+        filter: none;
+        transform: none;
+    }
+    .ecc-card:hover svg[id$="ProporsiSvg"] {
+        transform: rotate(-90deg) !important;
+        filter: none !important;
+    }
+}
+
 /* Grid 2 Column for forms */
 .grid-2col {
     display: grid;
