@@ -1687,25 +1687,22 @@ class CmsApiController extends Controller
         return response()->json(['success' => false, 'message' => 'No file uploaded']);
     }
 
-    public function uploadExpenseProof(Request $request)
+    public function uploadExpenseProof(Request $request, \App\Services\ImageSanitizerService $sanitizer)
     {
         if ($request->hasFile('file') || $request->hasFile('proof')) {
             $file = $request->file('file') ?? $request->file('proof');
-            $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $file->getClientOriginalName());
-            
-            $dest = public_path('uploads/expenses');
-            if (!file_exists($dest)) {
-                @mkdir($dest, 0777, true);
+            try {
+                $saved = $sanitizer->sanitizeAndStore($file, 'uploads/expenses', 'proof');
+                return response()->json([
+                    'success' => true,
+                    'url' => $saved['url'],
+                    'file_name' => $saved['file_name']
+                ]);
+            } catch (\Throwable $e) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
             }
-            
-            $file->move($dest, $filename);
-            return response()->json([
-                'success' => true,
-                'url' => '/uploads/expenses/' . $filename,
-                'file_name' => $filename
-            ]);
         }
-        return response()->json(['success' => false, 'message' => 'No file uploaded']);
+        return response()->json(['success' => false, 'message' => 'No file uploaded'], 400);
     }
 }
 

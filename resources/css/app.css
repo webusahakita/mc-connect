@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* =========================================================
    MC-CONNECT GLOBAL DESIGN SYSTEM (CSS VARIABLES & TOKENS)
    ========================================================= */

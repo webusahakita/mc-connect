@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AiCoPilotController;
 use App\Http\Controllers\CmsApiController;
+use App\Http\Controllers\FinanceApiController;
 use App\Http\Controllers\ProfileApiController;
 use App\Http\Controllers\PublicController;
 use App\Http\Middleware\EnsureMcAuthenticated;
@@ -38,6 +39,7 @@ Route::get('/system/version', function () {
     return response()->json($data)->header('Cache-Control', 'no-cache, no-store, must-revalidate');
 });
 Route::get('/calendar/availability', [PublicController::class, 'getCalendarEvents']);
+Route::post('/calendar/check-availability', [PublicController::class, 'checkAvailability']);
 Route::post('/book/request', [PublicController::class, 'submitBookingRequest']);
 Route::get('/event-categories', [CmsApiController::class, 'getEventCategories']);
 Route::get('/cms/public-bootstrap', [CmsApiController::class, 'getPublicBootstrap']);
@@ -54,6 +56,8 @@ foreach ([
     Route::get('/cms/'.$path, [CmsApiController::class, $action]);
 }
 
+Route::post('/pricing/calculate-quotation', [FinanceApiController::class, 'calculateQuotation']);
+
 Route::middleware(EnsureMcAuthenticated::class)->group(function () {
     Route::get('/cms/bootstrap', [CmsApiController::class, 'getBootstrap']);
     Route::get('/mc/session', [ProfileApiController::class, 'session']);
@@ -62,6 +66,8 @@ Route::middleware(EnsureMcAuthenticated::class)->group(function () {
     Route::post('/mc/profile', [ProfileApiController::class, 'updateProfile']);
     Route::post('/mc/change-password', [ProfileApiController::class, 'changePassword']);
     Route::post('/events/{id}/ai/generate-script', [AiCoPilotController::class, 'generateScript']);
+    Route::get('/events/{id}/financials', [FinanceApiController::class, 'getEventFinancials']);
+    Route::post('/events/{id}/expenses', [FinanceApiController::class, 'recordExpense']);
 
     foreach ([
         'payment-settings' => 'getPaymentSettings',

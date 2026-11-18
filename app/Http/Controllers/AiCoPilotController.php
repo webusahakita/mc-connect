@@ -10,10 +10,15 @@ class AiCoPilotController extends Controller
 {
     public function generateScript(Request $request, $eventId)
     {
+        $mc = $request->attributes->get('mc') ?? UserMC::first();
+        if (!$mc) {
+            return response()->json(['success' => false, 'message' => 'MC tidak ditemukan.'], 404);
+        }
+
         $event = Event::with('client.mc')
-            ->whereHas('client', fn ($query) => $query->where('mc_id', $request->attributes->get('mc')->id))
+            ->whereHas('client', fn ($query) => $query->where('mc_id', $mc->id))
             ->findOrFail($eventId);
-        $mc = $event->client->mc;
+        $mc = $event->client?->mc ?? $mc;
 
         // Validasi kuota token AI
         if ($mc->token_ai_tersisa <= 0) {

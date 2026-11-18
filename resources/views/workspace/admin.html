@@ -112,6 +112,14 @@
             if (sidebar) sidebar.classList.remove('open');
             document.body.style.overflow = '';
         };
+        window.openSpkPrintModal = function() {
+            var evId = typeof activeCommandCenterEventId !== 'undefined' && activeCommandCenterEventId ? activeCommandCenterEventId : (typeof window.curEventId !== 'undefined' && window.curEventId ? window.curEventId : 1);
+            window.open('/events/' + evId + '/spk', '_blank');
+        };
+        window.openThermalReceiptModal = function() {
+            var evId = typeof activeCommandCenterEventId !== 'undefined' && activeCommandCenterEventId ? activeCommandCenterEventId : (typeof window.curEventId !== 'undefined' && window.curEventId ? window.curEventId : 1);
+            window.open('/invoices/' + evId + '/thermal', '_blank');
+        };
         window.toggleSidebar = function() {
             const sidebar = document.querySelector('.admin-sidebar');
             if (sidebar && sidebar.classList.contains('open')) {
@@ -2038,6 +2046,12 @@ Kebutuhan Hospitality:
                                     </button>
                                     <button class="btn btn-secondary btn-sm" style="padding:0.75rem 1.25rem; font-size:0.9rem; font-weight:800; border-radius:12px;" onclick="window.openInvoicePrintModal()">
                                         Cetak Invoice
+                                    </button>
+                                    <button class="btn btn-outline-gold btn-sm" style="padding:0.75rem 1.25rem; font-size:0.9rem; font-weight:800; border-radius:12px; margin-left:6px;" onclick="window.openSpkPrintModal()" title="Cetak Surat Perjanjian Kerja (SPK) Kontrak Resmi">
+                                        📄 Cetak SPK
+                                    </button>
+                                    <button class="btn btn-secondary btn-sm" style="padding:0.75rem 1.25rem; font-size:0.9rem; font-weight:800; border-radius:12px; margin-left:6px;" onclick="window.openThermalReceiptModal()" title="Cetak Struk Kasir Thermal Bluetooth (58mm/80mm)">
+                                        🧾 Struk Thermal
                                     </button>
                                 </div>
                             </div>

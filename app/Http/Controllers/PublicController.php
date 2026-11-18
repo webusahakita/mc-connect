@@ -131,7 +131,34 @@ class PublicController extends Controller
         return response()->json($data);
     }
 
-    public function submitBookingRequest(Request $request)
+    public function checkAvailability(Request $request, \App\Services\AntiCollisionService $antiCollision)
+    {
+        $validated = $request->validate([
+            'tanggal_acara' => 'required|date',
+            'waktu_mulai' => 'required',
+            'waktu_selesai' => 'required',
+        ]);
+
+        $mc = UserMC::first();
+        if (!$mc) {
+            return response()->json(['available' => false, 'message' => 'MC belum terdaftar.'], 404);
+        }
+
+        $result = $antiCollision->checkCollision(
+            $mc->id,
+            $validated['tanggal_acara'],
+            $validated['waktu_mulai'],
+            $validated['waktu_selesai']
+        );
+
+        return response()->json([
+            'available' => !$result['has_collision'],
+            'message' => $result['message'],
+            'details' => $result,
+        ]);
+    }
+
+    public function submitBookingRequest(Request $request, \App\Services\AntiCollisionService $antiCollision)
     {
         $validated = $request->validate([
             'nama_pic' => 'required|string|max:150',
@@ -149,64 +176,33 @@ class PublicController extends Controller
         ]);
 
         $mc = UserMC::first();
-
-        // Cari paket layanan untuk mendapatkan harga
-        $packagePrice = 12500000.00; // default jika tidak ditemukan
-        if (!empty($validated['paket_layanan'])) {
-            $package = \App\Models\CmsPackage::where('name', $validated['paket_layanan'])->where('mc_id', $mc->id)->first();
-            if ($package) {
-                $packagePrice = $package->price;
-            }
+        if (!$mc) {
+            return response()->json(['success' => false, 'message' => 'Profil MC belum dikonfigurasi.'], 404);
         }
 
-        // 1. Simpan Klien
-        $client = Client::create([
-            'mc_id' => $mc->id,
-            'nama_pic' => $validated['nama_pic'],
-            'no_wa' => $validated['no_wa'],
-            'email' => $validated['email'] ?? null,
-            'tipe_klien' => $validated['tipe_klien'],
-            'kategori' => $validated['tipe_acara'], // Mengisi kategori sesuai pilihan dropdown Kategori Acara
-            'nilai_kontrak' => $packagePrice, // simpan nilai kontrak
-            'nama_acara' => $validated['nama_acara'],
-            'tanggal_acara' => $validated['tanggal_acara'],
-        ]);
+        try {
+            $result = $antiCollision->executeAtomicBooking($mc->id, $validated);
 
-        // 2. Simpan Acara dengan status 'Tentative' (Notifikasi & Status Tentative di kalender)
-        $event = Event::create([
-            'client_id' => $client->id,
-            'nama_acara' => $validated['nama_acara'],
-            'lokasi' => $validated['lokasi'],
-            'tanggal_acara' => $validated['tanggal_acara'],
-            'waktu_mulai' => $validated['waktu_mulai'],
-            'waktu_selesai' => $validated['waktu_selesai'],
-            'status' => 'Tentative',
-            'catatan_khusus' => $validated['catatan_khusus'] ?? '',
-            'tipe_acara' => $validated['tipe_acara'],
-            'total_budget' => $packagePrice,
-            'nilai_kontrak' => $packagePrice, // simpan nilai kontrak
-        ]);
-
-        // 3. Buat Draft Invoice
-        $dpNominal = $packagePrice / 2;
-        $invNumber = 'INV-' . date('Ym') . '-' . str_pad($event->id, 3, '0', STR_PAD_LEFT);
-        Invoice::create([
-            'event_id' => $event->id,
-            'invoice_number' => $invNumber,
-            'total_biaya' => $packagePrice,
-            'nominal_dp' => $dpNominal,
-            'sisa_tagihan' => $packagePrice - $dpNominal,
-            'status_bayar' => 'Unpaid',
-            'batas_waktu_bayar' => now()->addDays(3),
-            'qris_url' => 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . $invNumber,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Permintaan booking berhasil diajukan! Status jadwal kini "Tentative". MC akan meninjau dan mengirimkan invoice WhatsApp.',
-            'event_id' => $event->id,
-            'status' => 'Tentative',
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Permintaan booking berhasil diajukan! Status jadwal kini "Tentative" dan terkunci aman dari bentrok jadwal.',
+                'event_id' => $result['event']->id,
+                'status' => 'Tentative',
+                'invoice_id' => $result['invoice']->id,
+                'invoice_number' => $result['invoice']->invoice_number,
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->validator->errors()->first(),
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kendala pemrosesan: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function downloadPressKit()

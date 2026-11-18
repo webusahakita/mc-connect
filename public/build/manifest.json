@@ -1,21 +1,21 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-oPyCSUez.css",
+    "file": "assets/app-B5pTKn_9.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
   "resources/css/command-center.css": {
-    "file": "assets/command-center-Do-YLaDb.css",
+    "file": "assets/command-center-DzPliasD.css",
     "src": "resources/css/command-center.css",
     "isEntry": true
   },
   "resources/css/landing.css": {
-    "file": "assets/landing-BzhPBaQO.css",
+    "file": "assets/landing-C7upeb_Q.css",
     "src": "resources/css/landing.css",
     "isEntry": true
   },
   "resources/css/stage-mode.css": {
-    "file": "assets/stage-mode-CazFyW5e.css",
+    "file": "assets/stage-mode-hKmZdrNR.css",
     "src": "resources/css/stage-mode.css",
     "isEntry": true
   },
@@ -36,6 +36,15 @@
     "name": "live-sync",
     "src": "resources/js/live-sync.js",
     "isEntry": true
+  },
+  "resources/js/main.tsx": {
+    "file": "assets/main-BRnE9_Qa.js",
+    "name": "main",
+    "src": "resources/js/main.tsx",
+    "isEntry": true,
+    "css": [
+      "assets/app-B5pTKn_9.css"
+    ]
   },
   "resources/js/soundboard.js": {
     "file": "assets/soundboard-CXsX_UaJ.js",

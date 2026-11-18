@@ -121,7 +121,7 @@
             <div class="invoice-meta">
                 <div class="invoice-number">{{ $invoice->invoice_number }}</div>
                 <div style="color:#64748B; font-size:0.85rem; margin-top:0.25rem;">
-                    Tanggal: {{ $invoice->created_at->format('d M Y') }}<br>
+                    Tanggal: {{ $invoice->created_at ? $invoice->created_at->format('d M Y') : date('d M Y') }}<br>
                     Batas Bayar: {{ $invoice->batas_waktu_bayar ? $invoice->batas_waktu_bayar->format('d M Y') : 'H-2 Acara' }}
                 </div>
                 <div style="margin-top:0.5rem;">
@@ -135,17 +135,17 @@
         <div class="invoice-details-grid">
             <div>
                 <strong style="color:#64748B; font-size:0.8rem; text-transform:uppercase;">Tagihan Kepada (Klien):</strong>
-                <div style="font-size:1.1rem; font-weight:700; margin-top:0.25rem;">{{ $event->client->nama_pic }}</div>
+                <div style="font-size:1.1rem; font-weight:700; margin-top:0.25rem;">{{ $event->client?->nama_pic ?? 'Klien Terdaftar' }}</div>
                 <div style="color:#475569; margin-top:0.2rem;">
-                    Tipe Klien: {{ $event->client->tipe_klien }}<br>
-                    No. WhatsApp: {{ $event->client->no_wa }}
+                    Tipe Klien: {{ $event->client?->tipe_klien ?? 'Personal' }}<br>
+                    No. WhatsApp: {{ $event->client?->no_wa ?? '-' }}
                 </div>
             </div>
             <div>
                 <strong style="color:#64748B; font-size:0.8rem; text-transform:uppercase;">Detail Acara:</strong>
                 <div style="font-size:1.05rem; font-weight:700; margin-top:0.25rem;">{{ $event->nama_acara }}</div>
                 <div style="color:#475569; margin-top:0.2rem;">
-                    Tanggal: {{ $event->tanggal_acara->format('d F Y') }}<br>
+                    Tanggal: {{ $event->tanggal_acara ? $event->tanggal_acara->format('d F Y') : '-' }}<br>
                     Waktu: {{ substr($event->waktu_mulai, 0, 5) }} - {{ substr($event->waktu_selesai, 0, 5) }} WIB<br>
                     Lokasi: {{ $event->lokasi }}
                 </div>

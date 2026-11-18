@@ -2,6 +2,18 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\EnsureMcAuthenticated;
+use App\Http\Controllers\InvoiceController;
+
+// Document & Print Routes (Invoice QRIS, SPK Kontrak & ESC/POS Thermal)
+Route::get('/invoices/{id}/print', [InvoiceController::class, 'show'])->name('invoice.print');
+Route::get('/invoices/{id}/pdf', [InvoiceController::class, 'downloadPdf'])->name('invoice.pdf');
+Route::get('/events/{id}/spk', [InvoiceController::class, 'showSpk'])->name('event.spk');
+Route::get('/invoices/{id}/thermal', [InvoiceController::class, 'showThermalReceipt'])->name('invoice.thermal');
+Route::get('/invoices/{id}/thermal-binary', [InvoiceController::class, 'downloadThermalBinary'])->name('invoice.thermal-binary');
+
+// Modern Decoupled SPA Routes (React 19 + TypeScript)
+Route::get('/app', fn () => view('spa'))->name('app.spa');
+Route::get('/app/{any}', fn () => view('spa'))->where('any', '.*');
 
 Route::get('/', function () {
     return response(file_get_contents(public_path('index.html')), 200)

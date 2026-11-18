@@ -1,38 +1,38 @@
 {
   "version": "2.5.0",
-  "commit_hash": "d96130598be0721356b852de2d5f57b9ae55de7b",
-  "commit_short": "d961305",
-  "commit_message": "fix(mobile): resolve admin dashboard horizontal overflow, layout cutoff, and black blank void",
-  "commit_author": "MC Connect",
-  "commit_date": "2026-11-13T23:55:56+07:00",
+  "commit_hash": "66d74d6b387f222db03ad4f482420ea306f20e12",
+  "commit_short": "66d74d6",
+  "commit_message": "fix(mobile): use overflow-x clip on root to curb Chrome Android scroll flicker",
+  "commit_author": "dimasachmad2",
+  "commit_date": "2026-11-14T17:34:30+07:00",
   "recent_commits": [
     {
-      "hash": "d961305",
-      "message": "fix(mobile): resolve admin dashboard horizontal overflow, layout cutoff, and black blank void",
-      "date": "2026-11-13T23:55:56+07:00"
+      "hash": "66d74d6",
+      "message": "fix(mobile): use overflow-x clip on root to curb Chrome Android scroll flicker",
+      "date": "2026-11-14T17:34:30+07:00"
     },
     {
-      "hash": "3699bdd",
-      "message": "fix: stage teleprompter font controls & auto-scroll, login text overflow, and navbar responsive styling",
-      "date": "2026-11-13T23:31:40+07:00"
+      "hash": "18c6dfb",
+      "message": "fix(mobile): stop admin topbar scroll flicker via GPU layer promotion",
+      "date": "2026-11-14T17:03:02+07:00"
     },
     {
-      "hash": "064498c",
-      "message": "feat(navigation): replace keunggulan link with /bisnis, swap cta position, and enforce clean extensionless urls",
-      "date": "2026-11-13T07:57:12+07:00"
+      "hash": "e9af430",
+      "message": "Reduce dashboard effects on mobile devices",
+      "date": "2026-11-14T15:55:17+07:00"
     },
     {
-      "hash": "2f85f8f",
-      "message": "feat(saas): update keunggulan page to saas model, remove ai references, and add animated buat web mc cta",
-      "date": "2026-11-13T06:56:04+07:00"
+      "hash": "78b13bd",
+      "message": "Reduce mobile dashboard rendering effects",
+      "date": "2026-11-14T15:45:02+07:00"
     },
     {
-      "hash": "13850bb",
-      "message": "Fix production deployment pipeline",
-      "date": "2026-11-11T07:54:56+07:00"
+      "hash": "ee8674e",
+      "message": "docs: add CLAUDE.md project guidelines",
+      "date": "2026-11-14T00:00:44+07:00"
     }
   ],
-  "updated_at": "2026-11-13T17:00:44.375Z",
-  "release_title": "Pembaruan: fix(mobile): resolve admin dashboard horizontal overflow, layout cutoff, and black blank void",
+  "updated_at": "2026-11-18T14:46:44.715Z",
+  "release_title": "Pembaruan: fix(mobile): use overflow-x clip on root to curb Chrome Android scroll flicker",
   "notification_active": true
 }
