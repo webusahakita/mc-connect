@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+    <base href="/">
     <script>
         if (window.location.pathname.toLowerCase().endsWith('/index.html')) {
-            window.location.replace('/' + window.location.search);
+            const isLegacy = window.location.pathname.toLowerCase().includes('/legacy');
+            window.location.replace((isLegacy ? '/legacy' : '/') + window.location.search);
         }
     </script>
     <script src="/js/session-client.js?v=1.0"></script>

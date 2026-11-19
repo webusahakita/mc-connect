@@ -1,11 +1,16 @@
 {
   "version": "2.5.0",
-  "commit_hash": "66d74d6b387f222db03ad4f482420ea306f20e12",
-  "commit_short": "66d74d6",
-  "commit_message": "fix(mobile): use overflow-x clip on root to curb Chrome Android scroll flicker",
-  "commit_author": "dimasachmad2",
-  "commit_date": "2026-11-14T17:34:30+07:00",
+  "commit_hash": "58e96039890d8964abd1871f603ec1f0895d0f05",
+  "commit_short": "58e9603",
+  "commit_message": "feat: implement modern decoupled SPA (React 19), enterprise backend engines, and browser E2E test suite",
+  "commit_author": "MC Connect",
+  "commit_date": "2026-11-18T21:46:44+07:00",
   "recent_commits": [
+    {
+      "hash": "58e9603",
+      "message": "feat: implement modern decoupled SPA (React 19), enterprise backend engines, and browser E2E test suite",
+      "date": "2026-11-18T21:46:44+07:00"
+    },
     {
       "hash": "66d74d6",
       "message": "fix(mobile): use overflow-x clip on root to curb Chrome Android scroll flicker",
@@ -25,14 +30,9 @@
       "hash": "78b13bd",
       "message": "Reduce mobile dashboard rendering effects",
       "date": "2026-11-14T15:45:02+07:00"
-    },
-    {
-      "hash": "ee8674e",
-      "message": "docs: add CLAUDE.md project guidelines",
-      "date": "2026-11-14T00:00:44+07:00"
     }
   ],
-  "updated_at": "2026-11-18T14:46:44.715Z",
-  "release_title": "Pembaruan: fix(mobile): use overflow-x clip on root to curb Chrome Android scroll flicker",
+  "updated_at": "2026-11-19T16:00:03.803Z",
+  "release_title": "Pembaruan: feat: implement modern decoupled SPA (React 19), enterprise backend engines, and browser E2E test suite",
   "notification_active": true
 }

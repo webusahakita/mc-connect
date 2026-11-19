@@ -102,7 +102,8 @@ body {
     background: var(--adm-bg-base);
     position: relative;
     box-sizing: border-box !important;
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
+    overflow-y: visible !important;
 }
 
 /* =========================================================
@@ -425,7 +426,8 @@ body {
     flex-direction: column;
     position: relative;
     box-sizing: border-box !important;
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
+    overflow-y: visible !important;
 }
 
 .admin-topbar {
@@ -494,7 +496,8 @@ body {
     max-width: 100%;
     min-width: 0;
     box-sizing: border-box !important;
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
+    overflow-y: visible !important;
 }
 
 /* =========================================================
@@ -888,7 +891,8 @@ body {
         max-width: 100% !important;
         min-width: 0 !important;
         box-sizing: border-box !important;
-        overflow-x: hidden !important;
+        overflow-x: clip !important;
+        overflow-y: visible !important;
     }
     .admin-sidebar {
         position: fixed !important;
@@ -916,7 +920,8 @@ body {
         flex: 1 !important;
         padding-top: 60px !important;
         box-sizing: border-box !important;
-        overflow-x: hidden !important;
+        overflow-x: clip !important;
+        overflow-y: visible !important;
     }
     .admin-topbar {
         position: fixed !important;
@@ -947,7 +952,8 @@ body {
         max-width: 100% !important;
         min-width: 0 !important;
         box-sizing: border-box !important;
-        overflow-x: hidden !important;
+        overflow-x: clip !important;
+        overflow-y: visible !important;
     }
 }
 
@@ -2204,3 +2210,55 @@ body {
     background: rgba(212, 175, 55, 0.05);
     transform: translateX(4px);
 }
+
+/* =========================================================
+   CMS & WEB SETTINGS NAVIGATION TABS
+   ========================================================= */
+.cms-nav-tabs {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.cms-nav-tabs::-webkit-scrollbar {
+    height: 4px;
+}
+
+.cms-nav-tabs::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.cms-tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary, #94A3B8);
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.75rem 1.2rem;
+    border-radius: 12px 12px 0 0;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.cms-tab-btn:hover {
+    color: var(--text-primary, #F8FAFC);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.cms-tab-btn.active {
+    color: var(--gold-primary, #D4AF37) !important;
+    border-bottom-color: var(--gold-primary, #D4AF37) !important;
+    background: rgba(212, 175, 55, 0.08) !important;
+    font-weight: 700;
+}
+

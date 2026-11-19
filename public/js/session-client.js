@@ -98,4 +98,21 @@
         if (response.status === 401 && url.pathname !== '/api/mc/login') loginRequired();
         return response;
     };
+
+    // Auto-Reload Development Integration via Vite HMR
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        (async () => {
+            try {
+                const { createHotContext } = await import('http://127.0.0.1:5173/@vite/client');
+                const hot = createHotContext('/dev-live-reload.js');
+                hot.on('vite:beforeFullReload', (payload) => {
+                    console.log('⚡ [Auto-Reload] File diubah (' + (payload?.path || 'workspace') + '), memuat ulang halaman...');
+                    window.location.reload();
+                });
+                console.log('⚡ [Auto-Reload] Aktif terhubung ke Vite HMR Dev Server.');
+            } catch (e) {
+                // Vite dev server offline, skip auto-reload silently
+            }
+        })();
+    }
 })();

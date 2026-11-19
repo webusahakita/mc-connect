@@ -13,9 +13,17 @@
     <link rel="stylesheet" href="/css/app.css?v=8.4">
     <link rel="stylesheet" href="/css/command-center.css?v=8.4">
     <link rel="stylesheet" href="/css/stage-mode.css?v=8.3">
-    <link rel="stylesheet" href="/css/admin.css?v=8.15">
+    <link rel="stylesheet" href="/css/admin.css?v=8.16">
     <link rel="stylesheet" href="/css/custom-modal.css?v=8.3">
     <style>
+        /* Sticky Shell & Topbar Layout Guarantee */
+        .admin-shell,
+        .admin-body-content,
+        .admin-content-pad {
+            overflow-x: clip !important;
+            overflow-y: visible !important;
+        }
+
         .admin-section {
             display: none;
             animation: fadeIn 0.25s ease;
@@ -325,6 +333,9 @@
                         ⏰<span id="topbarLiveClock">09:00:00 WIB</span>
                     </div>
 
+                    <a href="/admin" class="btn btn-secondary btn-sm" style="font-weight:700; background:rgba(212,175,55,0.18); color:var(--adm-gold); border:1px solid rgba(212,175,55,0.4);" title="Buka Versi Modern (React SPA)">
+                        <span>⚡</span> <span>Modern React SPA</span>
+                    </a>
                     <button onclick="toggleTheme()" class="btn btn-secondary btn-sm" id="themeToggleBtn"
                         style="font-size:1.1rem; padding:0.2rem 0.5rem;" title="Ubah Mode Terang/Gelap">
                         🌗

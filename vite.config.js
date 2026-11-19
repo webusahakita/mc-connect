@@ -36,5 +36,23 @@ export default defineConfig({
     server: {
         host: '127.0.0.1',
         port: 5173,
+    },
+    build: {
+        chunkSizeWarningLimit: 1000,
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    if (id.includes('node_modules')) {
+                        if (id.includes('react') || id.includes('react-dom') || id.includes('scheduler')) {
+                            return 'vendor-react';
+                        }
+                        if (id.includes('lucide-react')) {
+                            return 'vendor-icons';
+                        }
+                        return 'vendor-libs';
+                    }
+                }
+            }
+        }
     }
 });

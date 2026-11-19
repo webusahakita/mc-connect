@@ -1,6 +1,32 @@
 {
+  "_badge-DiVwWvU-.js": {
+    "file": "assets/badge-DiVwWvU-.js",
+    "name": "badge",
+    "imports": [
+      "_vendor-react-CwqezjvO.js",
+      "resources/js/main.tsx"
+    ]
+  },
+  "_useSoundboard-IqnV65Jv.js": {
+    "file": "assets/useSoundboard-IqnV65Jv.js",
+    "name": "useSoundboard",
+    "imports": [
+      "_vendor-react-CwqezjvO.js"
+    ]
+  },
+  "_vendor-libs-CtoZ81DX.js": {
+    "file": "assets/vendor-libs-CtoZ81DX.js",
+    "name": "vendor-libs",
+    "imports": [
+      "_vendor-react-CwqezjvO.js"
+    ]
+  },
+  "_vendor-react-CwqezjvO.js": {
+    "file": "assets/vendor-react-CwqezjvO.js",
+    "name": "vendor-react"
+  },
   "resources/css/app.css": {
-    "file": "assets/app-B5pTKn_9.css",
+    "file": "assets/app-DN1_4AF8.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
@@ -38,12 +64,70 @@
     "isEntry": true
   },
   "resources/js/main.tsx": {
-    "file": "assets/main-BRnE9_Qa.js",
+    "file": "assets/main-CjbgADeq.js",
     "name": "main",
     "src": "resources/js/main.tsx",
     "isEntry": true,
+    "imports": [
+      "_vendor-react-CwqezjvO.js",
+      "_vendor-libs-CtoZ81DX.js"
+    ],
+    "dynamicImports": [
+      "resources/js/pages/Landing.tsx",
+      "resources/js/pages/Dashboard.tsx",
+      "resources/js/pages/StageMode.tsx",
+      "resources/js/pages/VendorCue.tsx"
+    ],
     "css": [
-      "assets/app-B5pTKn_9.css"
+      "assets/app-DN1_4AF8.css"
+    ]
+  },
+  "resources/js/pages/Dashboard.tsx": {
+    "file": "assets/Dashboard-B-etSojd.js",
+    "name": "Dashboard",
+    "src": "resources/js/pages/Dashboard.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_vendor-react-CwqezjvO.js",
+      "_vendor-libs-CtoZ81DX.js",
+      "_useSoundboard-IqnV65Jv.js"
+    ]
+  },
+  "resources/js/pages/Landing.tsx": {
+    "file": "assets/Landing-52s7plhY.js",
+    "name": "Landing",
+    "src": "resources/js/pages/Landing.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_vendor-react-CwqezjvO.js",
+      "resources/js/main.tsx",
+      "_badge-DiVwWvU-.js",
+      "_vendor-libs-CtoZ81DX.js"
+    ]
+  },
+  "resources/js/pages/StageMode.tsx": {
+    "file": "assets/StageMode-3AoGX-om.js",
+    "name": "StageMode",
+    "src": "resources/js/pages/StageMode.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_vendor-react-CwqezjvO.js",
+      "_useSoundboard-IqnV65Jv.js",
+      "resources/js/main.tsx",
+      "_badge-DiVwWvU-.js",
+      "_vendor-libs-CtoZ81DX.js"
+    ]
+  },
+  "resources/js/pages/VendorCue.tsx": {
+    "file": "assets/VendorCue-DzCZ5FQZ.js",
+    "name": "VendorCue",
+    "src": "resources/js/pages/VendorCue.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_vendor-react-CwqezjvO.js",
+      "_badge-DiVwWvU-.js",
+      "resources/js/main.tsx",
+      "_vendor-libs-CtoZ81DX.js"
     ]
   },
   "resources/js/soundboard.js": {
