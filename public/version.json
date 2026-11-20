@@ -1,11 +1,16 @@
 {
   "version": "2.5.0",
-  "commit_hash": "3e86393d2a6d10bb8f9c8e97f9ac933e3b9324d8",
-  "commit_short": "3e86393",
-  "commit_message": "feat: 100% paritas UI/UX panel admin modern, restorasi sub-tab CMS & Pengaturan Web, dan sinkronisasi real-time",
+  "commit_hash": "56a4dd5ac9a51f7f49e3f63a099a0c2d5e659df3",
+  "commit_short": "56a4dd5",
+  "commit_message": "feat & fix: sempurnakan fitur pengaturan web, ECC, audit keamanan, dan optimasi SEO halaman bisnis",
   "commit_author": "MC Connect",
-  "commit_date": "2026-11-19T23:00:03+07:00",
+  "commit_date": "2026-11-20T14:37:04+07:00",
   "recent_commits": [
+    {
+      "hash": "56a4dd5",
+      "message": "feat & fix: sempurnakan fitur pengaturan web, ECC, audit keamanan, dan optimasi SEO halaman bisnis",
+      "date": "2026-11-20T14:37:04+07:00"
+    },
     {
       "hash": "3e86393",
       "message": "feat: 100% paritas UI/UX panel admin modern, restorasi sub-tab CMS & Pengaturan Web, dan sinkronisasi real-time",
@@ -25,14 +30,9 @@
       "hash": "18c6dfb",
       "message": "fix(mobile): stop admin topbar scroll flicker via GPU layer promotion",
       "date": "2026-11-14T17:03:02+07:00"
-    },
-    {
-      "hash": "e9af430",
-      "message": "Reduce dashboard effects on mobile devices",
-      "date": "2026-11-14T15:55:17+07:00"
     }
   ],
-  "updated_at": "2026-11-20T07:37:04.430Z",
-  "release_title": "Pembaruan: feat: 100% paritas UI/UX panel admin modern, restorasi sub-tab CMS & Pengaturan Web, dan sinkronisasi real-time",
+  "updated_at": "2026-11-20T07:58:05.386Z",
+  "release_title": "Pembaruan: feat & fix: sempurnakan fitur pengaturan web, ECC, audit keamanan, dan optimasi SEO halaman bisnis",
   "notification_active": true
 }

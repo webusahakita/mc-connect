@@ -531,6 +531,13 @@ export default function Landing({
           <button onClick={() => scrollTo('testimoni')} className="hover:text-amber-400 transition-colors">
             Testimoni
           </button>
+          <a
+            href="/bisnis"
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-amber-500/40 bg-amber-500/15 text-amber-300 font-bold hover:bg-amber-500/25 hover:text-amber-200 transition-all text-xs"
+            title="Pelajari Platform SaaS MC-Connect untuk membuat website MC Anda sendiri"
+          >
+            <span>👑</span> Buat Web MC (SaaS)
+          </a>
         </div>
 
         {/* Right Action Buttons */}
@@ -1066,12 +1073,16 @@ export default function Landing({
             Portal resmi pemesanan jadwal Master of Ceremony terpadu. Dilengkapi sistem anti-collision, live teleprompter, dan transparansi invoice resmi.
           </p>
 
-          <div className="flex justify-center items-center gap-4 text-xs font-medium">
-            <button onClick={onOpenAdmin} className="text-amber-400 hover:underline">
+          <div className="flex flex-wrap justify-center items-center gap-3 sm:gap-4 text-xs font-medium">
+            <a href="/bisnis" className="font-bold text-amber-400 hover:text-amber-300 hover:underline flex items-center gap-1">
+              <span>👑</span> Buat Web MC Profesional Sendiri (Platform SaaS)
+            </a>
+            <span className="text-slate-600">•</span>
+            <button onClick={onOpenAdmin} className="text-slate-300 hover:text-amber-400 hover:underline">
               Buka Command Center Admin
             </button>
             <span className="text-slate-600">•</span>
-            <button onClick={onOpenStage} className="text-amber-400 hover:underline">
+            <button onClick={onOpenStage} className="text-slate-300 hover:text-amber-400 hover:underline">
               Layar Tablet Stage Mode
             </button>
             <span className="text-slate-600">•</span>

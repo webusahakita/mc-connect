@@ -1,6 +1,6 @@
 {
-  "_badge-fX3p5SDc.js": {
-    "file": "assets/badge-fX3p5SDc.js",
+  "_badge-BHk5iD14.js": {
+    "file": "assets/badge-BHk5iD14.js",
     "name": "badge",
     "imports": [
       "_vendor-react-CwqezjvO.js",
@@ -26,7 +26,7 @@
     "name": "vendor-react"
   },
   "resources/css/app.css": {
-    "file": "assets/app-Cp0pVRLu.css",
+    "file": "assets/app-CeW1FJtR.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
@@ -64,7 +64,7 @@
     "isEntry": true
   },
   "resources/js/main.tsx": {
-    "file": "assets/main-B-lhw9EK.js",
+    "file": "assets/main-BzqHaGrM.js",
     "name": "main",
     "src": "resources/js/main.tsx",
     "isEntry": true,
@@ -79,7 +79,7 @@
       "resources/js/pages/VendorCue.tsx"
     ],
     "css": [
-      "assets/app-Cp0pVRLu.css"
+      "assets/app-CeW1FJtR.css"
     ]
   },
   "resources/js/pages/Dashboard.tsx": {
@@ -94,19 +94,19 @@
     ]
   },
   "resources/js/pages/Landing.tsx": {
-    "file": "assets/Landing-CAXVKyZi.js",
+    "file": "assets/Landing-SNUlEAl2.js",
     "name": "Landing",
     "src": "resources/js/pages/Landing.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-react-CwqezjvO.js",
       "resources/js/main.tsx",
-      "_badge-fX3p5SDc.js",
+      "_badge-BHk5iD14.js",
       "_vendor-libs-CtoZ81DX.js"
     ]
   },
   "resources/js/pages/StageMode.tsx": {
-    "file": "assets/StageMode-B1fgvyB6.js",
+    "file": "assets/StageMode-BicZXXcS.js",
     "name": "StageMode",
     "src": "resources/js/pages/StageMode.tsx",
     "isDynamicEntry": true,
@@ -114,18 +114,18 @@
       "_vendor-react-CwqezjvO.js",
       "_useSoundboard-IqnV65Jv.js",
       "resources/js/main.tsx",
-      "_badge-fX3p5SDc.js",
+      "_badge-BHk5iD14.js",
       "_vendor-libs-CtoZ81DX.js"
     ]
   },
   "resources/js/pages/VendorCue.tsx": {
-    "file": "assets/VendorCue-D-2ETgAh.js",
+    "file": "assets/VendorCue-DCBFjbMP.js",
     "name": "VendorCue",
     "src": "resources/js/pages/VendorCue.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-react-CwqezjvO.js",
-      "_badge-fX3p5SDc.js",
+      "_badge-BHk5iD14.js",
       "resources/js/main.tsx",
       "_vendor-libs-CtoZ81DX.js"
     ]
