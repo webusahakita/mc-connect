@@ -1,11 +1,16 @@
 {
   "version": "2.5.0",
-  "commit_hash": "58e96039890d8964abd1871f603ec1f0895d0f05",
-  "commit_short": "58e9603",
-  "commit_message": "feat: implement modern decoupled SPA (React 19), enterprise backend engines, and browser E2E test suite",
+  "commit_hash": "3e86393d2a6d10bb8f9c8e97f9ac933e3b9324d8",
+  "commit_short": "3e86393",
+  "commit_message": "feat: 100% paritas UI/UX panel admin modern, restorasi sub-tab CMS & Pengaturan Web, dan sinkronisasi real-time",
   "commit_author": "MC Connect",
-  "commit_date": "2026-11-18T21:46:44+07:00",
+  "commit_date": "2026-11-19T23:00:03+07:00",
   "recent_commits": [
+    {
+      "hash": "3e86393",
+      "message": "feat: 100% paritas UI/UX panel admin modern, restorasi sub-tab CMS & Pengaturan Web, dan sinkronisasi real-time",
+      "date": "2026-11-19T23:00:03+07:00"
+    },
     {
       "hash": "58e9603",
       "message": "feat: implement modern decoupled SPA (React 19), enterprise backend engines, and browser E2E test suite",
@@ -25,14 +30,9 @@
       "hash": "e9af430",
       "message": "Reduce dashboard effects on mobile devices",
       "date": "2026-11-14T15:55:17+07:00"
-    },
-    {
-      "hash": "78b13bd",
-      "message": "Reduce mobile dashboard rendering effects",
-      "date": "2026-11-14T15:45:02+07:00"
     }
   ],
-  "updated_at": "2026-11-19T16:00:03.803Z",
-  "release_title": "Pembaruan: feat: implement modern decoupled SPA (React 19), enterprise backend engines, and browser E2E test suite",
+  "updated_at": "2026-11-20T07:37:04.430Z",
+  "release_title": "Pembaruan: feat: 100% paritas UI/UX panel admin modern, restorasi sub-tab CMS & Pengaturan Web, dan sinkronisasi real-time",
   "notification_active": true
 }

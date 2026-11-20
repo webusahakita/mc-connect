@@ -55,9 +55,18 @@ class InvoiceController extends Controller
     /**
      * Menampilkan Pratinjau Invoice Resmi Ber-QRIS siap cetak / PDF.
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
         [$invoice, $event, $mc] = $this->resolveInvoiceAndEvent($id);
+
+        $isMcAuthenticated = $request->session()->has('mc_user_id') || $request->attributes->has('mc');
+        $isBookingOwner = $request->session()->get('last_booking_invoice_id') == $invoice->id;
+        $expectedToken = substr(hash_hmac('sha256', (string)$invoice->invoice_number, (string)config('app.key')), 0, 16);
+        $hasValidToken = $request->query('token') && hash_equals($expectedToken, (string)$request->query('token'));
+
+        if (!$isMcAuthenticated && !$isBookingOwner && !$hasValidToken) {
+            abort(403, 'Akses invoice tidak diizinkan. Silakan login atau gunakan tautan resmi yang valid.');
+        }
 
         return view('admin.invoice-print', compact('invoice', 'event', 'mc'));
     }
@@ -65,9 +74,9 @@ class InvoiceController extends Controller
     /**
      * Unduh / Pratinjau PDF Invoice.
      */
-    public function downloadPdf($id)
+    public function downloadPdf(Request $request, $id)
     {
-        return $this->show($id);
+        return $this->show($request, $id);
     }
 
     /**

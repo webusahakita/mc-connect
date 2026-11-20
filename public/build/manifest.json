@@ -1,6 +1,6 @@
 {
-  "_badge-DiVwWvU-.js": {
-    "file": "assets/badge-DiVwWvU-.js",
+  "_badge-fX3p5SDc.js": {
+    "file": "assets/badge-fX3p5SDc.js",
     "name": "badge",
     "imports": [
       "_vendor-react-CwqezjvO.js",
@@ -26,7 +26,7 @@
     "name": "vendor-react"
   },
   "resources/css/app.css": {
-    "file": "assets/app-DN1_4AF8.css",
+    "file": "assets/app-Cp0pVRLu.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
@@ -64,7 +64,7 @@
     "isEntry": true
   },
   "resources/js/main.tsx": {
-    "file": "assets/main-CjbgADeq.js",
+    "file": "assets/main-B-lhw9EK.js",
     "name": "main",
     "src": "resources/js/main.tsx",
     "isEntry": true,
@@ -79,11 +79,11 @@
       "resources/js/pages/VendorCue.tsx"
     ],
     "css": [
-      "assets/app-DN1_4AF8.css"
+      "assets/app-Cp0pVRLu.css"
     ]
   },
   "resources/js/pages/Dashboard.tsx": {
-    "file": "assets/Dashboard-B-etSojd.js",
+    "file": "assets/Dashboard-VZXhuf0O.js",
     "name": "Dashboard",
     "src": "resources/js/pages/Dashboard.tsx",
     "isDynamicEntry": true,
@@ -94,19 +94,19 @@
     ]
   },
   "resources/js/pages/Landing.tsx": {
-    "file": "assets/Landing-52s7plhY.js",
+    "file": "assets/Landing-CAXVKyZi.js",
     "name": "Landing",
     "src": "resources/js/pages/Landing.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-react-CwqezjvO.js",
       "resources/js/main.tsx",
-      "_badge-DiVwWvU-.js",
+      "_badge-fX3p5SDc.js",
       "_vendor-libs-CtoZ81DX.js"
     ]
   },
   "resources/js/pages/StageMode.tsx": {
-    "file": "assets/StageMode-3AoGX-om.js",
+    "file": "assets/StageMode-B1fgvyB6.js",
     "name": "StageMode",
     "src": "resources/js/pages/StageMode.tsx",
     "isDynamicEntry": true,
@@ -114,18 +114,18 @@
       "_vendor-react-CwqezjvO.js",
       "_useSoundboard-IqnV65Jv.js",
       "resources/js/main.tsx",
-      "_badge-DiVwWvU-.js",
+      "_badge-fX3p5SDc.js",
       "_vendor-libs-CtoZ81DX.js"
     ]
   },
   "resources/js/pages/VendorCue.tsx": {
-    "file": "assets/VendorCue-DzCZ5FQZ.js",
+    "file": "assets/VendorCue-D-2ETgAh.js",
     "name": "VendorCue",
     "src": "resources/js/pages/VendorCue.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-react-CwqezjvO.js",
-      "_badge-DiVwWvU-.js",
+      "_badge-fX3p5SDc.js",
       "resources/js/main.tsx",
       "_vendor-libs-CtoZ81DX.js"
     ]

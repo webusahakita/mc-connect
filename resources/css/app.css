@@ -1029,3 +1029,67 @@ button {
     font-weight: 700;
 }
 
+/* =========================================================
+   BUTTON DANGER & DELETE PARITY (MATCH LEGACY APPEARANCE)
+   ========================================================= */
+.btn-danger,
+button.btn-danger,
+.bank-account-item .btn-danger {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: var(--radius-sm, 6px) !important;
+    font-weight: 600 !important;
+    padding: 0.4rem 0.8rem !important;
+    font-size: 0.8rem !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+.btn-danger:hover,
+button.btn-danger:hover,
+.bank-account-item .btn-danger:hover {
+    background: #f1f5f9 !important;
+    color: #ef4444 !important;
+    transform: translateY(-1px) !important;
+}
+
+/* =========================================================
+   COMMAND CENTER FINANCE STATS (100% PARITY)
+   ========================================================= */
+.finance-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+}
+
+.finance-stat-card {
+    background: var(--bg-card, #162032);
+    border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+    border-radius: var(--radius-md, 12px);
+    padding: 1.25rem;
+}
+
+.finance-stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted, #94A3B8);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.finance-stat-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-primary, #F8FAFC);
+    margin-top: 0.25rem;
+}
+
+.finance-stat-value.gold { color: var(--gold-primary, #D4AF37); }
+.finance-stat-value.green { color: var(--color-available, #10B981); }
+.finance-stat-value.red { color: var(--color-locked, #EF4444); }
+

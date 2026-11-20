@@ -4,12 +4,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\EnsureMcAuthenticated;
 use App\Http\Controllers\InvoiceController;
 
-// Document & Print Routes (Invoice QRIS, SPK Kontrak & ESC/POS Thermal)
+// Public Document Access (Secured by Token / Session Validation in Controller)
 Route::get('/invoices/{id}/print', [InvoiceController::class, 'show'])->name('invoice.print');
 Route::get('/invoices/{id}/pdf', [InvoiceController::class, 'downloadPdf'])->name('invoice.pdf');
-Route::get('/events/{id}/spk', [InvoiceController::class, 'showSpk'])->name('event.spk');
-Route::get('/invoices/{id}/thermal', [InvoiceController::class, 'showThermalReceipt'])->name('invoice.thermal');
-Route::get('/invoices/{id}/thermal-binary', [InvoiceController::class, 'downloadThermalBinary'])->name('invoice.thermal-binary');
 
 // Modern Decoupled SPA Routes (React 19 + TypeScript)
 Route::get('/', fn () => view('spa'))->name('home');
@@ -49,6 +46,11 @@ Route::get('/keunggulan.html', fn () => redirect('/bisnis', 301));
 Route::get('/bisnis.html', fn () => redirect('/bisnis', 301));
 
 Route::middleware(EnsureMcAuthenticated::class)->group(function () {
+    // Authenticated MC Operational Print Routes (SPK Kontrak & ESC/POS Thermal)
+    Route::get('/events/{id}/spk', [InvoiceController::class, 'showSpk'])->name('event.spk');
+    Route::get('/invoices/{id}/thermal', [InvoiceController::class, 'showThermalReceipt'])->name('invoice.thermal');
+    Route::get('/invoices/{id}/thermal-binary', [InvoiceController::class, 'downloadThermalBinary'])->name('invoice.thermal-binary');
+
     foreach (['admin', 'stage', 'vendor'] as $page) {
         // Modern Decoupled React 19 SPA Handlers
         Route::get('/'.$page, fn () => view('spa'))->name($page === 'admin' ? 'admin.dashboard' : $page);

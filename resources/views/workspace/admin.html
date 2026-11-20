@@ -1862,6 +1862,33 @@ Kebutuhan Hospitality:
                                     akan digunakan pada pojok kiri atas dashboard, favicon browser, invoice pelanggan,
                                     serta berkas Press Kit PDF.</small>
                             </div>
+
+                            <!-- Logo Installer PC & HP (PWA) -->
+                            <div class="grid-2col" style="gap:1.5rem; margin-top:1.5rem; border-top:1px solid rgba(255,255,255,0.08); padding-top:1.25rem;">
+                                <!-- PC Installer Logo -->
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label class="form-label" style="color:#60A5FA;">💻 Logo Installer PC (Desktop PWA)</label>
+                                    <p style="font-size:0.75rem; color:var(--text-secondary); margin:0 0 0.5rem;">Ikon desktop Windows / Mac saat web diinstal via Chrome/Edge (512x512px disarankan).</p>
+                                    <input type="text" class="form-input" id="ws_logo_pc_url" placeholder="/logo-512.png atau https://..." style="margin-bottom:0.5rem;"
+                                        oninput="const img = document.getElementById('previewLogoPcImg'); if(img) img.src = this.value || '/icons/icon-512x512.png';">
+                                    <input type="file" id="ws_logo_pc_file" accept="image/*" class="form-input" onchange="handlePcLogoUpload(event)" style="padding:0.35rem 0.6rem;">
+                                    <div style="margin-top:0.75rem; padding:0.5rem; background:rgba(255,255,255,0.03); border-radius:var(--adm-radius-sm); border:1px dashed rgba(255,255,255,0.1); width:fit-content;">
+                                        <img id="previewLogoPcImg" src="/icons/icon-512x512.png" alt="PC Icon Preview" style="width:48px; height:48px; object-fit:contain; background:#0F172A; padding:4px; border-radius:8px;" onerror="this.onerror=null; this.src='/icons/icon-192x192.png';">
+                                    </div>
+                                </div>
+                                <!-- HP Installer Logo -->
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label class="form-label" style="color:#34D399;">📱 Logo Installer HP (Mobile PWA & App Shortcut)</label>
+                                    <p style="font-size:0.75rem; color:var(--text-secondary); margin:0 0 0.5rem;">Ikon home screen di smartphone Android / iOS saat "Tambahkan ke Layar Utama".</p>
+                                    <input type="text" class="form-input" id="ws_logo_hp_url" placeholder="/logo-192.png atau https://..." style="margin-bottom:0.5rem;"
+                                        oninput="const img = document.getElementById('previewLogoHpImg'); if(img) img.src = this.value || '/icons/icon-192x192.png';">
+                                    <input type="file" id="ws_logo_hp_file" accept="image/*" class="form-input" onchange="handleHpLogoUpload(event)" style="padding:0.35rem 0.6rem;">
+                                    <div style="margin-top:0.75rem; padding:0.5rem; background:rgba(255,255,255,0.03); border-radius:var(--adm-radius-sm); border:1px dashed rgba(255,255,255,0.1); width:fit-content;">
+                                        <img id="previewLogoHpImg" src="/icons/icon-192x192.png" alt="HP Icon Preview" style="width:48px; height:48px; object-fit:contain; background:#0F172A; padding:4px; border-radius:12px;" onerror="this.onerror=null; this.src='/icons/icon-512x512.png';">
+                                    </div>
+                                </div>
+                            </div>
+
                             <div style="display:flex; justify-content:flex-end; margin-top:1.5rem;">
                                 <button type="submit" class="btn btn-primary">💾 Simpan Pengaturan Web</button>
                             </div>

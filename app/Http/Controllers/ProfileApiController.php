@@ -187,7 +187,7 @@ class ProfileApiController extends Controller
             ], 422);
         }
 
-        $mc = UserMC::first();
+        $mc = $request->attributes->get('mc') ?? ($request->session()->get('mc_user_id') ? UserMC::find($request->session()->get('mc_user_id')) : UserMC::first());
         if (!$mc) {
             return response()->json([
                 'success' => false,
@@ -198,15 +198,8 @@ class ProfileApiController extends Controller
         $currentPassword = $request->input('current_password');
         $newPassword = $request->input('new_password');
 
-        // Verifikasi kata sandi saat ini
-        $isCurrentValid = false;
-        if (!empty($mc->password_hash) && Hash::check($currentPassword, $mc->password_hash)) {
-            $isCurrentValid = true;
-        } elseif ($currentPassword === 'password123' || $currentPassword === 'admin') {
-            $isCurrentValid = true;
-        }
-
-        if (!$isCurrentValid) {
+        // Verifikasi kata sandi saat ini secara kriptografis tanpa bypass
+        if (empty($mc->password_hash) || !Hash::check($currentPassword, $mc->password_hash)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Password saat ini (lama) tidak sesuai.'

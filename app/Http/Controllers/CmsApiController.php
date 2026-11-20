@@ -567,6 +567,81 @@ class CmsApiController extends Controller
             }
         }
 
+        // Handle Logo uploads (Web Logo, PC Installer Logo, HP Installer Logo)
+        $logoFields = [
+            'logoUrl'   => 'logo_web',
+            'logoPcUrl' => 'logo_pc',
+            'logoHpUrl' => 'logo_hp'
+        ];
+        foreach ($logoFields as $field => $prefix) {
+            if (isset($payload[$field]) && is_string($payload[$field]) && \Illuminate\Support\Str::startsWith($payload[$field], 'data:image/')) {
+                $dataUrl = $payload[$field];
+                $semicolonPos = strpos($dataUrl, ';');
+                if ($semicolonPos !== false) {
+                    $type = substr($dataUrl, 11, $semicolonPos - 11);
+                    $base64Start = strpos($dataUrl, ',');
+                    if ($base64Start !== false) {
+                        $base64Data = substr($dataUrl, $base64Start + 1);
+                        $decoded = base64_decode($base64Data);
+                        if ($decoded !== false) {
+                            $ext = in_array($type, ['jpg', 'jpeg', 'png', 'webp', 'svg+xml']) ? $type : 'png';
+                            if ($ext === 'jpeg') $ext = 'jpg';
+                            if ($ext === 'svg+xml') $ext = 'svg';
+
+                            // Sanitize SVG content to prevent Stored XSS
+                            if ($ext === 'svg') {
+                                $cleanSvg = preg_replace('/<script\b[^>]*>(.*?)<\/script>/is', '', $decoded);
+                                $cleanSvg = preg_replace('/(\s+on\w+\s*=\s*(["\']).*?\2|\s+on\w+\s*=\s*[^>\s]+)/is', '', $cleanSvg);
+                                $cleanSvg = preg_replace('/href\s*=\s*(["\'])\s*javascript:[^"\']*\1/is', '', $cleanSvg);
+                                $cleanSvg = preg_replace('/<foreignObject\b[^>]*>(.*?)<\/foreignObject>/is', '', $cleanSvg);
+                                if (!str_contains($cleanSvg, '<svg')) {
+                                    continue;
+                                }
+                                $decoded = $cleanSvg;
+                            }
+
+                            $filename = $prefix . '_' . $mc->id . '_' . time() . '.' . $ext;
+                            $destPath = public_path('uploads/logos');
+                            if (!file_exists($destPath)) {
+                                @mkdir($destPath, 0755, true);
+                            }
+                            file_put_contents($destPath . '/' . $filename, $decoded);
+                            $payload[$field] = '/uploads/logos/' . $filename;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Update manifest.json if mobile/pc installer logo changed
+        $manifestPath = public_path('manifest.json');
+        if (file_exists($manifestPath) && (!empty($payload['logoHpUrl']) || !empty($payload['logoPcUrl']))) {
+            $manifest = json_decode(file_get_contents($manifestPath), true);
+            if (is_array($manifest)) {
+                $newIcons = [];
+                if (!empty($payload['logoHpUrl'])) {
+                    $newIcons[] = [
+                        'src'     => $payload['logoHpUrl'],
+                        'sizes'   => '192x192 512x512',
+                        'type'    => 'image/png',
+                        'purpose' => 'any maskable'
+                    ];
+                }
+                if (!empty($payload['logoPcUrl'])) {
+                    $newIcons[] = [
+                        'src'     => $payload['logoPcUrl'],
+                        'sizes'   => '192x192 512x512',
+                        'type'    => 'image/png',
+                        'purpose' => 'any'
+                    ];
+                }
+                if (count($newIcons) > 0) {
+                    $manifest['icons'] = $newIcons;
+                    @file_put_contents($manifestPath, json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                }
+            }
+        }
+
         $mc->payment_config = json_encode($payload);
         $mc->save();
         $this->invalidatePublicCache();
@@ -1675,16 +1750,41 @@ class CmsApiController extends Controller
 
     public function uploadMusicBankFile(Request $request)
     {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'file' => 'required|file|mimes:mp3,wav,ogg,aac,m4a,flac|max:30720',
+        ], [
+            'file.required' => 'Berkas audio wajib diunggah.',
+            'file.mimes' => 'Format berkas audio harus berupa MP3, WAV, OGG, AAC, M4A, atau FLAC.',
+            'file.max' => 'Ukuran berkas audio maksimal 30MB.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
         if ($request->hasFile('file')) {
             $file = $request->file('file');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('uploads/music'), $filename);
+            $ext = strtolower($file->getClientOriginalExtension());
+            if (!in_array($ext, ['mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac'])) {
+                $ext = 'mp3';
+            }
+            $safeBaseName = preg_replace('/[^a-zA-Z0-9_-]/', '_', pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+            $safeBaseName = substr($safeBaseName, 0, 40);
+            $filename = 'audio_' . time() . '_' . \Illuminate\Support\Str::random(10) . '_' . $safeBaseName . '.' . $ext;
+            $destPath = public_path('uploads/music');
+            if (!file_exists($destPath)) {
+                @mkdir($destPath, 0755, true);
+            }
+            $file->move($destPath, $filename);
             return response()->json([
                 'success' => true,
                 'url' => '/uploads/music/' . $filename
             ]);
         }
-        return response()->json(['success' => false, 'message' => 'No file uploaded']);
+        return response()->json(['success' => false, 'message' => 'Tidak ada berkas yang diunggah.'], 400);
     }
 
     public function uploadExpenseProof(Request $request, \App\Services\ImageSanitizerService $sanitizer)

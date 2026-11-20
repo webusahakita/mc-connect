@@ -183,6 +183,9 @@ class PublicController extends Controller
         try {
             $result = $antiCollision->executeAtomicBooking($mc->id, $validated);
 
+            $invoiceToken = substr(hash_hmac('sha256', (string)$result['invoice']->invoice_number, (string)config('app.key')), 0, 16);
+            $request->session()->put('last_booking_invoice_id', $result['invoice']->id);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Permintaan booking berhasil diajukan! Status jadwal kini "Tentative" dan terkunci aman dari bentrok jadwal.',
@@ -190,6 +193,8 @@ class PublicController extends Controller
                 'status' => 'Tentative',
                 'invoice_id' => $result['invoice']->id,
                 'invoice_number' => $result['invoice']->invoice_number,
+                'invoice_token' => $invoiceToken,
+                'invoice_url' => '/invoices/' . $result['invoice']->id . '/print?token=' . $invoiceToken,
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([

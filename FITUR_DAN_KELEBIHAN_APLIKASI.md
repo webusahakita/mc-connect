@@ -53,12 +53,31 @@ Antarmuka Admin dilengkapi 8 modul menu utama:
 ---
 
 ### 💼 Modul 2: Admin Dashboard & CRM Klien
+* **Dual Interface Modern (React SPA + Legacy Admin)**: Ditenagai Modern React 18 + TypeScript SPA di `/admin` dengan performa super cepat dan transisi instan, serta fallback Legacy Admin di `/legacy/admin`.
 * **Dashboard Metrik Kinerja**: Ringkasan performa finansial (Total Omset Terkunci, Total Acara, DP Tertunda, Margin Keuntungan Bersih).
 * **Grafik Tren Pendapatan Interaktif**: Visualisasi grafik area chart bulanan untuk memantau performa bisnis kuartal berjalan.
 * **Manajemen Pipeline Acara**: Pelacakan status acara multi-tahap: `Review` $\rightarrow$ `Tentative` (dengan auto-cleanup batas 24 jam) $\rightarrow$ `Terkunci` (setelah DP) $\rightarrow$ `Selesai`.
 * **CRM Klien & LTV (Lifetime Value)**:
-  - Database klien lengkap dengan riwayat booking, total omset per klien (*LTV*), dan kategori klien kustom.
+  - Database klien lengkap dengan riwayat booking, total omset per klien (*LTV*), dan kategori klien dinamis (VIP, Korporat, Reguler, WO).
+  - Integrasi tombol cepat **`💬 WA`** untuk memilih template WhatsApp dan membuka chat wa.me secara instan.
   - Catatan khusus preferensi klien dan riwayat kontak.
+
+---
+
+### ⚡ Modul 2b: Event Command Center (ECC) Terpadu
+* **Keuangan & Invoice (Paritas 100%)**:
+  - 3 Kartu Ringkasan Finansial: *Sisa Tagihan Belum Lunas*, *Total Pengeluaran*, dan *Estimasi Net Profit MC*.
+  - Layout Dua Kolom: Kolom kiri **Status Tagihan & QRIS** (edit rincian DP/pelunasan, QRIS statis, pratinjau invoice resmi); Kolom kanan **Expense Tracker** (pencatatan beban operasional dengan badge merah pengeluaran & total beban).
+* **Stage, Rundown & AI Builder**:
+  - Tombol **`🖨️ Cetak Rundown`** terpadu di header berdampingan dengan Cetak Invoice, Cetak SPK, dan Struk Thermal.
+  - **Full CRUD per Segmen Rundown**: Pengaturan jam mulai/selesai, judul segmen, naskah teleprompter, cue musik, instruksi operator FOH, dan PIC lapangan. Dilengkapi fitur geser urutan segmen naik/turun, duplikasi, dan hapus.
+* **Master Cue Sheet Musik & Live Soundboard**:
+  - 3 Sub-tab Navigasi: `🎵 Musik Latar Segmen Rundown (BGM)`, `🔊 Soundboard & SFX yang Dibawa`, dan `🌐 Musik Landing Page`.
+  - KPI Summary Soundboard panggung (Total Efek, Status Aktif, Shortcut [1]-[6], Zero Latency DSP).
+  - Pad Audisi Interaktif & Tabel Pengaturan Soundboard (Uji Suara, Status Bawa, Edit Shortcut, Hapus).
+* **Kolaborasi Vendor Lapangan (Cue Matrix)**:
+  - **Matriks Cue Panggung**: Urutan waktu, segmen/prompter, cue musik & efek audio, serta koordinator PIC vendor.
+  - Navigasi 2D scrollbar dengan *sticky header*, filter jumlah baris (10, 25, 50, Semua), dan paginasi otomatis.
 
 ---
 
@@ -109,15 +128,25 @@ Antarmuka Admin dilengkapi 8 modul menu utama:
 
 ---
 
-### 💬 Modul 8: WhatsApp Communication Hub
+### 💬 Modul 8: WhatsApp Communication Hub & CMS Pengaturan Web
+* **Dynamic CMS Web Settings**:
+  - Konfigurasi rekening bank multi-akun dengan tampilan terpadu.
+  - CRUD Kategori Acara & Kategori Klien yang dinamis dan terhubung ke filter CRM.
+  - CRUD Kategori Arus Kas (Pemasukan & Pengeluaran) yang terhubung ke pencatatan transaksi kas.
+  - Konfigurasi terpisah untuk **Logo Website**, **Logo Installer PWA PC (512x512)**, dan **Logo Installer HP (192x192)** dengan pratinjau instan.
 * **Template Pesan Cerdas**: Template pesan WhatsApp dinamis dengan variabel otomatis:
-  - `{name}`, `{event}`, `{mc_name}`, `{nominal_dp}`, `{link_invoice}`.
-* **One-Click WhatsApp Gateway**: Mengirim pesan konfirmasi booking, reminder pelunasan, dan follow-up langsung ke WhatsApp klien tanpa perlu repot menyimpan nomor telepon.
+  - `{name}`, `{event}`, `[Nama]`, `[Nama Acara]`, `[Tanggal]`, `[Nama MC]`.
+* **One-Click WhatsApp Gateway**: Mengirim pesan konfirmasi booking, reminder pelunasan, dan follow-up langsung ke WhatsApp klien (`https://wa.me/...`) tanpa perlu repot menyimpan nomor telepon.
 
 ---
 
-### 🔄 Modul 9: Offline-First PWA & High Performance
-* **Ketahanan Tanpa Internet (PWA)**: Dilengkapi `Service Worker` (`sw.js`). Jika koneksi internet terputus di dalam *ballroom* hotel atau area basement, aplikasi tetap dapat membaca naskah dan memutar audio panggung.
+### 🛡️ Modul 9: Offline-First PWA & Keamanan Kelas Enterprise
+* **Ketahanan Tanpa Internet (PWA)**: Dilengkapi `Service Worker` (`sw.js`) dan web app manifest. Jika koneksi internet terputus di dalam *ballroom* hotel atau area basement, aplikasi tetap dapat membaca naskah dan memutar audio panggung.
+* **Keamanan Berlapis (Security Hardened)**:
+  - **Zero-Trust Document Verification**: Proteksi IDOR pada cetak invoice, SPK, dan struk thermal menggunakan verifikasi token kriptografis HMAC SHA-256.
+  - **Upload Audio & Media Aman**: Whitelist MIME type ketat dan randomisasi nama berkas untuk mencegah Remote Code Execution (RCE).
+  - **CSRF Token Validation**: Validasi token CSRF pada seluruh mutasi data via API.
+  - **Otentikasi Kredensial Kuat**: Verifikasi password lama berbasis `Hash::check` untuk mencegah pergantian password tanpa izin.
 * **Arsitektur Database Server**: Seluruh mutasi data tersimpan aman dan terenkripsi di database MySQL server dengan sistem otentikasi session anti-bypass.
 
 ---
@@ -132,6 +161,8 @@ Antarmuka Admin dilengkapi 8 modul menu utama:
 | **4** | **Efisiensi Waktu dengan AI Co-Pilot** | Menghemat waktu berjam-jam dalam merancang susunan kata (*scripting*) untuk rundown baru dengan memanfaatkan AI yang sudah di-*tuning* khusus untuk gaya kepribadian panggung MC. |
 | **5** | **Citra Profesionalisme Ekstrem di Mata Klien** | Klien dimanjakan dengan invoice QRIS modern, jadwal kalender interaktif, dan *Press Kit* format PDF elegan yang siap unduh secara instan, meningkatkan daya tawar (*rate card*) MC. |
 | **6** | **Aman & Anti-Macet di Lokasi Minim Sinyal** | Dengan arsitektur Service Worker offline dan audio sintetis lokal, MC tidak perlu khawatir jika lokasi pernikahan berada di gedung bawah tanah (*basement*) dengan sinyal seluler lemah. |
+| **7** | **Event Command Center (ECC) Terpadu** | Kendali penuh setiap acara dalam satu layar: Keuangan dua kolom (QRIS & Expense Tracker), cetak dokumen serbaguna (Rundown, SPK, Invoice, Thermal), CRUD segmen rundown instan, dan Soundboard DSP hotkey. |
+| **8** | **Keamanan Teruji & Proteksi Zero-Trust** | Dokumen cetak terlindungi token kriptografi HMAC SHA-256 (anti-IDOR), proteksi upload anti-RCE, verifikasi CSRF ketat, dan keamanan akun yang sudah diaudit secara komprehensif. |
 
 ---
 

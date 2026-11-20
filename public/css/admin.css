@@ -728,6 +728,32 @@ body {
     transform: translateY(-1px);
 }
 
+.btn-danger,
+button.btn-danger,
+.bank-account-item .btn-danger {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: var(--adm-radius-sm, 6px) !important;
+    font-weight: 600 !important;
+    padding: 0.4rem 0.8rem !important;
+    font-size: 0.8rem !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+.btn-danger:hover,
+button.btn-danger:hover,
+.bank-account-item .btn-danger:hover {
+    background: #f1f5f9 !important;
+    color: #ef4444 !important;
+    transform: translateY(-1px) !important;
+}
+
 .btn-outline-gold {
     background: transparent;
     color: var(--adm-gold);

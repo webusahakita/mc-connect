@@ -19,7 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Session\Middleware\StartSession::class,
         ]);
         $middleware->validateCsrfTokens(except: [
-            'api/*',
+            'api/mc/login',
+            'api/book/request',
+            'api/calendar/check-availability',
+            'api/pricing/calculate-quotation',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

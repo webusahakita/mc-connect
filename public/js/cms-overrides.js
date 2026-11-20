@@ -965,8 +965,10 @@ window.savePaymentSettings = async function() {
 
     const qrisUrl = document.getElementById('paymentQrisUrl')?.value || '';
     const logoUrl = document.getElementById('ws_logo_url')?.value || ''; // gabung dengan web logo
+    const logoPcUrl = document.getElementById('ws_logo_pc_url')?.value || '';
+    const logoHpUrl = document.getElementById('ws_logo_hp_url')?.value || '';
     
-    const data = { accounts, qrisUrl, logoUrl };
+    const data = { accounts, qrisUrl, logoUrl, logoPcUrl, logoHpUrl };
     try {
         const res = await fetch('/api/cms/payment-settings', {
             method: 'POST',
@@ -1028,7 +1030,10 @@ window.handleSaveEventCategories = async function() {
     try {
         const res = await fetch('/api/cms/event-categories', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': window.CSRF_TOKEN || ''
+            },
             body: JSON.stringify({ categories })
         });
         if (res.ok) { if (typeof window.uiAlert === 'function') window.uiAlert('Kategori acara berhasil disimpan ke Server!', 'Sukses'); else { if (typeof window.uiAlert === 'function') window.uiAlert('Kategori acara berhasil disimpan ke Server!', 'Gagal'); else alert('Kategori acara berhasil disimpan ke Server!'); } }
@@ -1262,7 +1267,10 @@ window.handleSaveWaTemplates = async function() {
     try {
         const res = await fetch('/api/cms/wa-templates', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': window.CSRF_TOKEN || ''
+            },
             body: JSON.stringify({ templates })
         });
         if (res.ok) { if (typeof window.uiAlert === 'function') window.uiAlert('Template WA berhasil disimpan ke Server!', 'Sukses'); else { if (typeof window.uiAlert === 'function') window.uiAlert('Template WA berhasil disimpan ke Server!', 'Gagal'); else alert('Template WA berhasil disimpan ke Server!'); } }
@@ -1289,6 +1297,44 @@ window.handleWebLogoUpload = function(event) {
             const input = document.getElementById('ws_logo_url');
             if(input) input.value = e.target.result; 
         }
+        reader.readAsDataURL(file);
+    }
+};
+
+window.handlePcLogoUpload = function(event) {
+    const file = event.target.files[0];
+    if (file) {
+        if (file.size > 500 * 1024) {
+            if (typeof window.uiAlert === 'function') window.uiAlert('Ukuran file logo PC terlalu besar. Maksimal 500KB.', 'Notifikasi'); else alert('Ukuran file logo PC terlalu besar. Maksimal 500KB.');
+            event.target.value = '';
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = document.getElementById('previewLogoPcImg');
+            if (img) img.src = e.target.result;
+            const input = document.getElementById('ws_logo_pc_url');
+            if (input) input.value = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+window.handleHpLogoUpload = function(event) {
+    const file = event.target.files[0];
+    if (file) {
+        if (file.size > 500 * 1024) {
+            if (typeof window.uiAlert === 'function') window.uiAlert('Ukuran file logo HP terlalu besar. Maksimal 500KB.', 'Notifikasi'); else alert('Ukuran file logo HP terlalu besar. Maksimal 500KB.');
+            event.target.value = '';
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = document.getElementById('previewLogoHpImg');
+            if (img) img.src = e.target.result;
+            const input = document.getElementById('ws_logo_hp_url');
+            if (input) input.value = e.target.result;
+        };
         reader.readAsDataURL(file);
     }
 };
@@ -1405,6 +1451,18 @@ window.loadCmsWebSettings = async function(force = false) {
                 const wlImg = document.getElementById('previewLogoImg');
                 if (wl) wl.value = paySet.logoUrl;
                 if (wlImg) wlImg.src = paySet.logoUrl;
+            }
+            if (paySet.logoPcUrl) {
+                const wpc = document.getElementById('ws_logo_pc_url');
+                const wpcImg = document.getElementById('previewLogoPcImg');
+                if (wpc) wpc.value = paySet.logoPcUrl;
+                if (wpcImg) wpcImg.src = paySet.logoPcUrl;
+            }
+            if (paySet.logoHpUrl) {
+                const whp = document.getElementById('ws_logo_hp_url');
+                const whpImg = document.getElementById('previewLogoHpImg');
+                if (whp) whp.value = paySet.logoHpUrl;
+                if (whpImg) whpImg.src = paySet.logoHpUrl;
             }
         }
 
