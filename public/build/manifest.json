@@ -1,32 +1,32 @@
 {
-  "_badge-BHk5iD14.js": {
-    "file": "assets/badge-BHk5iD14.js",
+  "_badge-Cj2x0-hR.js": {
+    "file": "assets/badge-Cj2x0-hR.js",
     "name": "badge",
     "imports": [
-      "_vendor-react-CwqezjvO.js",
+      "_vendor-react-DMA-lQ1h.js",
       "resources/js/main.tsx"
     ]
   },
-  "_useSoundboard-IqnV65Jv.js": {
-    "file": "assets/useSoundboard-IqnV65Jv.js",
+  "_useSoundboard-D3qR-SKY.js": {
+    "file": "assets/useSoundboard-D3qR-SKY.js",
     "name": "useSoundboard",
     "imports": [
-      "_vendor-react-CwqezjvO.js"
+      "_vendor-react-DMA-lQ1h.js"
     ]
   },
-  "_vendor-libs-CtoZ81DX.js": {
-    "file": "assets/vendor-libs-CtoZ81DX.js",
+  "_vendor-libs-DmW2UMwm.js": {
+    "file": "assets/vendor-libs-DmW2UMwm.js",
     "name": "vendor-libs",
     "imports": [
-      "_vendor-react-CwqezjvO.js"
+      "_vendor-react-DMA-lQ1h.js"
     ]
   },
-  "_vendor-react-CwqezjvO.js": {
-    "file": "assets/vendor-react-CwqezjvO.js",
+  "_vendor-react-DMA-lQ1h.js": {
+    "file": "assets/vendor-react-DMA-lQ1h.js",
     "name": "vendor-react"
   },
   "resources/css/app.css": {
-    "file": "assets/app-CeW1FJtR.css",
+    "file": "assets/app-Dop3Rlvl.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
@@ -64,13 +64,13 @@
     "isEntry": true
   },
   "resources/js/main.tsx": {
-    "file": "assets/main-BzqHaGrM.js",
+    "file": "assets/main-IxlQqQKl.js",
     "name": "main",
     "src": "resources/js/main.tsx",
     "isEntry": true,
     "imports": [
-      "_vendor-react-CwqezjvO.js",
-      "_vendor-libs-CtoZ81DX.js"
+      "_vendor-react-DMA-lQ1h.js",
+      "_vendor-libs-DmW2UMwm.js"
     ],
     "dynamicImports": [
       "resources/js/pages/Landing.tsx",
@@ -79,55 +79,55 @@
       "resources/js/pages/VendorCue.tsx"
     ],
     "css": [
-      "assets/app-CeW1FJtR.css"
+      "assets/app-Dop3Rlvl.css"
     ]
   },
   "resources/js/pages/Dashboard.tsx": {
-    "file": "assets/Dashboard-VZXhuf0O.js",
+    "file": "assets/Dashboard-Bra8bbW9.js",
     "name": "Dashboard",
     "src": "resources/js/pages/Dashboard.tsx",
     "isDynamicEntry": true,
     "imports": [
-      "_vendor-react-CwqezjvO.js",
-      "_vendor-libs-CtoZ81DX.js",
-      "_useSoundboard-IqnV65Jv.js"
+      "_vendor-react-DMA-lQ1h.js",
+      "_vendor-libs-DmW2UMwm.js",
+      "_useSoundboard-D3qR-SKY.js"
     ]
   },
   "resources/js/pages/Landing.tsx": {
-    "file": "assets/Landing-SNUlEAl2.js",
+    "file": "assets/Landing-QBjouW3A.js",
     "name": "Landing",
     "src": "resources/js/pages/Landing.tsx",
     "isDynamicEntry": true,
     "imports": [
-      "_vendor-react-CwqezjvO.js",
+      "_vendor-react-DMA-lQ1h.js",
       "resources/js/main.tsx",
-      "_badge-BHk5iD14.js",
-      "_vendor-libs-CtoZ81DX.js"
+      "_badge-Cj2x0-hR.js",
+      "_vendor-libs-DmW2UMwm.js"
     ]
   },
   "resources/js/pages/StageMode.tsx": {
-    "file": "assets/StageMode-BicZXXcS.js",
+    "file": "assets/StageMode-CCBRTf_D.js",
     "name": "StageMode",
     "src": "resources/js/pages/StageMode.tsx",
     "isDynamicEntry": true,
     "imports": [
-      "_vendor-react-CwqezjvO.js",
-      "_useSoundboard-IqnV65Jv.js",
+      "_vendor-react-DMA-lQ1h.js",
+      "_useSoundboard-D3qR-SKY.js",
       "resources/js/main.tsx",
-      "_badge-BHk5iD14.js",
-      "_vendor-libs-CtoZ81DX.js"
+      "_badge-Cj2x0-hR.js",
+      "_vendor-libs-DmW2UMwm.js"
     ]
   },
   "resources/js/pages/VendorCue.tsx": {
-    "file": "assets/VendorCue-DCBFjbMP.js",
+    "file": "assets/VendorCue-BE5O5laD.js",
     "name": "VendorCue",
     "src": "resources/js/pages/VendorCue.tsx",
     "isDynamicEntry": true,
     "imports": [
-      "_vendor-react-CwqezjvO.js",
-      "_badge-BHk5iD14.js",
+      "_vendor-react-DMA-lQ1h.js",
+      "_badge-Cj2x0-hR.js",
       "resources/js/main.tsx",
-      "_vendor-libs-CtoZ81DX.js"
+      "_vendor-libs-DmW2UMwm.js"
     ]
   },
   "resources/js/soundboard.js": {

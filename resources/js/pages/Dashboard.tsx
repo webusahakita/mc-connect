@@ -154,7 +154,13 @@ export default function Dashboard({
   // Navigation State
   const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
   const [liveTime, setLiveTime] = useState<string>('09:00:00');
+
+  const handleSwitchSection = (sec: AdminSection) => {
+    setActiveSection(sec);
+    setIsMobileSidebarOpen(false);
+  };
 
   // Soundboard DSP Hook
   const { playFanfare, playDrumRoll, playChime, playBuzzer, playApplause } = useSoundboard();
@@ -1726,25 +1732,42 @@ export default function Dashboard({
   }, [unifiedTransactions]);
 
   return (
-    <div className={`admin-shell ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+    <div className={`admin-shell ${isSidebarCollapsed ? 'sidebar-collapsed' : ''} ${isMobileSidebarOpen ? 'sidebar-mobile-open' : ''}`}>
       {/* =========================================================
           1. STICKY LEFT SIDEBAR (EXACT MATCH TO OLD ADMIN)
           ========================================================= */}
-      <aside className="admin-sidebar">
+      <aside className={`admin-sidebar ${isMobileSidebarOpen ? 'open' : ''}`}>
         {/* Sidebar Header with Brand */}
         <div className="sidebar-header">
           <button 
-            onClick={() => setActiveSection('dashboard')} 
+            onClick={() => handleSwitchSection('dashboard')} 
             className="brand-logo"
             style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer' }}
           >
             <div className="brand-icon">MC</div>
             <div className="brand-text">MC-<span>Connect</span></div>
           </button>
-          <div className="sidebar-header-right">
+          <div className="sidebar-header-right" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
             <span style={{ fontSize: '0.7rem', fontWeight: 800, background: 'rgba(212,175,55,0.15)', color: 'var(--adm-gold)', border: '1px solid rgba(212,175,55,0.3)', padding: '0.18rem 0.55rem', borderRadius: '999px' }}>
               v8.0 Pro
             </span>
+            <button
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="mobile-sidebar-close"
+              title="Tutup Menu Sidebar"
+              aria-label="Tutup Menu Sidebar"
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                color: '#94A3B8',
+                borderRadius: '8px',
+                padding: '0.2rem 0.5rem',
+                fontSize: '0.85rem',
+                cursor: 'pointer'
+              }}
+            >
+              ✕
+            </button>
           </div>
         </div>
 
@@ -1768,7 +1791,7 @@ export default function Dashboard({
             <li>
               <button 
                 className={`sidebar-item-btn ${activeSection === 'dashboard' ? 'active' : ''}`}
-                onClick={() => setActiveSection('dashboard')}
+                onClick={() => handleSwitchSection('dashboard')}
               >
                 <div className="sidebar-item-left">
                   <div className="sidebar-icon-sq">📊</div>
@@ -1780,7 +1803,7 @@ export default function Dashboard({
             <li>
               <button 
                 className={`sidebar-item-btn ${activeSection === 'calendar' ? 'active' : ''}`}
-                onClick={() => setActiveSection('calendar')}
+                onClick={() => handleSwitchSection('calendar')}
                 style={{ justifyContent: 'space-between' }}
               >
                 <div className="sidebar-item-left">
@@ -1797,7 +1820,7 @@ export default function Dashboard({
             <li>
               <button 
                 className={`sidebar-item-btn ${activeSection === 'customers' ? 'active' : ''}`}
-                onClick={() => setActiveSection('customers')}
+                onClick={() => handleSwitchSection('customers')}
               >
                 <div className="sidebar-item-left">
                   <div className="sidebar-icon-sq">👥</div>
@@ -1809,7 +1832,7 @@ export default function Dashboard({
             <li>
               <button 
                 className={`sidebar-item-btn ${activeSection === 'cashflow' ? 'active' : ''}`}
-                onClick={() => setActiveSection('cashflow')}
+                onClick={() => handleSwitchSection('cashflow')}
               >
                 <div className="sidebar-item-left">
                   <div className="sidebar-icon-sq">💰</div>
@@ -1847,7 +1870,7 @@ export default function Dashboard({
                   <button
                     className={`sidebar-item-btn ${(activeSection === 'settings' || activeSection === 'landing-settings') ? 'active' : ''}`}
                     id="menu-landing-settings"
-                    onClick={() => setActiveSection('landing-settings')}
+                    onClick={() => handleSwitchSection('landing-settings')}
                     style={{ padding: '0.6rem', fontSize: '0.85rem', background: 'transparent' }}
                   >
                     <span>CMS Konten</span>
@@ -1857,7 +1880,7 @@ export default function Dashboard({
                   <button
                     className={`sidebar-item-btn ${activeSection === 'web-settings' ? 'active' : ''}`}
                     id="menu-web-settings"
-                    onClick={() => setActiveSection('web-settings')}
+                    onClick={() => handleSwitchSection('web-settings')}
                     style={{ padding: '0.6rem', fontSize: '0.85rem', background: 'transparent' }}
                   >
                     <span>Pengaturan Web</span>
@@ -1870,7 +1893,7 @@ export default function Dashboard({
               <button 
                 id="menu-command-center"
                 className={`sidebar-item-btn ${activeSection === 'command-center' ? 'active' : ''}`}
-                onClick={() => setActiveSection('command-center')}
+                onClick={() => handleSwitchSection('command-center')}
               >
                 <div className="sidebar-item-left">
                   <div className="sidebar-icon-sq">⚡</div>
@@ -1883,7 +1906,7 @@ export default function Dashboard({
               <button 
                 id="menu-wardrobe"
                 className={`sidebar-item-btn ${activeSection === 'wardrobe' ? 'active' : ''}`}
-                onClick={() => setActiveSection('wardrobe')}
+                onClick={() => handleSwitchSection('wardrobe')}
               >
                 <div className="sidebar-item-left">
                   <div className="sidebar-icon-sq">👔</div>
@@ -1896,7 +1919,7 @@ export default function Dashboard({
               <button 
                 id="menu-musicbank"
                 className={`sidebar-item-btn ${activeSection === 'musicbank' ? 'active' : ''}`}
-                onClick={() => setActiveSection('musicbank')}
+                onClick={() => handleSwitchSection('musicbank')}
               >
                 <div className="sidebar-item-left">
                   <div className="sidebar-icon-sq">&#128194;</div>
@@ -1909,7 +1932,7 @@ export default function Dashboard({
               <button 
                 id="menu-guide"
                 className={`sidebar-item-btn ${activeSection === 'guide' ? 'active' : ''}`}
-                onClick={() => setActiveSection('guide')}
+                onClick={() => handleSwitchSection('guide')}
                 style={{ border: '1px solid rgba(212, 175, 55, 0.3)', background: 'rgba(212, 175, 55, 0.08)', marginTop: '0.35rem' }}
               >
                 <div className="sidebar-item-left">
@@ -1928,7 +1951,10 @@ export default function Dashboard({
         <div className="sidebar-footer">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.82rem' }}>
             <button 
-              onClick={onBackToHome}
+              onClick={() => {
+                setIsMobileSidebarOpen(false);
+                onBackToHome();
+              }}
               style={{ color: 'var(--adm-gold)', fontSize: '0.8rem', background: 'none', border: 'none', fontWeight: 600, cursor: 'pointer', padding: 0 }}
               title="Buka Portal Publik"
             >
@@ -1937,6 +1963,7 @@ export default function Dashboard({
           </div>
           <button 
             onClick={() => {
+              setIsMobileSidebarOpen(false);
               if (onLogout) {
                 onLogout();
               } else {
@@ -1953,6 +1980,23 @@ export default function Dashboard({
         </div>
       </aside>
 
+      {/* Mobile Sidebar Backdrop Overlay */}
+      {isMobileSidebarOpen && (
+        <div 
+          className="sidebar-backdrop active"
+          onClick={() => setIsMobileSidebarOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(3px)',
+            WebkitBackdropFilter: 'blur(3px)',
+            zIndex: 1050,
+            cursor: 'pointer'
+          }}
+        />
+      )}
+
       {/* =========================================================
           2. STICKY TOPBAR & MAIN CONTENT BODY
           ========================================================= */}
@@ -1962,7 +2006,9 @@ export default function Dashboard({
           <div className="admin-topbar-left">
             <button 
               className="btn btn-secondary btn-sm mobile-menu-toggle"
-              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              onClick={() => setIsMobileSidebarOpen(prev => !prev)}
+              aria-label="Toggle Mobile Sidebar Menu"
+              title="Menu Navigasi Sidebar"
               style={{ fontSize: '1.2rem', padding: '0.2rem 0.6rem' }}
             >
               ☰

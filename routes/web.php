@@ -8,11 +8,31 @@ use App\Http\Controllers\InvoiceController;
 Route::get('/invoices/{id}/print', [InvoiceController::class, 'show'])->name('invoice.print');
 Route::get('/invoices/{id}/pdf', [InvoiceController::class, 'downloadPdf'])->name('invoice.pdf');
 
+// Safe SPA Renderer with Stale Vite Dev Server Auto-Recovery
+if (!function_exists('renderSpaView')) {
+    function renderSpaView() {
+        $hotFile = public_path('hot');
+        if (file_exists($hotFile)) {
+            $hotUrl = trim((string)@file_get_contents($hotFile));
+            $parsed = parse_url($hotUrl);
+            $host = $parsed['host'] ?? '127.0.0.1';
+            $port = $parsed['port'] ?? 5173;
+            $conn = @fsockopen($host, (int)$port, $errno, $errstr, 0.1);
+            if (!$conn) {
+                @unlink($hotFile);
+            } else {
+                fclose($conn);
+            }
+        }
+        return view('spa');
+    }
+}
+
 // Modern Decoupled SPA Routes (React 19 + TypeScript)
-Route::get('/', fn () => view('spa'))->name('home');
-Route::get('/landing', fn () => view('spa'))->name('landing');
-Route::get('/app', fn () => view('spa'))->name('app.spa');
-Route::get('/app/{any}', fn () => view('spa'))->where('any', '.*');
+Route::get('/', fn () => renderSpaView())->name('home');
+Route::get('/landing', fn () => renderSpaView())->name('landing');
+Route::get('/app', fn () => renderSpaView())->name('app.spa');
+Route::get('/app/{any}', fn () => renderSpaView())->where('any', '.*');
 
 // Legacy Safe Bridge Landing Page Fallbacks
 Route::get('/legacy', function () {
@@ -53,7 +73,7 @@ Route::middleware(EnsureMcAuthenticated::class)->group(function () {
 
     foreach (['admin', 'stage', 'vendor'] as $page) {
         // Modern Decoupled React 19 SPA Handlers
-        Route::get('/'.$page, fn () => view('spa'))->name($page === 'admin' ? 'admin.dashboard' : $page);
+        Route::get('/'.$page, fn () => renderSpaView())->name($page === 'admin' ? 'admin.dashboard' : $page);
         Route::get('/'.$page.'.html', fn () => redirect('/'.$page, 301));
 
         // Legacy Safe Bridge Fallbacks (Original Monolithic HTML)

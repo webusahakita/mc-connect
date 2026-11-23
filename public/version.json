@@ -1,11 +1,21 @@
 {
   "version": "2.5.0",
-  "commit_hash": "56a4dd5ac9a51f7f49e3f63a099a0c2d5e659df3",
-  "commit_short": "56a4dd5",
-  "commit_message": "feat & fix: sempurnakan fitur pengaturan web, ECC, audit keamanan, dan optimasi SEO halaman bisnis",
-  "commit_author": "MC Connect",
-  "commit_date": "2026-11-20T14:37:04+07:00",
+  "commit_hash": "620d15d0b12259c26ef6b88834bbc7f0a9975a74",
+  "commit_short": "620d15d",
+  "commit_message": "fix(test): make booking collision DB-agnostic and align tests with SPA contract",
+  "commit_author": "dimasachmad2",
+  "commit_date": "2026-11-23T19:03:03+07:00",
   "recent_commits": [
+    {
+      "hash": "620d15d",
+      "message": "fix(test): make booking collision DB-agnostic and align tests with SPA contract",
+      "date": "2026-11-23T19:03:03+07:00"
+    },
+    {
+      "hash": "bd6e998",
+      "message": "feat: sematkan tautan halaman SaaS (/bisnis) di navbar dan footer landing page",
+      "date": "2026-11-20T14:58:05+07:00"
+    },
     {
       "hash": "56a4dd5",
       "message": "feat & fix: sempurnakan fitur pengaturan web, ECC, audit keamanan, dan optimasi SEO halaman bisnis",
@@ -20,19 +30,9 @@
       "hash": "58e9603",
       "message": "feat: implement modern decoupled SPA (React 19), enterprise backend engines, and browser E2E test suite",
       "date": "2026-11-18T21:46:44+07:00"
-    },
-    {
-      "hash": "66d74d6",
-      "message": "fix(mobile): use overflow-x clip on root to curb Chrome Android scroll flicker",
-      "date": "2026-11-14T17:34:30+07:00"
-    },
-    {
-      "hash": "18c6dfb",
-      "message": "fix(mobile): stop admin topbar scroll flicker via GPU layer promotion",
-      "date": "2026-11-14T17:03:02+07:00"
     }
   ],
-  "updated_at": "2026-11-20T07:58:05.386Z",
-  "release_title": "Pembaruan: feat & fix: sempurnakan fitur pengaturan web, ECC, audit keamanan, dan optimasi SEO halaman bisnis",
+  "updated_at": "2026-11-23T23:55:12.883Z",
+  "release_title": "Pembaruan: fix(test): make booking collision DB-agnostic and align tests with SPA contract",
   "notification_active": true
 }

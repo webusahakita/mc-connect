@@ -44,8 +44,8 @@ export default function App() {
   // Authentication State (Unified SPA Auth Guard)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
-  const [loginEmail, setLoginEmail] = useState<string>('vanya@mcconnect.id');
-  const [loginPassword, setLoginPassword] = useState<string>('password123');
+  const [loginEmail, setLoginEmail] = useState<string>('');
+  const [loginPassword, setLoginPassword] = useState<string>('');
   const [loginLoading, setLoginLoading] = useState<boolean>(false);
   const [loginError, setLoginError] = useState<string>('');
   const [pendingView, setPendingView] = useState<'admin' | 'stage' | 'vendor' | null>(null);
@@ -547,11 +547,6 @@ export default function App() {
                     className="w-full rounded-xl border border-slate-700 bg-slate-950/70 py-2.5 pl-10 pr-3 text-sm text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                   />
                 </div>
-              </div>
-
-              <div className="rounded-xl border border-amber-500/15 bg-amber-500/5 p-2.5 text-[11px] text-amber-300/80">
-                <strong>💡 Akses Cepat Demo:</strong><br />
-                Email: <code className="text-amber-300 font-mono">vanya@mcconnect.id</code> | Pass: <code className="text-amber-300 font-mono">password123</code>
               </div>
 
               <Button

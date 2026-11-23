@@ -115,24 +115,18 @@
             </div>
             @endif
 
-            <div class="quick-demo-pill">
-                <strong style="color:var(--gold-primary);">Demo Kredensial Default:</strong><br>
-                Email: <code>vanya@mcconnect.id</code><br>
-                Sandi: <code>password123</code>
-            </div>
-
             <form action="{{ route('login.post') }}" method="POST">
                 @csrf
                 <div class="form-group">
                     <label class="form-label">Email Master of Ceremony *</label>
-                    <input type="email" class="form-input" name="email" value="{{ old('email', 'vanya@mcconnect.id') }}" required autofocus>
+                    <input type="email" class="form-input" name="email" value="{{ old('email') }}" placeholder="nama@mcconnect.id" required autofocus>
                 </div>
 
                 <div class="form-group">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
                         <label class="form-label" style="margin-bottom:0;">Kata Sandi *</label>
                     </div>
-                    <input type="password" class="form-input" name="password" value="password123" required>
+                    <input type="password" class="form-input" name="password" value="" placeholder="••••••••" required>
                 </div>
 
                 <div style="margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; color:var(--text-secondary);">

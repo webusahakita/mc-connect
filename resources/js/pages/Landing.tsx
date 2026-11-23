@@ -30,6 +30,7 @@ import {
   Volume2,
   VolumeX,
   Check,
+  Menu,
   X,
   MessageCircle
 } from 'lucide-react';
@@ -242,6 +243,7 @@ export default function Landing({
 
   // Booking Modal State
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState<boolean>(false);
   const [createdBooking, setCreatedBooking] = useState<{ eventId: number; invoiceId: number; invoiceNumber: string } | null>(null);
 
@@ -494,91 +496,202 @@ export default function Landing({
       {/* =========================================================
           1. LUXURY STICKY NAVIGATION BAR
           ========================================================= */}
-      <nav className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-white/10 bg-[#0B0F19]/90 px-6 backdrop-blur-xl">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-slate-950 font-black text-sm shadow-md shadow-amber-500/20">
-              MC
-            </div>
-            <div>
-              <span className="text-sm font-extrabold tracking-tight text-white flex items-center gap-1.5">
-                {bio.name || 'MC-Connect'}
-                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-400 border border-amber-500/30">
-                  OFFICIAL
+      <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#0B0F19]/95 backdrop-blur-xl">
+        <nav className="flex h-16 items-center justify-between px-3 sm:px-6 w-full">
+          <div className="flex items-center gap-2 shrink">
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+              <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-slate-950 font-black text-xs sm:text-sm shadow-md shadow-amber-500/20 shrink-0">
+                MC
+              </div>
+              <div className="min-w-0">
+                <span className="text-xs sm:text-sm font-extrabold tracking-tight text-white flex items-center gap-1.5">
+                  <span className="truncate max-w-[95px] xs:max-w-[130px] sm:max-w-none">{bio.name || 'MC-Connect'}</span>
+                  <span className="hidden sm:inline-block rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-400 border border-amber-500/30 shrink-0">
+                    OFFICIAL
+                  </span>
                 </span>
-              </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Center Nav Links */}
-        <div className="hidden lg:flex items-center gap-6 text-xs font-semibold text-slate-300">
-          <button onClick={() => scrollTo('biodata')} className="hover:text-amber-400 transition-colors">
-            Biodata
-          </button>
-          <button onClick={() => scrollTo('katalog')} className="hover:text-amber-400 transition-colors">
-            Paket Layanan
-          </button>
-          <button onClick={() => scrollTo('galeri')} className="hover:text-amber-400 transition-colors">
-            Galeri Portofolio
-          </button>
-          <button onClick={() => scrollTo('kalender')} className="hover:text-amber-400 transition-colors">
-            Kalender Jadwal
-          </button>
-          <button onClick={() => scrollTo('kebijakan')} className="hover:text-amber-400 transition-colors">
-            Kebijakan & FAQ
-          </button>
-          <button onClick={() => scrollTo('testimoni')} className="hover:text-amber-400 transition-colors">
-            Testimoni
-          </button>
-          <a
-            href="/bisnis"
-            className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-amber-500/40 bg-amber-500/15 text-amber-300 font-bold hover:bg-amber-500/25 hover:text-amber-200 transition-all text-xs"
-            title="Pelajari Platform SaaS MC-Connect untuk membuat website MC Anda sendiri"
-          >
-            <span>👑</span> Buat Web MC (SaaS)
-          </a>
-        </div>
+          {/* Center Nav Links (Desktop) */}
+          <div className="hidden lg:flex items-center gap-6 text-xs font-semibold text-slate-300">
+            <button onClick={() => scrollTo('biodata')} className="hover:text-amber-400 transition-colors">
+              Biodata
+            </button>
+            <button onClick={() => scrollTo('katalog')} className="hover:text-amber-400 transition-colors">
+              Paket Layanan
+            </button>
+            <button onClick={() => scrollTo('galeri')} className="hover:text-amber-400 transition-colors">
+              Galeri Portofolio
+            </button>
+            <button onClick={() => scrollTo('kalender')} className="hover:text-amber-400 transition-colors">
+              Kalender Jadwal
+            </button>
+            <button onClick={() => scrollTo('kebijakan')} className="hover:text-amber-400 transition-colors">
+              Kebijakan & FAQ
+            </button>
+            <button onClick={() => scrollTo('testimoni')} className="hover:text-amber-400 transition-colors">
+              Testimoni
+            </button>
+            <a
+              href="/bisnis"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-amber-500/40 bg-amber-500/15 text-amber-300 font-bold hover:bg-amber-500/25 hover:text-amber-200 transition-all text-xs"
+              title="Pelajari Platform SaaS MC-Connect untuk membuat website MC Anda sendiri"
+            >
+              <span>👑</span> Buat Web MC (SaaS)
+            </a>
+          </div>
 
-        {/* Right Action Buttons */}
-        <div className="flex items-center gap-2.5">
-          {/* BGM Toggle Button */}
-          <button
-            onClick={() => {
-              if (!bgm.isPlaying) bgm.start();
-              setIsBgmWidgetOpen(!isBgmWidgetOpen);
-            }}
-            title="Pengaturan Musik Latar Panggung (BGM)"
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
-              bgm.isPlaying
-                ? 'border-amber-500/40 bg-amber-500/10 text-amber-400'
-                : 'border-white/10 bg-white/5 text-slate-400 hover:text-white'
-            }`}
-          >
-            <Music className={`h-3.5 w-3.5 ${bgm.isPlaying ? 'animate-bounce' : ''}`} />
-            <span className="hidden sm:inline">{bgm.isPlaying ? 'Musik On' : 'Musik BGM'}</span>
-          </button>
+          {/* Right Action Buttons */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* BGM Toggle Button */}
+            <button
+              onClick={() => {
+                if (!bgm.isPlaying) bgm.start();
+                setIsBgmWidgetOpen(!isBgmWidgetOpen);
+              }}
+              title="Pengaturan Musik Latar Panggung (BGM)"
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
+                bgm.isPlaying
+                  ? 'border-amber-500/40 bg-amber-500/10 text-amber-400'
+                  : 'border-white/10 bg-white/5 text-slate-400 hover:text-white'
+              }`}
+            >
+              <Music className={`h-3.5 w-3.5 ${bgm.isPlaying ? 'animate-bounce' : ''}`} />
+              <span className="hidden sm:inline">{bgm.isPlaying ? 'Musik On' : 'Musik BGM'}</span>
+            </button>
 
-          {/* Quick Booking Button */}
-          <Button
-            size="sm"
-            onClick={() => setIsModalOpen(true)}
-            className="bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-bold hover:brightness-110 shadow-md shadow-amber-500/20"
-          >
-            <Sparkles className="h-3.5 w-3.5 mr-1" /> Request to Book
-          </Button>
+            {/* Quick Booking Button */}
+            <Button
+              size="sm"
+              onClick={() => setIsModalOpen(true)}
+              className="bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-bold hover:brightness-110 shadow-md shadow-amber-500/20 text-xs px-2.5 sm:px-4 py-1.5 h-8 sm:h-9"
+            >
+              <Sparkles className="h-3.5 w-3.5 sm:mr-1 shrink-0" />
+              <span className="hidden sm:inline">Request to Book</span>
+              <span className="sm:hidden">Book</span>
+            </Button>
 
-          {/* Login MC Admin Portal Button */}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={onOpenAdmin}
-            className="hidden sm:flex border-white/10 bg-slate-900 text-slate-300 hover:text-white"
+            {/* Login MC Admin Portal Button (Desktop / Tablet) */}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onOpenAdmin}
+              className="hidden sm:flex border-white/10 bg-slate-900 text-slate-300 hover:text-white text-xs h-9"
+            >
+              <Lock className="h-3 w-3 mr-1 text-amber-400" /> Portal MC
+            </Button>
+
+            {/* Mobile Hamburger Menu Toggle Button */}
+            <button
+              type="button"
+              id="landingMobileMenuBtn"
+              onClick={() => setIsMobileMenuOpen(prev => !prev)}
+              className="lg:hidden flex items-center justify-center h-8 w-8 rounded-xl border border-white/10 bg-white/5 text-slate-300 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+              aria-label="Toggle Mobile Menu"
+              title="Menu Navigasi Landing Page"
+            >
+              {isMobileMenuOpen ? <X className="h-4 w-4 text-amber-400" /> : <Menu className="h-4 w-4 text-amber-400" />}
+            </button>
+          </div>
+        </nav>
+
+        {/* Mobile Navigation Dropdown Menu Drawer */}
+        {isMobileMenuOpen && (
+          <div 
+            id="landingMobileMenuDrawer"
+            className="lg:hidden border-t border-white/10 bg-[#0B0F19]/98 px-5 py-4 shadow-2xl animate-in slide-in-from-top-2 duration-200"
           >
-            <Lock className="h-3 w-3 mr-1 text-amber-400" /> Portal MC
-          </Button>
-        </div>
-      </nav>
+            <div className="flex flex-col gap-1 text-sm font-semibold text-slate-200">
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  scrollTo('biodata');
+                }}
+                className="flex items-center justify-between py-2 px-3 rounded-xl hover:bg-white/5 hover:text-amber-400 text-slate-300 transition-colors text-left"
+              >
+                <span>👤 Biodata & Profil</span>
+                <span className="text-xs text-slate-500">➔</span>
+              </button>
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  scrollTo('katalog');
+                }}
+                className="flex items-center justify-between py-2 px-3 rounded-xl hover:bg-white/5 hover:text-amber-400 text-slate-300 transition-colors text-left"
+              >
+                <span>📦 Paket Layanan</span>
+                <span className="text-xs text-slate-500">➔</span>
+              </button>
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  scrollTo('galeri');
+                }}
+                className="flex items-center justify-between py-2 px-3 rounded-xl hover:bg-white/5 hover:text-amber-400 text-slate-300 transition-colors text-left"
+              >
+                <span>🖼️ Galeri Portofolio</span>
+                <span className="text-xs text-slate-500">➔</span>
+              </button>
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  scrollTo('kalender');
+                }}
+                className="flex items-center justify-between py-2 px-3 rounded-xl hover:bg-white/5 hover:text-amber-400 text-slate-300 transition-colors text-left"
+              >
+                <span>📅 Kalender Jadwal</span>
+                <span className="text-xs text-slate-500">➔</span>
+              </button>
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  scrollTo('kebijakan');
+                }}
+                className="flex items-center justify-between py-2 px-3 rounded-xl hover:bg-white/5 hover:text-amber-400 text-slate-300 transition-colors text-left"
+              >
+                <span>📜 Kebijakan & FAQ</span>
+                <span className="text-xs text-slate-500">➔</span>
+              </button>
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  scrollTo('testimoni');
+                }}
+                className="flex items-center justify-between py-2 px-3 rounded-xl hover:bg-white/5 hover:text-amber-400 text-slate-300 transition-colors text-left"
+              >
+                <span>⭐ Testimoni Klien</span>
+                <span className="text-xs text-slate-500">➔</span>
+              </button>
+
+              <div className="h-px bg-white/10 my-1" />
+
+              <a
+                href="/bisnis"
+                className="flex items-center justify-between py-2.5 px-3 rounded-xl border border-amber-500/40 bg-amber-500/15 text-amber-300 font-bold hover:bg-amber-500/25 transition-all text-xs"
+              >
+                <span>👑 Buat Web MC Sendiri (SaaS)</span>
+                <span className="text-[10px] bg-amber-500/20 px-1.5 py-0.5 rounded text-amber-300">PRO</span>
+              </a>
+
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  onOpenAdmin();
+                }}
+                className="flex items-center justify-between py-2 px-3 rounded-xl bg-slate-900 border border-white/10 text-slate-300 hover:text-white transition-colors text-xs mt-1"
+              >
+                <span className="flex items-center gap-2">
+                  <Lock className="h-3.5 w-3.5 text-amber-400" />
+                  Portal MC Admin
+                </span>
+                <span className="text-xs text-slate-500">Masuk ➔</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </header>
 
       {/* =========================================================
           2. HERO SECTION (BIODATA & PROFIL RESMI)

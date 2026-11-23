@@ -1,4 +1,4 @@
-.mobile-menu-toggle { display: none; }
+.mobile-menu-toggle, .mobile-sidebar-close { display: none; }
 /* =========================================================
    MC-CONNECT - ADMIN WORKSPACE ENHANCED DESIGN SYSTEM
    Modern, User-Friendly, Comfortable (Eye-friendly Dark Theme),
@@ -909,6 +909,7 @@ button.btn-danger:hover,
    ========================================================= */
 @media (max-width: 1024px) {
     .mobile-menu-toggle { display: inline-block !important; }
+    .mobile-sidebar-close { display: inline-flex !important; align-items: center; justify-content: center; }
 
     .admin-shell {
         flex-direction: row;

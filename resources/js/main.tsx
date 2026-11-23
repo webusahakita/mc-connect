@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import App from './App.tsx';
+import ErrorBoundary from './components/ErrorBoundary.tsx';
 import '../css/app.css';
 
 // Initialize and ensure CSRF token from document meta
@@ -49,10 +50,12 @@ const rootElement = document.getElementById('app');
 if (rootElement) {
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <App />
-        <Toaster position="top-right" richColors />
-      </QueryClientProvider>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <App />
+          <Toaster position="top-right" richColors />
+        </QueryClientProvider>
+      </ErrorBoundary>
     </React.StrictMode>
   );
 }
