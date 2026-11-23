@@ -37,7 +37,6 @@ class AntiCollisionService
         ?int $bufferMinutes = null
     ): array {
         $buffer = $bufferMinutes ?? $this->defaultBufferMinutes;
-        $bufferTimeStr = sprintf('%02d:%02d:00', floor($buffer / 60), $buffer % 60);
 
         // Standarisasi format waktu ke H:i:s
         $startFormatted = strlen($startTime) === 5 ? $startTime . ':00' : $startTime;
@@ -53,11 +52,26 @@ class AntiCollisionService
             $query->where('id', '!=', $excludeEventId);
         }
 
+        // Geser batas buffer pada sisi REQUEST (di PHP) agar query portabel lintas-database
+        // (MySQL & SQLite) tanpa fungsi khusus seperti ADDTIME/SUBTIME.
+        $toSeconds = static function (string $t): int {
+            $parts = array_pad(explode(':', $t), 3, '0');
+            return ((int) $parts[0]) * 3600 + ((int) $parts[1]) * 60 + (int) $parts[2];
+        };
+        $toTime = static function (int $sec): string {
+            $sec = max(0, min(86399, $sec));
+            return sprintf('%02d:%02d:%02d', intdiv($sec, 3600), intdiv($sec % 3600, 60), $sec % 60);
+        };
+        $bufferSeconds = $buffer * 60;
+        $reqStartMinusBuffer = $toTime($toSeconds($startFormatted) - $bufferSeconds);
+        $reqEndPlusBuffer = $toTime($toSeconds($endFormatted) + $bufferSeconds);
+
         // Logika overlap: Event bertabrakan jika:
         // (ReqStart < ExistingEnd + Buffer) AND (ReqEnd > ExistingStart - Buffer)
-        $conflicts = $query->where(function ($q) use ($startFormatted, $endFormatted, $bufferTimeStr) {
-            $q->whereRaw('? < ADDTIME(waktu_selesai, ?)', [$startFormatted, $bufferTimeStr])
-              ->whereRaw('? > SUBTIME(waktu_mulai, ?)', [$endFormatted, $bufferTimeStr]);
+        // <=> (waktu_selesai > ReqStart - Buffer) AND (waktu_mulai < ReqEnd + Buffer)
+        $conflicts = $query->where(function ($q) use ($reqStartMinusBuffer, $reqEndPlusBuffer) {
+            $q->where('waktu_selesai', '>', $reqStartMinusBuffer)
+              ->where('waktu_mulai', '<', $reqEndPlusBuffer);
         })->get();
 
         if ($conflicts->isNotEmpty()) {

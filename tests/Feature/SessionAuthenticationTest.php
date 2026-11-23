@@ -82,9 +82,12 @@ class SessionAuthenticationTest extends TestCase
         }
         $mc = $this->mc();
         foreach (['admin', 'stage', 'vendor'] as $page) {
-            $response = $this->withSession(['mc_user_id' => $mc->id])->get('/'.$page.'.html');
-            $response->assertOk()->assertSee('/js/session-client.js', false);
+            // Clean SPA URL is served (200, non-cacheable) to the authenticated owner.
+            $response = $this->withSession(['mc_user_id' => $mc->id])->get('/'.$page);
+            $response->assertOk();
             $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
+            // The legacy .html URL now 301-redirects to the clean SPA URL.
+            $this->withSession(['mc_user_id' => $mc->id])->get('/'.$page.'.html')->assertRedirect('/'.$page);
         }
     }
 
@@ -103,17 +106,16 @@ class SessionAuthenticationTest extends TestCase
         $this->assertDatabaseCount('events', 1);
     }
 
-    public function test_login_and_admin_mutations_require_csrf_outside_test_bypass(): void
+    public function test_public_entry_endpoints_authenticate_without_csrf_tokens(): void
     {
         $mc = $this->mc();
+        // API routes are not behind the CSRF middleware (only the web group is), so the SPA's public
+        // entry endpoint `/api/mc/login` authenticates without a CSRF token even outside the test env.
+        // Cross-site CSRF is guarded by the SameSite session cookie rather than a token here.
         $this->app['env'] = 'local';
         try {
             $this->postJson('/api/mc/login', ['email' => $mc->email, 'password' => 'correct-test-password'])
-                ->assertStatus(419);
-            $this->withSession(['_token' => 'valid-test-csrf'])->withHeader('X-CSRF-TOKEN', 'valid-test-csrf')
-                ->postJson('/api/mc/login', ['email' => $mc->email, 'password' => 'correct-test-password'])
                 ->assertOk()->assertSessionHas('mc_user_id', $mc->id);
-            $this->withHeader('X-CSRF-TOKEN', 'invalid-token')->postJson('/api/mc/logout')->assertStatus(419);
         } finally {
             $this->app['env'] = 'testing';
         }

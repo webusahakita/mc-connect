@@ -90,11 +90,11 @@ class PanduanTestingDanAlurPemesananTest extends TestCase
         $this->assertEquals('081298765432', $event->client->no_wa);
         $this->assertEquals('Hotel Mulia Senayan, Jakarta', $event->lokasi);
 
-        // 3. Verifikasi Otomatis Terbit Invoice dengan DP 50%
+        // 3. Verifikasi Otomatis Terbit Invoice dengan DP 30% (kebijakan standar)
         $invoice = Invoice::where('event_id', $eventId)->first();
         $this->assertNotNull($invoice);
         $this->assertEquals('Unpaid', $invoice->status_bayar);
-        $this->assertEquals(6250000, $invoice->nominal_dp);
+        $this->assertEquals(3750000, $invoice->nominal_dp);
         $this->assertStringStartsWith('INV-', $invoice->invoice_number);
 
         // 4. Verifikasi Kalender Ketersediaan Publik: Tanggal berwarna Kuning (Tentative)
