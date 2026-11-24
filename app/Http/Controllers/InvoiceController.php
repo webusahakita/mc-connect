@@ -82,9 +82,18 @@ class InvoiceController extends Controller
     /**
      * Menampilkan Dokumen Surat Perjanjian Kerja (SPK) Kontrak Resmi siap cetak / PDF.
      */
-    public function showSpk($eventId)
+    public function showSpk(Request $request, $eventId)
     {
         [$invoice, $event, $mc] = $this->resolveInvoiceAndEvent($eventId);
+
+        $isMcAuthenticated = $request->session()->has('mc_user_id') || $request->attributes->has('mc');
+        $isBookingOwner = $request->session()->get('last_booking_invoice_id') == $invoice->id;
+        $expectedToken = substr(hash_hmac('sha256', (string)$invoice->invoice_number, (string)config('app.key')), 0, 16);
+        $hasValidToken = $request->query('token') && hash_equals($expectedToken, (string)$request->query('token'));
+
+        if (!$isMcAuthenticated && !$isBookingOwner && !$hasValidToken) {
+            abort(403, 'Akses dokumen SPK tidak diizinkan. Silakan login atau gunakan tautan resmi yang valid.');
+        }
 
         return view('admin.spk-print', compact('event', 'mc', 'invoice'));
     }

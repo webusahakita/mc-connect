@@ -23,7 +23,7 @@ Route::get('/system/version', function () {
 });
 Route::get('/calendar/availability', [PublicController::class, 'getCalendarEvents']);
 Route::post('/calendar/check-availability', [PublicController::class, 'checkAvailability']);
-Route::post('/book/request', [PublicController::class, 'submitBookingRequest']);
+Route::post('/book/request', [PublicController::class, 'submitBookingRequest'])->middleware('throttle:6,1');
 Route::get('/event-categories', [CmsApiController::class, 'getEventCategories']);
 Route::get('/cms/public-bootstrap', [CmsApiController::class, 'getPublicBootstrap']);
 foreach ([

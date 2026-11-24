@@ -32,7 +32,8 @@ import {
   Check,
   Menu,
   X,
-  MessageCircle
+  MessageCircle,
+  Copy
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -245,7 +246,40 @@ export default function Landing({
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState<boolean>(false);
-  const [createdBooking, setCreatedBooking] = useState<{ eventId: number; invoiceId: number; invoiceNumber: string } | null>(null);
+  const [createdBooking, setCreatedBooking] = useState<{ eventId: number; invoiceId: number; invoiceNumber: string; invoiceUrl?: string; spkUrl?: string } | null>(null);
+
+  // Interactive Quotation & Proforma Simulator State
+  const [quotePackage, setQuotePackage] = useState<string>('Gold Luxury');
+  const [quoteOvertime, setQuoteOvertime] = useState<number>(0);
+  const [quoteEventType, setQuoteEventType] = useState<string>('Wedding Reception');
+  const [isMicroKitOpen, setIsMicroKitOpen] = useState<boolean>(false);
+
+  const quoteCalculations = useMemo(() => {
+    let basePrice = 8500000;
+    if (quotePackage.includes('Silver')) basePrice = 4500000;
+    if (quotePackage.includes('Platinum')) basePrice = 12000000;
+
+    const matched = packages.find(p => p.name === quotePackage);
+    if (matched && typeof matched.price === 'string') {
+      const parsed = parseInt(matched.price.replace(/[^0-9]/g, ''), 10);
+      if (!isNaN(parsed) && parsed > 0) basePrice = parsed;
+    }
+
+    const overtimeRate = 1000000;
+    const overtimeTotal = quoteOvertime * overtimeRate;
+    const grandTotal = basePrice + overtimeTotal;
+    const dpAmount = Math.round(grandTotal * 0.5);
+    const dateCode = new Date().toISOString().slice(2, 7).replace('-', '');
+    const proformaRef = `PRO-${dateCode}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    return {
+      basePrice,
+      overtimeTotal,
+      grandTotal,
+      dpAmount,
+      proformaRef,
+    };
+  }, [quotePackage, quoteOvertime, packages]);
 
   // Form State
   const [form, setForm] = useState({
@@ -339,6 +373,19 @@ export default function Landing({
       .catch((err) => console.warn('Gagal memuat ketersediaan jadwal:', err));
   }, []);
 
+  // Auto-calculated Duration
+  const calculatedDuration = useMemo(() => {
+    if (!form.waktu_mulai || !form.waktu_selesai) return null;
+    const [startH, startM] = form.waktu_mulai.split(':').map(Number);
+    const [endH, endM] = form.waktu_selesai.split(':').map(Number);
+    if (isNaN(startH) || isNaN(startM) || isNaN(endH) || isNaN(endM)) return null;
+    let diffM = (endH * 60 + endM) - (startH * 60 + startM);
+    if (diffM < 0) diffM += 24 * 60;
+    const h = Math.floor(diffM / 60);
+    const m = diffM % 60;
+    return m > 0 ? `${h} Jam ${m} Menit` : `${h} Jam`;
+  }, [form.waktu_mulai, form.waktu_selesai]);
+
   // Anti-Collision Validator
   useEffect(() => {
     if (!form.tanggal_acara || !form.waktu_mulai || !form.waktu_selesai) return;
@@ -415,6 +462,8 @@ export default function Landing({
           eventId: data.event_id,
           invoiceId: data.invoice_id,
           invoiceNumber: data.invoice_number,
+          invoiceUrl: data.invoice_url || `/invoices/${data.invoice_id}/print?token=${data.invoice_token || ''}`,
+          spkUrl: data.spk_url || `/events/${data.event_id}/spk?token=${data.invoice_token || ''}`,
         });
         setIsModalOpen(false);
         setIsSuccessModalOpen(true);
@@ -775,6 +824,16 @@ export default function Landing({
               >
                 <Play className="h-4 w-4 mr-2 text-amber-400" /> Tonton Showreel Video
               </Button>
+
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => setIsMicroKitOpen(true)}
+                className="border-amber-400/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 px-5"
+                title="Buka Ringkasan Portofolio MC Format Story 9:16"
+              >
+                <span>📱</span> Micro Press-Kit (9:16)
+              </Button>
             </div>
           </div>
 
@@ -897,6 +956,114 @@ export default function Landing({
             </Card>
           ))}
         </div>
+
+        {/* =========================================================
+            INTERACTIVE QUOTATION & AUTO-PROFORMA INVOICE GENERATOR
+            ========================================================= */}
+        <div className="mt-14 rounded-3xl border border-amber-500/30 bg-gradient-to-br from-slate-900 via-slate-900/95 to-amber-950/20 p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-white/10">
+            <div>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/15 text-amber-400 text-xs font-bold border border-amber-400/30 mb-2">
+                <Sparkles className="h-3.5 w-3.5 text-amber-400" /> Proforma Engine 2.0
+              </span>
+              <h3 className="text-xl sm:text-2xl font-black text-white">Simulasi Penawaran & Proforma Invoice WhatsApp</h3>
+              <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
+                Sesuaikan paket dan durasi acara Anda. Sistem langsung menghasilkan estimasi investasi transparan dan draf <strong>Proforma Invoice resmi</strong> siap kirim ke WhatsApp.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 bg-slate-950/80 border border-white/10 rounded-2xl px-4 py-2.5 shrink-0 self-start lg:self-auto">
+              <Shield className="h-4 w-4 text-emerald-400" />
+              <div className="text-left font-mono">
+                <div className="text-[10px] text-slate-400 uppercase">Ref Proforma:</div>
+                <div className="text-xs font-bold text-amber-400">{quoteCalculations.proformaRef}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 items-end">
+            <div>
+              <label className="text-xs font-bold text-slate-300 block mb-2">1. Pilih Paket Layanan:</label>
+              <select
+                value={quotePackage}
+                onChange={(e) => setQuotePackage(e.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+              >
+                {packages.map((p) => (
+                  <option key={p.name} value={p.name}>
+                    {p.name} ({p.price})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-300 block mb-2">2. Tambahan Jam Overtime (Opsional):</label>
+              <select
+                value={quoteOvertime}
+                onChange={(e) => setQuoteOvertime(Number(e.target.value))}
+                className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+              >
+                <option value={0}>Standar (Sesuai Paket - 0 Jam Overtime)</option>
+                <option value={1}>+1 Jam Overtime (+Rp 1.000.000)</option>
+                <option value={2}>+2 Jam Overtime (+Rp 2.000.000)</option>
+                <option value={3}>+3 Jam Overtime (+Rp 3.000.000)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-300 block mb-2">3. Tipe Acara Anda:</label>
+              <select
+                value={quoteEventType}
+                onChange={(e) => setQuoteEventType(e.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+              >
+                <option value="Wedding Reception & Akad">Wedding Reception & Akad</option>
+                <option value="Corporate Summit & Gala">Corporate Summit & Gala</option>
+                <option value="Awarding Night & Kenegaraan">Awarding Night & Kenegaraan</option>
+                <option value="Birthday & Private Gathering">Birthday & Private Gathering</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Quotation Calculation Result Card */}
+          <div className="mt-6 rounded-2xl border border-amber-500/20 bg-slate-950/80 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Estimasi Total Nilai Kontrak:</span>
+              <div className="flex items-baseline gap-2 mt-0.5">
+                <span className="text-2xl sm:text-3xl font-black text-amber-400">
+                  Rp {quoteCalculations.grandTotal.toLocaleString('id-ID')}
+                </span>
+                <span className="text-xs text-slate-400">
+                  (DP 50%: Rp {quoteCalculations.dpAmount.toLocaleString('id-ID')})
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <Button
+                onClick={() => {
+                  setForm((prev) => ({ ...prev, paket_layanan: quotePackage, tipe_acara: quoteEventType }));
+                  setIsModalOpen(true);
+                }}
+                className="flex-1 sm:flex-none bg-white/10 hover:bg-white/20 text-white text-xs font-bold px-4 py-2.5 h-10 rounded-xl"
+              >
+                Kunci Jadwal di Web
+              </Button>
+
+              <a
+                href={`https://wa.me/${bio.no_telp?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+                  `Halo Kak ${bio.name || 'MC'},\n\nSaya ingin konsultasi & mendapatkan *Dokumen Proforma Invoice Resmi* berdasarkan simulasi web:\n• Tipe Acara: ${quoteEventType}\n• Paket: ${quotePackage}\n• Overtime: +${quoteOvertime} Jam\n• Estimasi Total: Rp ${quoteCalculations.grandTotal.toLocaleString('id-ID')} (DP 50%: Rp ${quoteCalculations.dpAmount.toLocaleString('id-ID')})\n• Ref Proforma: ${quoteCalculations.proformaRef}\n\nMohon info ketersediaan slot tanggal & instruksi pembayaran DP. Terima kasih!`
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-emerald-500/20 hover:brightness-110 transition-all h-10"
+              >
+                <Phone className="h-3.5 w-3.5 fill-current" />
+                <span>Kirim Proforma ke WA</span>
+              </a>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* =========================================================
@@ -953,6 +1120,20 @@ export default function Landing({
         </div>
 
         <Card className="border border-white/10 bg-slate-900/90 p-6 shadow-2xl backdrop-blur-xl">
+          {/* Smart Calendar Scarcity Banner */}
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-2.5 text-xs text-amber-300">
+            <div className="flex items-center gap-2 font-semibold">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+              </span>
+              <span>🔥 <strong>3 Calon Klien</strong> baru saja meninjau tanggal bulan ini • Slot terbatas & bebas bentrok 90 menit.</span>
+            </div>
+            <span className="text-[10px] uppercase font-bold text-amber-400 bg-amber-500/20 px-2.5 py-0.5 rounded-full border border-amber-500/30">
+              Live Real-Time Sync
+            </span>
+          </div>
+
           {/* Calendar Header with Month Switcher */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-white/10">
             <div className="flex items-center gap-3">
@@ -1333,6 +1514,13 @@ export default function Landing({
                   />
                 </div>
 
+                {calculatedDuration && (
+                  <div className="sm:col-span-2 flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2 text-xs text-amber-300">
+                    <Clock className="h-4 w-4 text-amber-400 shrink-0" />
+                    <span>Estimasi Durasi Acara: <strong>{calculatedDuration}</strong></span>
+                  </div>
+                )}
+
                 <div>
                   <label className="text-slate-400 block mb-1">Nama Pemesan (PIC):</label>
                   <input
@@ -1484,7 +1672,7 @@ export default function Landing({
 
             <div className="space-y-2 pt-2">
               <a
-                href={`/invoices/${createdBooking.invoiceId}/print`}
+                href={createdBooking.invoiceUrl || `/invoices/${createdBooking.invoiceId}/print`}
                 target="_blank"
                 rel="noreferrer"
                 className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 px-4 py-2.5 text-xs font-bold text-slate-950 hover:brightness-110 shadow-lg shadow-amber-500/20 transition-all"
@@ -1493,7 +1681,7 @@ export default function Landing({
               </a>
 
               <a
-                href={`/events/${createdBooking.eventId}/spk`}
+                href={createdBooking.spkUrl || `/events/${createdBooking.eventId}/spk`}
                 target="_blank"
                 rel="noreferrer"
                 className="w-full flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-slate-800 px-4 py-2.5 text-xs font-semibold text-slate-200 hover:bg-slate-700 transition-all"
@@ -1515,9 +1703,22 @@ export default function Landing({
       )}
 
       {/* =========================================================
-          13. FLOATING LUXURY BGM SYNTHESIZER WIDGET
+          13. FLOATING WHATSAPP CTA & LUXURY BGM SYNTHESIZER
           ========================================================= */}
-      <div className="fixed bottom-6 right-6 z-40">
+      <div className="fixed bottom-6 right-4 sm:right-6 z-40 flex flex-col items-end gap-2.5">
+        {bio.no_telp && (
+          <a
+            href={`https://wa.me/${bio.no_telp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Halo Kak ' + (bio.name || 'MC') + ', saya ingin konsultasi jadwal dan booking acara...')}`}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-2 rounded-full border border-emerald-400/50 bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow-2xl backdrop-blur-md hover:bg-emerald-500 hover:scale-105 transition-all"
+            title="Chat Langsung via WhatsApp"
+          >
+            <Phone className="h-3.5 w-3.5 fill-current" />
+            <span>Chat WhatsApp</span>
+          </a>
+        )}
+
         {!isBgmWidgetOpen ? (
           <button
             onClick={() => {
@@ -1589,6 +1790,112 @@ export default function Landing({
           </div>
         )}
       </div>
+
+      {/* =========================================================
+          14. MICRO PRESS-KIT (9:16 VERTICAL STORY FORMAT) MODAL
+          ========================================================= */}
+      {isMicroKitOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+          <div className="relative w-full max-w-sm rounded-3xl border border-amber-400/40 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950 p-5 shadow-2xl space-y-4 max-h-[95vh] overflow-y-auto">
+            {/* Header with Close */}
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <span className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                <span>📱</span> Official Micro Press-Kit
+              </span>
+              <button
+                onClick={() => setIsMicroKitOpen(false)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-white/10 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* 9:16 Card Container */}
+            <div className="relative rounded-2xl overflow-hidden border border-amber-400/30 bg-slate-900 shadow-xl aspect-[9/16] flex flex-col justify-between p-5 text-center">
+              {/* Top Bar */}
+              <div className="flex items-center justify-between text-[10px] font-mono text-amber-400">
+                <span>⭐ VERIFIED MASTER MC</span>
+                <span>INDONESIA</span>
+              </div>
+
+              {/* MC Photo & Identity */}
+              <div className="space-y-3 my-auto">
+                <div className="relative mx-auto h-28 w-28 rounded-full border-2 border-amber-400 p-1 shadow-xl">
+                  <img
+                    src={bio.photo || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80'}
+                    alt={bio.name}
+                    className="h-full w-full object-cover rounded-full"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <div>
+                  <h4 className="text-lg font-black text-white">{bio.name}</h4>
+                  <p className="text-[11px] text-amber-300 font-medium mt-0.5">Premier Wedding & Corporate Host</p>
+                </div>
+
+                {/* 3 Metric Pills */}
+                <div className="grid grid-cols-3 gap-2 pt-2">
+                  <div className="rounded-xl bg-white/5 border border-white/10 p-2">
+                    <div className="text-xs font-black text-amber-400">{bio.statEvents || '500+'}</div>
+                    <div className="text-[9px] text-slate-400">Panggung</div>
+                  </div>
+                  <div className="rounded-xl bg-white/5 border border-white/10 p-2">
+                    <div className="text-xs font-black text-amber-400">{bio.statYears || '8+ Thn'}</div>
+                    <div className="text-[9px] text-slate-400">Karier</div>
+                  </div>
+                  <div className="rounded-xl bg-white/5 border border-white/10 p-2">
+                    <div className="text-xs font-black text-emerald-400">99.8%</div>
+                    <div className="text-[9px] text-slate-400">Puas</div>
+                  </div>
+                </div>
+
+                {/* Badges */}
+                <div className="flex flex-wrap gap-1.5 justify-center pt-2">
+                  <span className="rounded-md bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 text-[9px] font-bold text-amber-300">
+                    Bilingual ID/EN
+                  </span>
+                  <span className="rounded-md bg-white/5 border border-white/10 px-2 py-0.5 text-[9px] font-medium text-slate-300">
+                    AI Co-Pilot Script
+                  </span>
+                  <span className="rounded-md bg-white/5 border border-white/10 px-2 py-0.5 text-[9px] font-medium text-slate-300">
+                    Anti-Collision Calendar
+                  </span>
+                </div>
+              </div>
+
+              {/* Bottom Footer Info */}
+              <div className="pt-2 border-t border-white/10 text-[10px] text-slate-400 flex items-center justify-between">
+                <span>IG: @{bio.ig}</span>
+                <span className="text-amber-400 font-bold">mc-connect.id</span>
+              </div>
+            </div>
+
+            {/* Actions: Copy Link & WhatsApp Share */}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.origin);
+                  toast.success('Link profil MC berhasil disalin ke clipboard!');
+                }}
+                className="flex-1 border-white/10 bg-slate-800 text-xs font-bold"
+              >
+                <Copy className="h-3.5 w-3.5 mr-1" /> Salin Link
+              </Button>
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(`Berikut profil resmi ${bio.name} (Master of Ceremony): ${window.location.origin}`)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white py-2 shadow-md transition-all"
+              >
+                <Phone className="h-3.5 w-3.5 fill-current" /> Bagikan WA
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

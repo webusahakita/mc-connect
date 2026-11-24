@@ -7,6 +7,7 @@ use App\Http\Controllers\InvoiceController;
 // Public Document Access (Secured by Token / Session Validation in Controller)
 Route::get('/invoices/{id}/print', [InvoiceController::class, 'show'])->name('invoice.print');
 Route::get('/invoices/{id}/pdf', [InvoiceController::class, 'downloadPdf'])->name('invoice.pdf');
+Route::get('/events/{id}/spk', [InvoiceController::class, 'showSpk'])->name('event.spk');
 
 // Safe SPA Renderer with Stale Vite Dev Server Auto-Recovery
 if (!function_exists('renderSpaView')) {
@@ -66,8 +67,7 @@ Route::get('/keunggulan.html', fn () => redirect('/bisnis', 301));
 Route::get('/bisnis.html', fn () => redirect('/bisnis', 301));
 
 Route::middleware(EnsureMcAuthenticated::class)->group(function () {
-    // Authenticated MC Operational Print Routes (SPK Kontrak & ESC/POS Thermal)
-    Route::get('/events/{id}/spk', [InvoiceController::class, 'showSpk'])->name('event.spk');
+    // Authenticated MC Operational Print Routes (ESC/POS Thermal)
     Route::get('/invoices/{id}/thermal', [InvoiceController::class, 'showThermalReceipt'])->name('invoice.thermal');
     Route::get('/invoices/{id}/thermal-binary', [InvoiceController::class, 'downloadThermalBinary'])->name('invoice.thermal-binary');
 

@@ -4548,7 +4548,8 @@ export default function Dashboard({
                         <div style={{ padding: '1rem', borderBottom: '1px solid var(--adm-border)', fontWeight: 800 }}>
                           🎵 Master Cue Sheet Musik Acara Terpilih
                         </div>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+                        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                        <table style={{ width: '100%', minWidth: '600px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
                           <thead style={{ background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                             <tr>
                               <th style={{ padding: '0.75rem 1rem', color: 'var(--adm-gold)' }}>Segmen Acara</th>
@@ -4595,6 +4596,7 @@ export default function Dashboard({
                               ))}
                           </tbody>
                         </table>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -8376,7 +8378,8 @@ export default function Dashboard({
               </div>
 
               {/* Rundown Table */}
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', marginBottom: '2rem' }}>
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <table style={{ width: '100%', minWidth: '640px', borderCollapse: 'collapse', fontSize: '0.82rem', marginBottom: '2rem' }}>
                 <thead>
                   <tr style={{ background: '#0F172A', color: '#FFF', textAlign: 'left' }}>
                     <th style={{ padding: '0.6rem 0.5rem', width: '40px', textAlign: 'center' }}>No</th>
@@ -8420,6 +8423,7 @@ export default function Dashboard({
                   )}
                 </tbody>
               </table>
+              </div>
 
               {/* Signatures */}
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid #E2E8F0', pageBreakInside: 'avoid' }}>

@@ -195,6 +195,7 @@ class PublicController extends Controller
                 'invoice_number' => $result['invoice']->invoice_number,
                 'invoice_token' => $invoiceToken,
                 'invoice_url' => '/invoices/' . $result['invoice']->id . '/print?token=' . $invoiceToken,
+                'spk_url' => '/events/' . $result['event']->id . '/spk?token=' . $invoiceToken,
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
