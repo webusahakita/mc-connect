@@ -1988,10 +1988,10 @@ export default function Dashboard({
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            backgroundColor: 'rgba(0, 0, 0, 0.65)',
             backdropFilter: 'blur(3px)',
             WebkitBackdropFilter: 'blur(3px)',
-            zIndex: 1050,
+            zIndex: 1040,
             cursor: 'pointer'
           }}
         />

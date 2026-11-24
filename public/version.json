@@ -1,11 +1,16 @@
 {
   "version": "2.5.0",
-  "commit_hash": "7f56a13569565b6c57ac4984895f6ea169e0af2e",
-  "commit_short": "7f56a13",
-  "commit_message": "feat: perbaiki hamburger menu mobile admin & landing page, hilangkan demo kredensial, dan tangani blank screen login",
+  "commit_hash": "2913794473831cc9f3d23e6ba6958bfe88c3bc1a",
+  "commit_short": "2913794",
+  "commit_message": "feat: complete modern react spa audit, security hardening, mobile responsiveness, and proforma engine",
   "commit_author": "MC Connect",
-  "commit_date": "2026-11-24T06:55:12+07:00",
+  "commit_date": "2026-11-24T08:35:38+07:00",
   "recent_commits": [
+    {
+      "hash": "2913794",
+      "message": "feat: complete modern react spa audit, security hardening, mobile responsiveness, and proforma engine",
+      "date": "2026-11-24T08:35:38+07:00"
+    },
     {
       "hash": "7f56a13",
       "message": "feat: perbaiki hamburger menu mobile admin & landing page, hilangkan demo kredensial, dan tangani blank screen login",
@@ -25,14 +30,9 @@
       "hash": "56a4dd5",
       "message": "feat & fix: sempurnakan fitur pengaturan web, ECC, audit keamanan, dan optimasi SEO halaman bisnis",
       "date": "2026-11-20T14:37:04+07:00"
-    },
-    {
-      "hash": "3e86393",
-      "message": "feat: 100% paritas UI/UX panel admin modern, restorasi sub-tab CMS & Pengaturan Web, dan sinkronisasi real-time",
-      "date": "2026-11-19T23:00:03+07:00"
     }
   ],
-  "updated_at": "2026-11-24T01:35:38.855Z",
-  "release_title": "Pembaruan: feat: perbaiki hamburger menu mobile admin & landing page, hilangkan demo kredensial, dan tangani blank screen login",
+  "updated_at": "2026-11-24T01:44:54.070Z",
+  "release_title": "Pembaruan: feat: complete modern react spa audit, security hardening, mobile responsiveness, and proforma engine",
   "notification_active": true
 }
