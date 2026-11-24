@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/admin.css?v=8.16">
+    <link rel="stylesheet" href="/css/admin.css?v=8.17">
     <link rel="stylesheet" href="/css/command-center.css?v=8.4">
     <link rel="stylesheet" href="/css/custom-modal.css?v=8.3">
     @viteReactRefresh

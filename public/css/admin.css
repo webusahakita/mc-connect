@@ -1499,20 +1499,27 @@ button.btn-danger:hover,
         -webkit-backdrop-filter: none !important;
     }
     .mini-chart-svg {
-        filter: none;
-        transform: none;
+        filter: none !important;
+        transform: none !important;
     }
     .ecc-card:hover svg[id$="ProporsiSvg"] {
         transform: rotate(-90deg) !important;
         filter: none !important;
     }
-    /* Keep scrolling simple on mobile GPUs without disabling interactive controls. */
-    .admin-section {
+    /* Keep scrolling simple on mobile GPUs without disabling interactive controls.
+       Covers both the legacy .admin-section markup and the React SPA, whose
+       dashboard content lives under .admin-body-content (not .admin-section).
+       !important also neutralises inline backdrop-filter set in the SPA JSX. */
+    .admin-section,
+    .admin-body-content {
         animation: none !important;
     }
     .admin-section *,
     .admin-section *::before,
-    .admin-section *::after {
+    .admin-section *::after,
+    .admin-body-content *,
+    .admin-body-content *::before,
+    .admin-body-content *::after {
         box-shadow: none !important;
         text-shadow: none !important;
         backdrop-filter: none !important;
