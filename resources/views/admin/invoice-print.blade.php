@@ -99,6 +99,17 @@
             right: 2rem;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
+        @media screen and (max-width: 640px) {
+            body { padding: 0.75rem; }
+            .invoice-sheet { padding: 1.25rem; }
+            .invoice-header { flex-direction: column; gap: 1rem; }
+            .invoice-meta { text-align: left; }
+            .invoice-details-grid { grid-template-columns: 1fr; gap: 1rem; }
+            .total-table { width: 100%; }
+            .qris-section { flex-direction: column; align-items: flex-start; padding: 1rem; gap: 1rem; }
+            .btn-print { position: static; display: block; width: 100%; margin-bottom: 1rem; }
+            table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        }
         @media print {
             body { background: #fff; padding: 0; }
             .invoice-sheet { box-shadow: none; padding: 0; }

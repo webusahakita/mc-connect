@@ -16,19 +16,9 @@ Route::get('/landing', SpaController::class)->name('landing');
 Route::get('/app', SpaController::class)->name('app.spa');
 Route::get('/app/{any}', SpaController::class)->where('any', '.*');
 
-// Legacy Safe Bridge Landing Page Fallbacks
-Route::get('/legacy', function () {
-    return response(file_get_contents(public_path('index.html')), 200)
-        ->header('Content-Type', 'text/html; charset=UTF-8');
-})->name('legacy.home');
-
-Route::get('/legacy/landing', function () {
-    return response(file_get_contents(public_path('index.html')), 200)
-        ->header('Content-Type', 'text/html; charset=UTF-8');
-})->name('legacy.landing');
-
-Route::get('/legacy/index.html', fn () => redirect('/legacy', 301));
 Route::get('/index.html', fn () => redirect('/', 301));
+Route::get('/legacy', fn () => redirect('/', 301))->name('legacy.home');
+Route::get('/legacy/{any}', fn () => redirect('/', 301))->where('any', '.*');
 
 Route::get('/login', function () {
     return response(file_get_contents(public_path('login.html')), 200)
@@ -56,12 +46,5 @@ Route::middleware(EnsureMcAuthenticated::class)->group(function () {
         // Modern Decoupled React 19 SPA Handlers
         Route::get('/'.$page, SpaController::class)->name($page === 'admin' ? 'admin.dashboard' : $page);
         Route::get('/'.$page.'.html', fn () => redirect('/'.$page, 301));
-
-        // Legacy Safe Bridge Fallbacks (Original Monolithic HTML)
-        $legacyHandler = fn () => response(file_get_contents(resource_path('views/workspace/'.$page.'.html')), 200)
-            ->header('Content-Type', 'text/html; charset=UTF-8');
-
-        Route::get('/legacy/'.$page, $legacyHandler)->name('legacy.'.$page);
-        Route::get('/legacy/'.$page.'.html', fn () => redirect('/legacy/'.$page, 301));
     }
 });

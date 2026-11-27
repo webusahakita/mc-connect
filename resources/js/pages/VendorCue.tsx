@@ -35,11 +35,15 @@ export default function VendorCue({
   eventId?: number;
   onBackToDashboard?: () => void;
 }) {
-  const [activeSegmentIndex, setActiveSegmentIndex] = useState<number>(1);
+  const [activeSegmentIndex, setActiveSegmentIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<number | null>(null);
   const [isSynced, setIsSynced] = useState<boolean>(true);
   const [masterVolume, setMasterVolume] = useState<number>(80);
   const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [eventMeta, setEventMeta] = useState<{ title: string; date: string }>({
+    title: `Event #${eventId}`,
+    date: '',
+  });
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const activeOscsRef = useRef<OscillatorNode[]>([]);
@@ -106,6 +110,43 @@ export default function VendorCue({
       status: 'pending',
     },
   ]);
+
+  // Load cue sheet from database event rundown
+  useEffect(() => {
+    let active = true;
+    fetch('/api/cms/events', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((res) => {
+        if (!active || !res) return;
+        const list = Array.isArray(res.data) ? res.data : Array.isArray(res) ? res : [];
+        const ev = list.find((item: any) => Number(item.id) === Number(eventId)) || list[0];
+        if (!ev) return;
+        setEventMeta({
+          title: ev.nama_acara || ev.eventName || `Event #${ev.id}`,
+          date: ev.tanggal_acara || ev.date || '',
+        });
+        const rawRundown = ev.metadata?.rundown || ev.rundown;
+        if (Array.isArray(rawRundown) && rawRundown.length > 0) {
+          const mapped: CueItem[] = rawRundown.map((seg: any, idx: number) => ({
+            id: seg.id || idx + 1,
+            time: seg.start_time && seg.end_time ? `${seg.start_time} - ${seg.end_time}` : seg.time || '--:--',
+            segmentTitle: seg.title || seg.segment || `Segmen ${idx + 1}`,
+            songTitle: seg.cue_music || seg.music || 'BGM Standar',
+            artist: seg.pic || 'Audio Cue',
+            cueType: idx === 0 ? 'Intro' : idx === rawRundown.length - 1 ? 'Outro' : 'Background',
+            notes: seg.cue_instruction || seg.notes || '-',
+            status: seg.isDone ? 'completed' : idx === 0 ? 'active' : 'pending',
+          }));
+          setCueList(mapped);
+          const firstActive = mapped.findIndex((c) => c.status === 'active');
+          setActiveSegmentIndex(firstActive >= 0 ? firstActive : 0);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [eventId]);
 
   // Stop synthetic audio
   const stopAudio = () => {
@@ -259,24 +300,29 @@ export default function VendorCue({
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none">
       {/* Header Operator Musik */}
-      <header className="flex h-16 items-center justify-between border-b border-slate-800 bg-slate-900/90 px-6 backdrop-blur sticky top-0 z-40">
-        <div className="flex items-center gap-4">
+      <header className="flex flex-wrap min-h-16 items-center justify-between gap-2 border-b border-slate-800 bg-slate-900/90 px-3 sm:px-6 py-2.5 backdrop-blur sticky top-0 z-40">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           {onBackToDashboard && (
-            <Button variant="ghost" size="sm" onClick={onBackToDashboard}>
-              <ArrowLeft className="h-4 w-4 mr-1" /> Kembali ke Dashboard
+            <Button variant="ghost" size="sm" onClick={onBackToDashboard} className="px-2 shrink-0">
+              <ArrowLeft className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Dashboard</span>
             </Button>
           )}
-          <div className="flex items-center gap-2">
-            <Radio className="h-5 w-5 text-emerald-400 animate-pulse" />
-            <h1 className="text-sm font-bold text-white tracking-wide">
-              LAYAR OPERATOR MUSIK & SOUND (LIVE SYNC)
-            </h1>
+          <div className="flex items-center gap-2 min-w-0">
+            <Radio className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-400 animate-pulse shrink-0" />
+            <div className="min-w-0">
+              <h1 className="text-xs sm:text-sm font-bold text-white tracking-wide truncate">
+                OPERATOR MUSIK (LIVE SYNC)
+              </h1>
+              <div className="text-[11px] text-slate-400 truncate">
+                {eventMeta.title}{eventMeta.date ? ` • ${eventMeta.date}` : ''}
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          {/* Master Volume Slider */}
-          <div className="hidden sm:flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-xs font-mono">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          {/* Master Volume Slider (visible on mobile too) */}
+          <div className="flex items-center gap-2 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 text-xs font-mono">
             <button
               onClick={() => setIsMuted(!isMuted)}
               className="text-slate-400 hover:text-white"
@@ -297,23 +343,23 @@ export default function VendorCue({
                 setMasterVolume(Number(e.target.value));
                 if (isMuted) setIsMuted(false);
               }}
-              className="w-20 accent-amber-400 cursor-pointer"
+              className="w-16 sm:w-20 accent-amber-400 cursor-pointer"
             />
             <span className="font-bold text-amber-400 w-8">{isMuted ? '0%' : `${masterVolume}%`}</span>
           </div>
 
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400">
+          <div className="hidden sm:inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
             Sinkronisasi Panggung Aktif
           </div>
-          <Badge variant="warning" className="font-mono text-xs">
-            SEGMEN AKTIF: #{activeSegmentIndex + 1}
+          <Badge variant="warning" className="font-mono text-[10px] sm:text-xs">
+            SEGMEN #{activeSegmentIndex + 1}
           </Badge>
         </div>
       </header>
 
       {/* Main Cue Sheet */}
-      <main className="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6">
+      <main className="flex-1 p-3 sm:p-6 max-w-7xl w-full mx-auto space-y-4 sm:space-y-6">
         <Card className="border-amber-400/30 bg-gradient-to-r from-amber-400/5 to-transparent">
           <CardHeader className="py-4">
             <div className="flex items-center justify-between">
@@ -373,7 +419,60 @@ export default function VendorCue({
             <span className="text-xs text-slate-400 font-mono">BroadcastChannel: mc_connect_live_channel</span>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
+            {/* Mobile Card List */}
+            <div className="md:hidden divide-y divide-slate-800/70">
+              {cueList.map((item, idx) => (
+                <div
+                  key={`mob-${item.id}`}
+                  className={`p-4 space-y-2.5 ${
+                    item.status === 'active'
+                      ? 'bg-amber-400/10'
+                      : item.status === 'completed'
+                      ? 'bg-slate-950/50 opacity-70'
+                      : ''
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-mono text-slate-400">#{idx + 1} • {item.time}</div>
+                      <div className="text-sm font-bold text-white">{item.segmentTitle}</div>
+                    </div>
+                    {item.status === 'active' ? (
+                      <Badge variant="warning" className="text-[10px] animate-pulse shrink-0">LIVE ON AIR</Badge>
+                    ) : item.status === 'completed' ? (
+                      <span className="text-emerald-400 text-xs shrink-0">✓ Selesai</span>
+                    ) : (
+                      <span className="text-slate-500 text-xs shrink-0">Standby</span>
+                    )}
+                  </div>
+                  <div className="text-xs text-amber-300 font-semibold">🎵 {item.songTitle}</div>
+                  {item.notes && item.notes !== '-' && (
+                    <div className="text-xs text-slate-300">{item.notes}</div>
+                  )}
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      onClick={() => togglePlay(item.id, item.cueType)}
+                      className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 py-2 text-xs font-semibold text-slate-200"
+                    >
+                      {isPlaying === item.id ? <Square className="h-3.5 w-3.5 text-rose-400" /> : <Play className="h-3.5 w-3.5" />}
+                      {isPlaying === item.id ? 'Stop' : 'Preview'}
+                    </button>
+                    <button
+                      onClick={() => handleManualActivate(idx)}
+                      className={`flex-1 rounded-lg py-2 text-xs font-bold ${
+                        item.status === 'active'
+                          ? 'bg-amber-400 text-slate-950'
+                          : 'bg-slate-800 text-slate-200'
+                      }`}
+                    >
+                      {item.status === 'active' ? 'Aktif' : 'Trigger'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-slate-800 bg-slate-900/60 text-slate-400 font-mono uppercase">

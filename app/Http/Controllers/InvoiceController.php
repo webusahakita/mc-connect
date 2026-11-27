@@ -11,6 +11,39 @@ use Illuminate\Http\Request;
 class InvoiceController extends Controller
 {
     /**
+     * Memastikan Invoice selalu ada berdasarkan Event ID (untuk rute /events/{id}/spk).
+     */
+    private function resolveByEventId($eventId): array
+    {
+        $event = Event::with(['client.mc', 'invoice'])->findOrFail($eventId);
+        $invoice = $event->invoice;
+
+        if (!$invoice) {
+            $total = (float) ($event->nilai_kontrak ?: ($event->total_budget ?: 12500000.00));
+            $dp = round($total * 0.30, 2);
+            $invNumber = 'INV-' . date('Ym') . '-' . str_pad((string)$event->id, 4, '0', STR_PAD_LEFT);
+
+            $invoice = Invoice::create([
+                'event_id' => $event->id,
+                'invoice_number' => $invNumber,
+                'total_biaya' => $total,
+                'nominal_dp' => $dp,
+                'sisa_tagihan' => $total - $dp,
+                'status_bayar' => 'Unpaid',
+                'batas_waktu_bayar' => now()->addDays(3),
+                'qris_url' => 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . $invNumber,
+            ]);
+        }
+
+        $mc = $event->client ? $event->client->mc : UserMC::first();
+        if (!$mc) {
+            $mc = UserMC::first();
+        }
+
+        return [$invoice, $event, $mc];
+    }
+
+    /**
      * Memastikan Invoice selalu ada untuk suatu acara (Auto-create jika belum ada).
      */
     private function resolveInvoiceAndEvent($id): array
@@ -18,32 +51,11 @@ class InvoiceController extends Controller
         $invoice = Invoice::with(['event.client.mc'])->find($id);
 
         if (!$invoice) {
-            $event = Event::with(['client.mc', 'invoice'])->findOrFail($id);
-            $invoice = $event->invoice;
-
-            // Auto-create invoice jika acara lama belum memiliki invoice
-            if (!$invoice) {
-                $total = (float) ($event->nilai_kontrak ?: ($event->total_budget ?: 12500000.00));
-                $dp = round($total * 0.30, 2);
-                $invNumber = 'INV-' . date('Ym') . '-' . str_pad((string)$event->id, 4, '0', STR_PAD_LEFT);
-
-                $invoice = Invoice::create([
-                    'event_id' => $event->id,
-                    'invoice_number' => $invNumber,
-                    'total_biaya' => $total,
-                    'nominal_dp' => $dp,
-                    'sisa_tagihan' => $total - $dp,
-                    'status_bayar' => 'Unpaid',
-                    'batas_waktu_bayar' => now()->addDays(3),
-                    'qris_url' => 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . $invNumber,
-                ]);
-            }
-
-            $mc = $event->client ? $event->client->mc : UserMC::first();
-        } else {
-            $event = $invoice->event;
-            $mc = $event && $event->client ? $event->client->mc : UserMC::first();
+            return $this->resolveByEventId($id);
         }
+
+        $event = $invoice->event;
+        $mc = $event && $event->client ? $event->client->mc : UserMC::first();
 
         if (!$mc) {
             $mc = UserMC::first();
@@ -84,7 +96,7 @@ class InvoiceController extends Controller
      */
     public function showSpk(Request $request, $eventId)
     {
-        [$invoice, $event, $mc] = $this->resolveInvoiceAndEvent($eventId);
+        [$invoice, $event, $mc] = $this->resolveByEventId($eventId);
 
         $isMcAuthenticated = $request->session()->has('mc_user_id') || $request->attributes->has('mc');
         $isBookingOwner = $request->session()->get('last_booking_invoice_id') == $invoice->id;

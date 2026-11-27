@@ -423,10 +423,13 @@ export default function Landing({
     return () => clearTimeout(timer);
   }, [form.tanggal_acara, form.waktu_mulai, form.waktu_selesai]);
 
-  const handleDateClick = (dateStr: string, isLocked: boolean) => {
+  const handleDateClick = (dateStr: string, isLocked: boolean, isTentative?: boolean) => {
     if (isLocked) {
       toast.error('Tanggal ini telah terkunci penuh oleh acara klien lain.');
       return;
+    }
+    if (isTentative) {
+      toast.info('Tanggal ini berstatus Tentative (Hold). Anda tetap dapat mengajukan antrean booking.');
     }
     setForm((prev) => ({ ...prev, tanggal_acara: dateStr }));
     setIsModalOpen(true);
@@ -1194,7 +1197,7 @@ export default function Landing({
                   <button
                     key={item.key}
                     disabled={isLocked}
-                    onClick={() => handleDateClick(item.fullDate!, isLocked)}
+                    onClick={() => handleDateClick(item.fullDate!, isLocked, isTentative)}
                     className={`min-h-[64px] sm:min-h-[82px] flex flex-col justify-between items-stretch p-2 sm:p-2.5 rounded-xl border text-left transition-all duration-200 ${
                       item.status === 'available'
                         ? 'border-white/10 bg-slate-950/60 hover:border-amber-400/60 hover:-translate-y-0.5'

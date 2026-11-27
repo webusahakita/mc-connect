@@ -1480,16 +1480,26 @@ class CmsApiController extends Controller
 
         $event->update($data);
 
-        // Update linked invoice if price changed
-        if (isset($data['nilai_kontrak'])) {
+        // Update linked invoice if price, DP, or payment status changed
+        if (isset($data['nilai_kontrak']) || isset($data['status_pembayaran']) || isset($incomingMeta['nominal_dp'])) {
             $inv = \App\Models\Invoice::where('event_id', $event->id)->first();
             if ($inv) {
-                $dpNominal = $data['nilai_kontrak'] / 2;
-                $inv->update([
-                    'total_biaya' => $data['nilai_kontrak'],
+                $totalInv = isset($data['nilai_kontrak']) ? (float)$data['nilai_kontrak'] : (float)$inv->total_biaya;
+                $dpNominal = isset($incomingMeta['nominal_dp'])
+                    ? (float)$incomingMeta['nominal_dp']
+                    : (isset($data['nilai_kontrak']) ? $totalInv / 2 : (float)$inv->nominal_dp);
+                $invUpdate = [
+                    'total_biaya' => $totalInv,
                     'nominal_dp' => $dpNominal,
-                    'sisa_tagihan' => $data['nilai_kontrak'] - $dpNominal,
-                ]);
+                    'sisa_tagihan' => max(0, $totalInv - $dpNominal),
+                ];
+                if (isset($data['status_pembayaran'])) {
+                    $sp = strtolower((string)$data['status_pembayaran']);
+                    $invUpdate['status_bayar'] = str_contains($sp, 'lunas') || str_contains($sp, 'fully')
+                        ? 'Fully Paid'
+                        : (str_contains($sp, 'dp') ? 'DP Paid' : 'Unpaid');
+                }
+                $inv->update($invUpdate);
             }
         }
 

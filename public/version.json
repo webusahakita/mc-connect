@@ -1,11 +1,16 @@
 {
   "version": "2.5.0",
-  "commit_hash": "969dd5d55e302443f4d0b394c1d3a5cbe53e2e6d",
-  "commit_short": "969dd5d",
-  "commit_message": "fix(deploy): render SPA via controller so routes survive route:cache",
-  "commit_author": "dimasachmad2",
-  "commit_date": "2026-11-24T20:48:43+07:00",
+  "commit_hash": "380bfb692c0f8201caa56bedd48bf06f7e025686",
+  "commit_short": "380bfb6",
+  "commit_message": "feat: mobile responsive landing, hide legacy links, CMS CRUD, and update docs",
+  "commit_author": "MC Connect",
+  "commit_date": "2026-11-27T08:10:05+07:00",
   "recent_commits": [
+    {
+      "hash": "380bfb6",
+      "message": "feat: mobile responsive landing, hide legacy links, CMS CRUD, and update docs",
+      "date": "2026-11-27T08:10:05+07:00"
+    },
     {
       "hash": "969dd5d",
       "message": "fix(deploy): render SPA via controller so routes survive route:cache",
@@ -25,14 +30,9 @@
       "hash": "2913794",
       "message": "feat: complete modern react spa audit, security hardening, mobile responsiveness, and proforma engine",
       "date": "2026-11-24T08:35:38+07:00"
-    },
-    {
-      "hash": "7f56a13",
-      "message": "feat: perbaiki hamburger menu mobile admin & landing page, hilangkan demo kredensial, dan tangani blank screen login",
-      "date": "2026-11-24T06:55:12+07:00"
     }
   ],
-  "updated_at": "2026-11-27T01:10:05.576Z",
-  "release_title": "Pembaruan: fix(deploy): render SPA via controller so routes survive route:cache",
+  "updated_at": "2026-11-27T02:07:25.254Z",
+  "release_title": "Pembaruan: feat: mobile responsive landing, hide legacy links, CMS CRUD, and update docs",
   "notification_active": true
 }

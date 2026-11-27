@@ -233,10 +233,21 @@ export default function Dashboard({
     featuresText: string;
   }>({ name: '', category: 'Wedding', price: '', duration: 'Max. 4 Jam', badge: '', featuresText: '' });
 
-  const [cmsPolicies, setCmsPolicies] = useState<{ terms?: string; refund?: string; faq?: any[] }>({
+  const [cmsPolicies, setCmsPolicies] = useState<{ terms?: string; refund?: string; faqs?: { q: string; a: string }[] }>({
     terms: '1. Booking tanggal dianggap sah (Terkunci) setelah klien membayar Down Payment (DP) 50% dari total nilai kontrak.\n2. Pelunasan sisa tagihan 50% wajib diselesaikan selambat-lambatnya H-2 sebelum hari acara.\n3. Durasi perform MC maksimal 4 jam per sesi acara. Kelebihan durasi dihitung overtime.\n4. Klien wajib menyediakan waktu Soundcheck / Gladi Bersih minimal 45 menit sebelum acara mulai.',
-    refund: '1. Pembatalan >30 hari sebelum hari H: DP dapat dialihkan ke jadwal lain (reschedule) dalam waktu 6 bulan kalender.\n2. Pembatalan H-30 s/d H-14: DP dapat dipindahtangankan ke event lain dengan persetujuan manajemen MC.\n3. Pembatalan <14 hari: DP tidak dapat dikembalikan sebagai biaya kompensasi penolakan penawaran klien lain.\n4. Force Majeure: Tanggal acara dijadwalkan ulang tanpa penalti biaya.'
+    refund: '1. Pembatalan >30 hari sebelum hari H: DP dapat dialihkan ke jadwal lain (reschedule) dalam waktu 6 bulan kalender.\n2. Pembatalan H-30 s/d H-14: DP dapat dipindahtangankan ke event lain dengan persetujuan manajemen MC.\n3. Pembatalan <14 hari: DP tidak dapat dikembalikan sebagai biaya kompensasi penolakan penawaran klien lain.\n4. Force Majeure: Tanggal acara dijadwalkan ulang tanpa penalti biaya.',
+    faqs: [],
   });
+  const [cmsDraftDirty, setCmsDraftDirty] = useState<{ packages: boolean; policies: boolean; presskit: boolean; riders: boolean }>({
+    packages: false,
+    policies: false,
+    presskit: false,
+    riders: false,
+  });
+  const [autoFillConfirm, setAutoFillConfirm] = useState<{
+    target: 'packages' | 'policies' | 'presskit' | 'riders';
+    title: string;
+  } | null>(null);
 
   const [cmsPressKit, setCmsPressKit] = useState<Record<string, string>>({
     stageName: '', spesialisasi: '', tagline: '', bio: '',
@@ -499,6 +510,30 @@ export default function Dashboard({
     { text: 'Cek air mineral hangat & lemon di green room', done: false }
   ]);
   const [newChecklistText, setNewChecklistText] = useState<string>('');
+  const [showEditEventModal, setShowEditEventModal] = useState<boolean>(false);
+  const [editEventForm, setEditEventForm] = useState<{
+    nama_acara: string;
+    tanggal_acara: string;
+    waktu_mulai: string;
+    waktu_selesai: string;
+    lokasi: string;
+  }>({ nama_acara: '', tanggal_acara: '', waktu_mulai: '18:00', waktu_selesai: '21:00', lokasi: '' });
+
+  const [musicBankList, setMusicBankList] = useState<{ cat: string; catName: string; title: string; cue: string }[]>([
+    { cat: 'Anthem', catName: 'Opening Anthem', title: 'Fanfare Brass of Triumph Intro', cue: 'Fade in saat MC dipanggil naik panggung' },
+    { cat: 'Entrance', catName: 'Grand Entrance', title: 'Canon in D Strings / A Thousand Years', cue: 'Naikkan volume 80% saat pintu ballroom terbuka' },
+    { cat: 'Toast', catName: 'Cake & Toast', title: 'Celebration Pop Uplifting Beats', cue: 'Hitungan ketiga bersamaan confetti pop' },
+    { cat: 'Games', catName: 'Games & Ice Break', title: 'Funky Groovy Upbeat Jazz', cue: 'Background audio saat games interaktif berlangsung' },
+    { cat: 'Finale', catName: 'Grand Finale', title: 'Emotional Cinematic Strings Outro', cue: 'Mulai saat MC closing kalimat terakhir' },
+    { cat: 'Anthem', catName: 'Opening Anthem', title: 'Majestic Royal Fanfare', cue: 'Diputar saat pembukaan gala dinner tamu VIP' },
+    { cat: 'Entrance', catName: 'Grand Entrance', title: 'Acoustic Guitar Romantic Journey', cue: 'Iringan masuk mempelai wanita ke pelaminan' },
+  ]);
+  const [showMusicBankForm, setShowMusicBankForm] = useState<boolean>(false);
+  const [musicBankForm, setMusicBankForm] = useState<{ cat: string; title: string; cue: string }>({
+    cat: 'Anthem',
+    title: '',
+    cue: '',
+  });
 
   // Load Bootstrap CMS data
   useEffect(() => {
@@ -652,6 +687,16 @@ export default function Dashboard({
 
   // Fetch Session & Initial Events
   useEffect(() => {
+    // 0. Fetch Master Music Bank
+    fetch('/api/cms/music-bank', { credentials: 'same-origin' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+          setMusicBankList(data.data);
+        }
+      })
+      .catch(() => {});
+
     // 1. Fetch Biodata & CMS Settings
     fetch('/api/cms/biodata', { credentials: 'same-origin' })
       .then((res) => res.json())
@@ -828,6 +873,25 @@ export default function Dashboard({
       .finally(() => setFinancialLoading(false));
   }, [selectedEventId]);
 
+  // Persist ECC metadata (rundown, stickyNotes, vipProtocols, checklist)
+  const persistEventMetadata = async (patch: Record<string, any>) => {
+    if (!selectedEventId) return;
+    try {
+      await fetch(`/api/cms/events/${selectedEventId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': (window as any).CSRF_TOKEN || '',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({ metadata: patch }),
+      });
+    } catch {
+      // silent fallback
+    }
+  };
+
   // AI Script Generation Handler
   const handleGenerateAiScript = async () => {
     setAiGenerating(true);
@@ -845,10 +909,12 @@ export default function Dashboard({
       const data = await res.json();
       if (res.ok && data.success) {
         const genScript = data.data?.script || data.script;
-        setRundownList((prev) =>
-          prev.map((s) => (s.id === selectedSegmentForAi ? { ...s, script: genScript, tone: aiTone } : s))
+        const nextRundown = rundownList.map((s) =>
+          s.id === selectedSegmentForAi ? { ...s, script: genScript, tone: aiTone } : s
         );
-        toast.success('Skrip MC AI Co-Pilot berhasil di-generate!');
+        setRundownList(nextRundown);
+        await persistEventMetadata({ rundown: nextRundown });
+        toast.success('Skrip MC AI Co-Pilot berhasil di-generate & disimpan!');
       } else {
         toast.error(data.message || 'Gagal men-generate skrip.');
       }
@@ -986,11 +1052,139 @@ export default function Dashboard({
     setIsSavingSettings(true);
     try {
       const data = await cmsJsonRequest('/api/cms/presskit', 'POST', cmsPressKit);
+      setCmsDraftDirty((prev) => ({ ...prev, presskit: false }));
       toast.success(data.message || 'Press Kit berhasil disimpan!');
     } catch (err: any) {
       toast.error(err.message || 'Gagal menyimpan Press Kit.');
     } finally {
       setIsSavingSettings(false);
+    }
+  };
+
+  // Auto-Fill Referensi Admin (hanya mengisi form/draft, tidak auto-save)
+  const applyAutoFill = (target: 'packages' | 'policies' | 'presskit' | 'riders', mode: 'replace' | 'fill_empty') => {
+    if (target === 'packages') {
+      const templatePackages = [
+        {
+          name: 'Silver Classic Wedding',
+          category: 'Wedding',
+          price: 6500000,
+          duration: 'Max. 3 Jam',
+          badge: null,
+          features: ['1 Sesi Resepsi Wedding', 'Custom Rundown & Script', 'Koordinasi Tim WO & Sound'],
+        },
+        {
+          name: 'Gold Luxury Wedding',
+          category: 'Wedding',
+          price: 9500000,
+          duration: 'Max. 4 Jam',
+          badge: 'Best Seller',
+          features: ['Akad/Pemberkatan & Resepsi', 'Bilingual (ID/EN)', 'Gladi Bersih H-1 & Briefing Keluarga'],
+        },
+        {
+          name: 'Corporate Gala & Awarding',
+          category: 'Corporate',
+          price: 15000000,
+          duration: 'Full Event (Max. 5 Jam)',
+          badge: 'VIP',
+          features: ['Protokoler Resmi & VIP Handling', 'Bilingual ID/EN Formal', 'Teleprompter & Cue Sync'],
+        },
+      ];
+      setCmsPackages((prev) => (mode === 'replace' ? templatePackages : [...prev, ...templatePackages]));
+      setCmsDraftDirty((prev) => ({ ...prev, packages: true }));
+      toast.info('Draft Paket Layanan terisi! Tinjau lalu klik "Simpan Draft ke Server".');
+    } else if (target === 'policies') {
+      const tplTerms =
+        '1. Booking tanggal dianggap sah (Terkunci) setelah klien membayar Down Payment (DP) 50% dari total nilai kontrak.\n2. Pelunasan sisa tagihan 50% wajib diselesaikan selambat-lambatnya H-2 sebelum hari acara.\n3. Durasi perform MC maksimal 4 jam per sesi acara. Kelebihan durasi dihitung overtime.\n4. Klien wajib menyediakan waktu Soundcheck / Gladi Bersih minimal 45 menit sebelum acara mulai.';
+      const tplRefund =
+        '1. Pembatalan >30 hari sebelum hari H: DP dapat dialihkan ke jadwal lain (reschedule) dalam waktu 6 bulan kalender.\n2. Pembatalan H-30 s/d H-14: DP dapat dipindahtangankan ke event lain dengan persetujuan manajemen MC.\n3. Pembatalan <14 hari: DP tidak dapat dikembalikan.\n4. Force Majeure: Tanggal acara dijadwalkan ulang tanpa penalti biaya.';
+      const tplFaqs = [
+        { q: 'Apakah MC bisa membawakan acara dalam dua bahasa (Bilingual ID/EN)?', a: 'Ya, seluruh paket Gold & Corporate mendukung pembawaan bilingual Bahasa Indonesia dan Inggris secara natural.' },
+        { q: 'Berapa DP yang dibutuhkan untuk mengunci tanggal?', a: 'DP minimal 50% dari nilai kontrak untuk mengunci tanggal secara resmi di kalender anti-bentrok kami.' },
+        { q: 'Apakah sudah termasuk gladi bersih / technical meeting?', a: 'Ya, sudah termasuk 1x sesi technical meeting / briefing rundown sebelum hari-H.' },
+        { q: 'Bagaimana jika acara berlangsung di luar kota?', a: 'Untuk luar kota, akomodasi dan transportasi MC (serta 1 asisten bila diperlukan) ditanggung oleh pihak penyelenggara.' },
+      ];
+      setCmsPolicies((prev) => {
+        if (mode === 'replace') {
+          return { terms: tplTerms, refund: tplRefund, faqs: tplFaqs };
+        }
+        return {
+          terms: prev.terms?.trim() ? prev.terms : tplTerms,
+          refund: prev.refund?.trim() ? prev.refund : tplRefund,
+          faqs: Array.isArray(prev.faqs) && prev.faqs.length > 0 ? prev.faqs : tplFaqs,
+        };
+      });
+      setCmsDraftDirty((prev) => ({ ...prev, policies: true }));
+      toast.info('Draft Kebijakan & FAQ terisi! Tinjau lalu klik "Simpan Kebijakan & FAQ".');
+    } else if (target === 'presskit') {
+      const tplPressKit: Record<string, string> = {
+        stageName: mcName || 'Vanya Arsyad',
+        spesialisasi: mcSpec || 'Wedding, Corporate Gala & Awarding Night',
+        tagline: 'Elegan, Bilingual (ID/EN), Adaptif & Berkarisma',
+        bio: mcBio || 'Master of Ceremony profesional dengan pengalaman ratusan panggung pernikahan mewah, gala dinner korporat, dan acara kenegaraan.',
+        pic: 'Manajemen MC-Connect',
+        wa: mcPhone || '081234567890',
+        email: 'booking@mc-connect.id',
+        sosmed: `@${(mcIg || 'mcconnect').replace(/^@/, '')}`,
+        domisili: 'Jakarta & Surabaya (Siap Luar Kota)',
+        scope1: 'Annual Gala Dinner, Awarding Night, Product Launching, Townhall & Protokol Kenegaraan.',
+        scope2: 'Akad Nikah / Holy Matrimony, Resepsi Adat & Internasional, Intimate Wedding.',
+        scope3: 'Festival Musik, Brand Activation, Talkshow, & Gathering Perusahaan.',
+        scope4: 'Dilengkapi AI Script Co-Pilot, Live Teleprompter, dan Kalender Anti-Bentrok 90 Menit.',
+        footerNote: 'Dokumen Press Kit Resmi — Diperbarui otomatis dari MC-Connect.',
+        ridersFooter: 'Mohon konfirmasi kesiapan technical riders minimal H-2 sebelum acara.',
+      };
+      setCmsPressKit((prev) => {
+        if (mode === 'replace') return tplPressKit;
+        const merged: Record<string, string> = { ...prev };
+        Object.keys(tplPressKit).forEach((k) => {
+          if (!merged[k] || !merged[k].trim()) merged[k] = tplPressKit[k];
+        });
+        return merged;
+      });
+      setCmsDraftDirty((prev) => ({ ...prev, presskit: true }));
+      toast.info('Draft Press Kit terisi! Tinjau lalu klik "Simpan Press Kit".');
+    } else if (target === 'riders') {
+      const tplRiders = [
+        {
+          id: `draft_r1_${Date.now()}`,
+          title: '🎤 Technical Sound Riders',
+          notes: '• 2x Wireless Handheld Mic (Shure / Sennheiser UHF)\n• 1x Dedicated Sound Monitor di posisi Stage MC\n• Koneksi audio aux / bluetooth untuk cue musik',
+        },
+        {
+          id: `draft_r2_${Date.now()}`,
+          title: '☕ Hospitality Riders',
+          notes: '• Ruang transit / ganti pakaian ber-AC yang bersih\n• Air mineral hangat, kopi / teh sebelum naik panggung\n• 1x Meal box untuk MC & 1 Asisten Lapangan',
+        },
+      ];
+      setCmsRiders((prev) => (mode === 'replace' ? tplRiders : [...prev, ...tplRiders]));
+      setCmsDraftDirty((prev) => ({ ...prev, riders: true }));
+      toast.info('Draft Riders terisi! Tinjau lalu klik "Simpan Riders Draft".');
+    }
+    setAutoFillConfirm(null);
+  };
+
+  const requestAutoFill = (target: 'packages' | 'policies' | 'presskit' | 'riders') => {
+    let hasExisting = false;
+    let title = 'Auto-Fill Template';
+    if (target === 'packages') {
+      hasExisting = cmsPackages.length > 0;
+      title = 'Auto-Fill Paket Layanan';
+    } else if (target === 'policies') {
+      hasExisting = Boolean(cmsPolicies.terms?.trim() || cmsPolicies.refund?.trim() || (cmsPolicies.faqs && cmsPolicies.faqs.length > 0));
+      title = 'Auto-Fill Kebijakan & FAQ';
+    } else if (target === 'presskit') {
+      hasExisting = Object.values(cmsPressKit).some((v) => typeof v === 'string' && v.trim() !== '');
+      title = 'Auto-Fill Info Press Kit';
+    } else if (target === 'riders') {
+      hasExisting = cmsRiders.length > 0;
+      title = 'Auto-Fill Riders Standar';
+    }
+
+    if (!hasExisting) {
+      applyAutoFill(target, 'replace');
+    } else {
+      setAutoFillConfirm({ target, title });
     }
   };
 
@@ -3150,8 +3344,80 @@ export default function Dashboard({
                   </div>
                 </div>
 
+                {/* Mobile Card View (< md) */}
+                <div className="md:hidden space-y-3 mb-4">
+                  {filteredCustomers.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--adm-text-muted)', fontSize: '0.85rem' }}>
+                      Tidak ada data pelanggan yang sesuai dengan filter pencarian.
+                    </div>
+                  ) : (
+                    filteredCustomers.map((cust) => (
+                      <div
+                        key={`mob-cust-${cust.id}`}
+                        style={{
+                          padding: '0.9rem',
+                          borderRadius: '10px',
+                          border: '1px solid var(--adm-border)',
+                          background: 'rgba(255,255,255,0.02)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.55rem',
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 800, color: '#FFF', fontSize: '0.95rem' }}>{cust.name}</div>
+                            <div style={{ fontSize: '0.78rem', color: 'var(--adm-text-secondary)' }}>{cust.eventName || '-'} • {cust.date || '-'}</div>
+                          </div>
+                          <span className="badge" style={{ fontSize: '0.7rem', flexShrink: 0 }}>{cust.calendarStatus}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem' }}>
+                          <span style={{ color: '#34D399', fontWeight: 800 }}>{formatRupiah(cust.rawPrice || 0)}</span>
+                          <span style={{ color: 'var(--adm-text-muted)', fontSize: '0.75rem' }}>{cust.paymentStatus}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.4rem', paddingTop: '0.35rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            style={{ flex: 1, fontSize: '0.75rem', color: '#34D399', borderColor: 'rgba(52,211,153,0.3)' }}
+                            onClick={() => {
+                              setSelectedWaClient(cust);
+                              if (waTemplates.length > 0) {
+                                const tpl = waTemplates[0];
+                                const text = (tpl.message || '').replace(/{name}/g, cust.name).replace(/{event}/g, cust.eventName || 'Acara');
+                                setCustomWaMessage(text);
+                              } else {
+                                setCustomWaMessage(`Halo ${cust.name}, terkait acara "${cust.eventName}", kami dari tim MC ingin mengkonfirmasi...`);
+                              }
+                              setIsWaModalOpen(true);
+                            }}
+                          >
+                            💬 WA
+                          </button>
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            style={{ flex: 1, fontSize: '0.75rem' }}
+                            onClick={() => setSelectedCustomer(cust)}
+                          >
+                            👁️ Detail
+                          </button>
+                          <button
+                            className="btn btn-primary btn-sm"
+                            style={{ flex: 1, fontSize: '0.75rem', fontWeight: 800 }}
+                            onClick={() => {
+                              onSelectEvent(cust.eventId);
+                              setActiveSection('command-center');
+                            }}
+                          >
+                            ⚡ ECC
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
                 {/* Table Container */}
-                <div className="table-clean-wrapper" style={{ overflowX: 'auto' }}>
+                <div className="table-clean-wrapper hidden md:block" style={{ overflowX: 'auto' }}>
                   <table className="table-clean" style={{ width: '100%', minWidth: '980px', borderCollapse: 'collapse' }}>
                     <thead>
                       <tr style={{ cursor: 'pointer', userSelect: 'none', borderBottom: '1px solid var(--adm-border)' }}>
@@ -3430,12 +3696,12 @@ export default function Dashboard({
                     justifyContent: 'space-between',
                     background: 'linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(15,23,42,0.95) 100%)',
                     border: '1px solid rgba(212,175,55,0.15)',
-                    padding: '2rem 2.5rem',
+                    padding: 'clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2.5rem)',
                     borderRadius: '18px',
                     boxShadow: '0 15px 45px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)',
                   }}
                 >
-                  <div className="ecc-title-group" style={{ flex: 1, minWidth: '340px' }}>
+                  <div className="ecc-title-group" style={{ flex: 1, minWidth: 0, width: '100%' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
                       <span
                         className={`badge ${activeEvent.status?.toLowerCase() === 'terkunci' ? 'badge-locked' : 'badge-review'}`}
@@ -3494,7 +3760,7 @@ export default function Dashboard({
                     <h1
                       id="ccEventTitle"
                       style={{
-                        fontSize: '2.8rem',
+                        fontSize: 'clamp(1.4rem, 5vw, 2.8rem)',
                         fontWeight: 900,
                         margin: '0 0 1.5rem 0',
                         color: '#F8FAFC',
@@ -3708,14 +3974,21 @@ export default function Dashboard({
                           borderRadius: '12px',
                         }}
                         onClick={() => {
-                          toast.info(`Edit jadwal acara #${activeEvent.id}`);
+                          setEditEventForm({
+                            nama_acara: activeEvent.title || activeEvent.nama_acara || '',
+                            tanggal_acara: activeEvent.date || '',
+                            waktu_mulai: '18:00',
+                            waktu_selesai: '21:00',
+                            lokasi: activeEvent.venue || activeEvent.lokasi || '',
+                          });
+                          setShowEditEventModal(true);
                         }}
                         title="Edit Venue & Jam Acara"
                       >
                         ✏️ Edit
                       </button>
                       <a
-                        href={`/invoices/${activeEvent.id}/print`}
+                        href={`/invoices/${financialData?.invoice?.id || activeEvent.id}/print`}
                         target="_blank"
                         rel="noreferrer"
                         className="btn btn-secondary btn-sm"
@@ -3746,7 +4019,7 @@ export default function Dashboard({
                         📄 Cetak SPK
                       </a>
                       <a
-                        href={`/invoices/${activeEvent.id}/thermal`}
+                        href={`/invoices/${financialData?.invoice?.id || activeEvent.id}/thermal`}
                         target="_blank"
                         rel="noreferrer"
                         className="btn btn-secondary btn-sm"
@@ -3821,7 +4094,7 @@ export default function Dashboard({
               {(activeTab === 'overview' || activeTab === 'crm') && activeEvent && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                   {/* Row 1: Profil Klien & Detail Booking + Sticky Notes VIP Info */}
-                  <div className="grid-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem' }}>
+                  <div className="grid-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '1.5rem' }}>
                     {/* Profil Klien & Detail Booking */}
                     <div className="ecc-card">
                       <div className="ecc-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '0.75rem' }}>
@@ -3947,6 +4220,7 @@ export default function Dashboard({
                           placeholder="Tulis catatan penting acara di sini..."
                           value={eccStickyNotes}
                           onChange={(e) => setEccStickyNotes(e.target.value)}
+                          onBlur={() => persistEventMetadata({ stickyNotes: eccStickyNotes })}
                         />
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: '#92400E', marginTop: '0.35rem', borderTop: '1px dashed rgba(120,53,15,0.3)', paddingTop: '0.35rem' }}>
                           <span id="eccStickySubtitle">* Tersimpan ke Event_ID #{activeEvent.id}</span>
@@ -3967,7 +4241,9 @@ export default function Dashboard({
                               if (!role) return;
                               const name = prompt('Masukkan Nama Lengkap & Gelar (contoh: Bpk. Erick Thohir):');
                               if (!name) return;
-                              setEccVipProtocols(prev => [...prev, { role: role + ':', name }]);
+                              const next = [...eccVipProtocols, { role: role + ':', name }];
+                              setEccVipProtocols(next);
+                              persistEventMetadata({ vipProtocols: next });
                             }}
                           >
                             + Tambah
@@ -3986,7 +4262,7 @@ export default function Dashboard({
                   </div>
 
                   {/* Row 2: Checklist Kesiapan MC & WhatsApp Gateway */}
-                  <div className="grid-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem' }}>
+                  <div className="grid-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '1.5rem' }}>
                     {/* Checklist Kesiapan MC Panggung */}
                     <div className="ecc-card">
                       <div className="ecc-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '0.75rem' }}>
@@ -4016,7 +4292,9 @@ export default function Dashboard({
                               type="checkbox"
                               checked={item.done}
                               onChange={() => {
-                                setEccChecklist(prev => prev.map((c, i) => i === cIdx ? { ...c, done: !c.done } : c));
+                                const next = eccChecklist.map((c, i) => i === cIdx ? { ...c, done: !c.done } : c);
+                                setEccChecklist(next);
+                                persistEventMetadata({ checklist: next });
                               }}
                             />
                             <span>{item.text}</span>
@@ -4028,7 +4306,9 @@ export default function Dashboard({
                         onSubmit={(e) => {
                           e.preventDefault();
                           if (!newChecklistText.trim()) return;
-                          setEccChecklist(prev => [...prev, { text: newChecklistText.trim(), done: false }]);
+                          const next = [...eccChecklist, { text: newChecklistText.trim(), done: false }];
+                          setEccChecklist(next);
+                          persistEventMetadata({ checklist: next });
                           setNewChecklistText('');
                         }}
                         style={{ display: 'flex', gap: '0.5rem', marginTop: '1.25rem' }}
@@ -6117,7 +6397,46 @@ export default function Dashboard({
                   </div>
                 </div>
 
-                <div className="table-clean-wrapper" style={{ overflowX: 'auto' }}>
+                {/* Mobile Card View (< md) */}
+                <div className="md:hidden space-y-2.5 p-3">
+                  {filteredCashflow.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--adm-text-muted)', fontSize: '0.85rem' }}>
+                      {cfLoading ? 'Memuat transaksi kas...' : 'Belum ada transaksi kas yang dicatat.'}
+                    </div>
+                  ) : (
+                    filteredCashflow.map((t, idx) => {
+                      const isIn = t.type === 'in';
+                      return (
+                        <div
+                          key={`mob-cf-${t.id || idx}`}
+                          style={{
+                            padding: '0.8rem',
+                            borderRadius: '8px',
+                            border: '1px solid var(--adm-border)',
+                            background: 'rgba(255,255,255,0.02)',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: '0.6rem',
+                          }}
+                        >
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 700, color: '#FFF', fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.desc || '-'}</div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--adm-text-muted)' }}>{t.date || '-'} • {t.category || (isIn ? 'Kas Masuk' : 'Pengeluaran')}</div>
+                          </div>
+                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                            <div style={{ fontWeight: 800, fontSize: '0.85rem', color: isIn ? '#34D399' : '#F87171' }}>
+                              {isIn ? '+' : '-'}{formatRupiah(t.amount)}
+                            </div>
+                            <div style={{ fontSize: '0.68rem', color: 'var(--adm-text-muted)' }}>{t.status || 'Berhasil'}</div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                <div className="table-clean-wrapper hidden md:block" style={{ overflowX: 'auto' }}>
                   <table className="table-clean" id="cashFlowTable" style={{ width: '100%', minWidth: '780px' }}>
                     <thead>
                       <tr>
@@ -6301,14 +6620,92 @@ export default function Dashboard({
                     Kelola seluruh koleksi bank lagu, musik latar, dan soundboard di sini.
                   </p>
                 </div>
-                <button 
+                <button
                   className="btn btn-primary"
-                  onClick={() => toast.info('Fitur unggah lagu audio MP3/WAV siap digunakan.')}
+                  onClick={() => setShowMusicBankForm(!showMusicBankForm)}
                   style={{ fontWeight: 800 }}
                 >
-                  + Tambah Lagu Baru
+                  {showMusicBankForm ? '✕ Tutup Form' : '+ Tambah Lagu Baru'}
                 </button>
               </div>
+
+              {showMusicBankForm && (
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!musicBankForm.title.trim()) return;
+                    const catNames: Record<string, string> = {
+                      Anthem: 'Opening Anthem',
+                      Entrance: 'Grand Entrance',
+                      Toast: 'Cake & Toast',
+                      Games: 'Games & Ice Break',
+                      Finale: 'Grand Finale',
+                    };
+                    const next = [
+                      {
+                        cat: musicBankForm.cat,
+                        catName: catNames[musicBankForm.cat] || musicBankForm.cat,
+                        title: musicBankForm.title.trim(),
+                        cue: musicBankForm.cue.trim() || 'Putar sesuai cue panggung',
+                      },
+                      ...musicBankList,
+                    ];
+                    try {
+                      await cmsJsonRequest('/api/cms/music-bank', 'POST', { data: next });
+                      setMusicBankList(next);
+                      setMusicBankForm({ cat: 'Anthem', title: '', cue: '' });
+                      setShowMusicBankForm(false);
+                      toast.success('Lagu berhasil ditambahkan ke Bank Musik!');
+                    } catch (err: any) {
+                      toast.error(err.message || 'Gagal menyimpan lagu.');
+                    }
+                  }}
+                  className="ecc-card"
+                  style={{ marginBottom: '1.5rem', border: '1px solid var(--adm-gold)' }}
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="form-label" style={{ display: 'block', fontSize: '0.78rem', marginBottom: '0.2rem', color: 'var(--adm-text-secondary)' }}>Kategori Cue</label>
+                      <select
+                        className="form-select"
+                        value={musicBankForm.cat}
+                        onChange={(e) => setMusicBankForm({ ...musicBankForm, cat: e.target.value })}
+                      >
+                        <option value="Anthem">Opening Anthem</option>
+                        <option value="Entrance">Grand Entrance</option>
+                        <option value="Toast">Cake & Toast</option>
+                        <option value="Games">Games & Ice Break</option>
+                        <option value="Finale">Grand Finale</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="form-label" style={{ display: 'block', fontSize: '0.78rem', marginBottom: '0.2rem', color: 'var(--adm-text-secondary)' }}>Judul Lagu / Track *</label>
+                      <input
+                        type="text"
+                        required
+                        className="form-input"
+                        placeholder="Contoh: A Thousand Years (Strings)"
+                        value={musicBankForm.title}
+                        onChange={(e) => setMusicBankForm({ ...musicBankForm, title: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="form-label" style={{ display: 'block', fontSize: '0.78rem', marginBottom: '0.2rem', color: 'var(--adm-text-secondary)' }}>Instruksi Panggung MC</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="Contoh: Fade in saat pintu dibuka"
+                        value={musicBankForm.cue}
+                        onChange={(e) => setMusicBankForm({ ...musicBankForm, cue: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.85rem' }}>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowMusicBankForm(false)}>Batal</button>
+                    <button type="submit" className="btn btn-primary btn-sm">💾 Simpan Lagu</button>
+                  </div>
+                </form>
+              )}
 
               {/* Quick Soundboard Live Audition */}
               <div className="ecc-card" style={{ marginBottom: '1.5rem' }}>
@@ -6356,14 +6753,14 @@ export default function Dashboard({
                   <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#FFF' }}>
                     📁 Daftar Katalog Bank Musik Panggung
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center', width: '100%', maxWidth: '420px' }}>
                     <input 
                       type="text" 
                       placeholder="Cari lagu / instruksi..." 
                       value={musicBankSearch}
                       onChange={(e) => setMusicBankSearch(e.target.value)}
                       className="form-input"
-                      style={{ padding: '0.35rem 0.75rem', fontSize: '0.82rem', width: '220px' }}
+                      style={{ padding: '0.35rem 0.75rem', fontSize: '0.82rem', flex: '1 1 180px', minWidth: 0 }}
                     />
                     <select
                       value={musicBankCategory}
@@ -6392,15 +6789,7 @@ export default function Dashboard({
                       </tr>
                     </thead>
                     <tbody>
-                      {[
-                        { cat: 'Anthem', catName: 'Opening Anthem', title: 'Fanfare Brass of Triumph Intro', cue: 'Fade in saat MC dipanggil naik panggung' },
-                        { cat: 'Entrance', catName: 'Grand Entrance', title: 'Canon in D Strings / A Thousand Years', cue: 'Naikkan volume 80% saat pintu ballroom terbuka' },
-                        { cat: 'Toast', catName: 'Cake & Toast', title: 'Celebration Pop Uplifting Beats', cue: 'Hitungan ketiga bersamaan confetti pop' },
-                        { cat: 'Games', catName: 'Games & Ice Break', title: 'Funky Groovy Upbeat Jazz', cue: 'Background audio saat games interaktif berlangsung' },
-                        { cat: 'Finale', catName: 'Grand Finale', title: 'Emotional Cinematic Strings Outro', cue: 'Mulai saat MC closing kalimat terakhir' },
-                        { cat: 'Anthem', catName: 'Opening Anthem', title: 'Majestic Royal Fanfare', cue: 'Diputar saat pembukaan gala dinner tamu VIP' },
-                        { cat: 'Entrance', catName: 'Grand Entrance', title: 'Acoustic Guitar Romantic Journey', cue: 'Iringan masuk mempelai wanita ke pelaminan' },
-                      ]
+                      {musicBankList
                         .filter(m => (musicBankCategory === 'all' || m.cat === musicBankCategory) && (musicBankSearch === '' || m.title.toLowerCase().includes(musicBankSearch.toLowerCase()) || m.cue.toLowerCase().includes(musicBankSearch.toLowerCase())))
                         .map((m, idx) => (
                           <tr key={idx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)', background: idx % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.01)' }}>
@@ -6408,16 +6797,35 @@ export default function Dashboard({
                             <td style={{ padding: '0.85rem 0.75rem', fontWeight: 700, color: '#FFF' }}>{m.title}</td>
                             <td style={{ padding: '0.85rem 0.75rem', fontSize: '0.85rem', color: 'var(--adm-text-secondary)' }}>{m.cue}</td>
                             <td style={{ padding: '0.85rem 0.75rem', textAlign: 'right' }}>
-                              <button 
-                                className="btn btn-secondary btn-sm"
-                                onClick={() => {
-                                  playChime();
-                                  toast.info(`Memutar Web Audio preview: ${m.title}`);
-                                }}
-                                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
-                              >
-                                ▶ Putar Cue
-                              </button>
+                              <div style={{ display: 'inline-flex', gap: '0.4rem', alignItems: 'center' }}>
+                                <button
+                                  className="btn btn-secondary btn-sm"
+                                  onClick={() => {
+                                    playChime();
+                                    toast.info(`Memutar Web Audio preview: ${m.title}`);
+                                  }}
+                                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                                >
+                                  ▶ Putar Cue
+                                </button>
+                                <button
+                                  className="btn btn-secondary btn-sm"
+                                  style={{ color: '#F87171', borderColor: 'rgba(239,68,68,0.35)' }}
+                                  onClick={async () => {
+                                    if (!confirm(`Hapus "${m.title}" dari Bank Musik?`)) return;
+                                    const next = musicBankList.filter((item) => item !== m);
+                                    try {
+                                      await cmsJsonRequest('/api/cms/music-bank', 'POST', { data: next });
+                                      setMusicBankList(next);
+                                      toast.success('Lagu dihapus dari Bank Musik.');
+                                    } catch (err: any) {
+                                      toast.error(err.message || 'Gagal menghapus lagu.');
+                                    }
+                                  }}
+                                >
+                                  🗑️
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -6706,9 +7114,35 @@ export default function Dashboard({
                 <div className="cms-subpanel active" id="cms-packages">
                   <div className="ecc-card">
                     <div className="ecc-card-header" style={{ flexWrap: 'wrap', gap: '0.75rem' }}>
-                      <div className="ecc-card-title">Kelola Paket Layanan & Harga Panggung</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span className="badge badge-available">Katalog Online</span>
+                      <div className="ecc-card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <span>Kelola Paket Layanan & Harga Panggung</span>
+                        {cmsDraftDirty.packages && (
+                          <span className="badge" style={{ background: 'rgba(245,158,11,0.2)', color: '#FBBF24', border: '1px solid rgba(245,158,11,0.4)', fontSize: '0.7rem' }}>
+                            Draft — Belum Disimpan
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => requestAutoFill('packages')}
+                        >
+                          ✨ Auto-Fill Paket
+                        </button>
+                        {cmsDraftDirty.packages && (
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            disabled={isSavingSettings}
+                            onClick={async () => {
+                              const ok = await savePackagesToServer(cmsPackages, 'Draft paket layanan berhasil disimpan ke server!');
+                              if (ok) setCmsDraftDirty((prev) => ({ ...prev, packages: false }));
+                            }}
+                          >
+                            💾 Simpan Draft ke Server
+                          </button>
+                        )}
                         <button
                           type="button"
                           className="btn btn-primary btn-sm"
@@ -6889,15 +7323,44 @@ export default function Dashboard({
               {cmsSubTab === 'cms-policies' && (
                 <div className="cms-subpanel active" id="cms-policies">
                   <div className="ecc-card">
-                    <div className="ecc-card-header">
-                      <div className="ecc-card-title">⚖️ Kebijakan, Syarat & Ketentuan (T&C) & FAQ</div>
-                      <span className="badge badge-tier-pro">Legal & Compliance</span>
+                    <div className="ecc-card-header" style={{ flexWrap: 'wrap', gap: '0.75rem' }}>
+                      <div className="ecc-card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <span>⚖️ Kebijakan, Syarat & Ketentuan (T&C) & FAQ</span>
+                        {cmsDraftDirty.policies && (
+                          <span className="badge" style={{ background: 'rgba(245,158,11,0.2)', color: '#FBBF24', border: '1px solid rgba(245,158,11,0.4)', fontSize: '0.7rem' }}>
+                            Draft — Belum Disimpan
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => requestAutoFill('policies')}
+                        >
+                          ✨ Auto-Fill Kebijakan & FAQ
+                        </button>
+                        <span className="badge badge-tier-pro">Legal & Compliance</span>
+                      </div>
                     </div>
 
                     <form
-                      onSubmit={(e) => {
+                      onSubmit={async (e) => {
                         e.preventDefault();
-                        toast.success('Kebijakan T&C & FAQ berhasil disimpan!');
+                        setIsSavingSettings(true);
+                        try {
+                          const data = await cmsJsonRequest('/api/cms/policies', 'POST', {
+                            terms: cmsPolicies.terms || '',
+                            refund: cmsPolicies.refund || '',
+                            faqs: (cmsPolicies.faqs || []).filter((f) => f.q.trim() || f.a.trim()),
+                          });
+                          setCmsDraftDirty((prev) => ({ ...prev, policies: false }));
+                          toast.success(data.message || 'Kebijakan & FAQ berhasil disimpan ke database!');
+                        } catch (err: any) {
+                          toast.error(err.message || 'Gagal menyimpan kebijakan & FAQ.');
+                        } finally {
+                          setIsSavingSettings(false);
+                        }
                       }}
                       className="space-y-4"
                     >
@@ -6909,7 +7372,10 @@ export default function Dashboard({
                           className="form-textarea"
                           rows={4}
                           value={cmsPolicies.terms || ''}
-                          onChange={(e) => setCmsPolicies({ ...cmsPolicies, terms: e.target.value })}
+                          onChange={(e) => {
+                            setCmsPolicies({ ...cmsPolicies, terms: e.target.value });
+                            setCmsDraftDirty((prev) => ({ ...prev, policies: true }));
+                          }}
                           style={{ width: '100%', background: 'var(--adm-bg-surface)', border: '1px solid var(--adm-border)', borderRadius: '6px', padding: '0.5rem', color: '#FFF' }}
                         />
                       </div>
@@ -6922,14 +7388,98 @@ export default function Dashboard({
                           className="form-textarea"
                           rows={4}
                           value={cmsPolicies.refund || ''}
-                          onChange={(e) => setCmsPolicies({ ...cmsPolicies, refund: e.target.value })}
+                          onChange={(e) => {
+                            setCmsPolicies({ ...cmsPolicies, refund: e.target.value });
+                            setCmsDraftDirty((prev) => ({ ...prev, policies: true }));
+                          }}
                           style={{ width: '100%', background: 'var(--adm-bg-surface)', border: '1px solid var(--adm-border)', borderRadius: '6px', padding: '0.5rem', color: '#FFF' }}
                         />
                       </div>
 
+                      {/* CRUD FAQ */}
+                      <div style={{ borderTop: '1px solid var(--adm-border)', paddingTop: '1rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                          <label className="form-label" style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--adm-gold)', margin: 0 }}>
+                            3. Daftar Pertanyaan Umum (FAQ)
+                          </label>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => {
+                              setCmsPolicies((prev) => ({
+                                ...prev,
+                                faqs: [...(prev.faqs || []), { q: '', a: '' }],
+                              }));
+                              setCmsDraftDirty((prev) => ({ ...prev, policies: true }));
+                            }}
+                          >
+                            + Tambah FAQ
+                          </button>
+                        </div>
+
+                        {(!cmsPolicies.faqs || cmsPolicies.faqs.length === 0) ? (
+                          <div style={{ padding: '1rem', textAlign: 'center', fontSize: '0.82rem', color: 'var(--adm-text-secondary)', border: '1px dashed var(--adm-border)', borderRadius: '8px' }}>
+                            Belum ada FAQ. Klik <strong>+ Tambah FAQ</strong> atau <strong>✨ Auto-Fill Kebijakan & FAQ</strong> di atas.
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {cmsPolicies.faqs.map((faq, fIdx) => (
+                              <div key={fIdx} style={{ padding: '0.85rem', borderRadius: '8px', border: '1px solid var(--adm-border)', background: 'rgba(255,255,255,0.02)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--adm-gold)' }}>FAQ #{fIdx + 1}</span>
+                                  <button
+                                    type="button"
+                                    className="btn btn-secondary btn-sm"
+                                    style={{ color: '#F87171', borderColor: 'rgba(239,68,68,0.35)', padding: '0.15rem 0.5rem' }}
+                                    onClick={() => {
+                                      setCmsPolicies((prev) => ({
+                                        ...prev,
+                                        faqs: (prev.faqs || []).filter((_, i) => i !== fIdx),
+                                      }));
+                                      setCmsDraftDirty((prev) => ({ ...prev, policies: true }));
+                                    }}
+                                  >
+                                    🗑️ Hapus
+                                  </button>
+                                </div>
+                                <input
+                                  type="text"
+                                  className="form-input"
+                                  placeholder="Pertanyaan (Q)..."
+                                  value={faq.q}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setCmsPolicies((prev) => ({
+                                      ...prev,
+                                      faqs: (prev.faqs || []).map((item, i) => (i === fIdx ? { ...item, q: val } : item)),
+                                    }));
+                                    setCmsDraftDirty((prev) => ({ ...prev, policies: true }));
+                                  }}
+                                />
+                                <textarea
+                                  rows={2}
+                                  className="form-textarea"
+                                  placeholder="Jawaban (A)..."
+                                  value={faq.a}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setCmsPolicies((prev) => ({
+                                      ...prev,
+                                      faqs: (prev.faqs || []).map((item, i) => (i === fIdx ? { ...item, a: val } : item)),
+                                    }));
+                                    setCmsDraftDirty((prev) => ({ ...prev, policies: true }));
+                                  }}
+                                  style={{ width: '100%', background: 'var(--adm-bg-surface)', border: '1px solid var(--adm-border)', borderRadius: '6px', padding: '0.5rem', color: '#FFF' }}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
                       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-                        <button type="submit" className="btn btn-primary" style={{ fontWeight: 700 }}>
-                          💾 Simpan Kebijakan & FAQ
+                        <button type="submit" className="btn btn-primary" disabled={isSavingSettings} style={{ fontWeight: 700 }}>
+                          {isSavingSettings ? 'Menyimpan...' : '💾 Simpan Kebijakan & FAQ'}
                         </button>
                       </div>
                     </form>
@@ -6941,9 +7491,25 @@ export default function Dashboard({
               {cmsSubTab === 'cms-presskit' && (
                 <div className="cms-subpanel active" id="cms-presskit" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   <div className="ecc-card">
-                    <div className="ecc-card-header">
-                      <div className="ecc-card-title">📁 Informasi Resmi Press Kit MC</div>
-                      <span className="badge badge-available">Dokumen Resmi</span>
+                    <div className="ecc-card-header" style={{ flexWrap: 'wrap', gap: '0.75rem' }}>
+                      <div className="ecc-card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <span>📁 Informasi Resmi Press Kit MC</span>
+                        {cmsDraftDirty.presskit && (
+                          <span className="badge" style={{ background: 'rgba(245,158,11,0.2)', color: '#FBBF24', border: '1px solid rgba(245,158,11,0.4)', fontSize: '0.7rem' }}>
+                            Draft — Belum Disimpan
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => requestAutoFill('presskit')}
+                        >
+                          ✨ Auto-Fill dari Biodata & Template
+                        </button>
+                        <span className="badge badge-available">Dokumen Resmi</span>
+                      </div>
                     </div>
                     <form onSubmit={handleSavePressKit} className="space-y-4">
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.85rem' }}>
@@ -7043,18 +7609,64 @@ export default function Dashboard({
                   {/* CRUD TECHNICAL & HOSPITALITY RIDERS */}
                   <div className="ecc-card">
                     <div className="ecc-card-header" style={{ flexWrap: 'wrap', gap: '0.75rem' }}>
-                      <div className="ecc-card-title">🎤 Daftar Technical & Hospitality Riders</div>
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-sm"
-                        onClick={() => {
-                          setEditingRiderId(null);
-                          setRiderForm({ title: '', notes: '' });
-                          setShowRiderForm(true);
-                        }}
-                      >
-                        + Tambah Rider
-                      </button>
+                      <div className="ecc-card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <span>🎤 Daftar Technical & Hospitality Riders</span>
+                        {cmsDraftDirty.riders && (
+                          <span className="badge" style={{ background: 'rgba(245,158,11,0.2)', color: '#FBBF24', border: '1px solid rgba(245,158,11,0.4)', fontSize: '0.7rem' }}>
+                            Draft — Belum Disimpan
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => requestAutoFill('riders')}
+                        >
+                          ✨ Auto-Fill Riders
+                        </button>
+                        {cmsDraftDirty.riders && (
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            disabled={isSavingSettings}
+                            onClick={async () => {
+                              setIsSavingSettings(true);
+                              try {
+                                const savedAll: any[] = [];
+                                for (const r of cmsRiders) {
+                                  const res = await cmsJsonRequest('/api/cms/riders', 'POST', {
+                                    db_id: r.db_id || undefined,
+                                    title: r.title,
+                                    notes: r.notes,
+                                  });
+                                  if (res.data) savedAll.push(res.data);
+                                }
+                                setCmsRiders(savedAll);
+                                setCmsDraftDirty((prev) => ({ ...prev, riders: false }));
+                                toast.success('Seluruh draft riders berhasil disimpan ke database!');
+                              } catch (err: any) {
+                                toast.error(err.message || 'Gagal menyimpan draft riders.');
+                              } finally {
+                                setIsSavingSettings(false);
+                              }
+                            }}
+                          >
+                            💾 Simpan Riders Draft
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="btn btn-primary btn-sm"
+                          onClick={() => {
+                            setEditingRiderId(null);
+                            setRiderForm({ title: '', notes: '' });
+                            setShowRiderForm(true);
+                          }}
+                        >
+                          + Tambah Rider
+                        </button>
+                      </div>
                     </div>
 
                     {showRiderForm && (
@@ -7744,7 +8356,7 @@ export default function Dashboard({
                       </p>
                     </div>
                   </div>
-                  <div className="grid-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+                  <div className="grid-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '1.5rem' }}>
                     {/* Kategori Pemasukan */}
                     <div className="ecc-card" style={{ borderTop: '3px solid #10B981', background: 'linear-gradient(180deg, rgba(16,185,129,0.05) 0%, rgba(20,11,11,0.6) 100%)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(16,185,129,0.2)' }}>
@@ -7915,7 +8527,7 @@ export default function Dashboard({
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginTop: '1.5rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '1.5rem', marginTop: '1.5rem' }}>
                       {/* 1. Logo Web & Invoice */}
                       <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--adm-border)', borderRadius: '8px', padding: '1.25rem' }}>
                         <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--adm-gold)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -8100,7 +8712,7 @@ export default function Dashboard({
               {/* TAB 7: KEAMANAN AKUN & GANTI KATA SANDI */}
               {webSubTab === 'web-security' && (
                 <div className="cms-subpanel active" id="web-security">
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '1.5rem', alignItems: 'start' }}>
                     {/* Card Form Ganti Password */}
                     <div className="ecc-card">
                       <div className="ecc-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '0.75rem' }}>
@@ -8586,8 +9198,8 @@ export default function Dashboard({
               </button>
             </div>
 
-            <form 
-              onSubmit={(e) => {
+            <form
+              onSubmit={async (e) => {
                 e.preventDefault();
                 const formEl = e.currentTarget;
                 const newName = (formEl.elements.namedItem('custName') as HTMLInputElement).value;
@@ -8596,26 +9208,41 @@ export default function Dashboard({
                 const newDate = (formEl.elements.namedItem('custDate') as HTMLInputElement).value;
                 const newPrice = parseFloat((formEl.elements.namedItem('custPrice') as HTMLInputElement).value) || 15000000;
 
-                const newEventObj: EventItem = {
-                  id: Date.now(),
-                  title: newEvent,
-                  nama_acara: newEvent,
-                  date: newDate,
-                  time: '18:00 - 21:00 WIB',
-                  venue: 'Jakarta Ballroom',
-                  lokasi: 'Jakarta Ballroom',
-                  pic: `${newName} (${newWa})`,
-                  price: formatRupiah(newPrice),
-                  rawPrice: newPrice,
-                  status: 'Tentative',
-                  paymentStatus: 'MENUNGGU DP',
-                  category: 'Corporate',
-                  clientCategory: 'REGULAR',
-                };
-
-                setEvents(prev => [newEventObj, ...prev]);
-                setShowAddCustomerModal(false);
-                toast.success(`Klien baru ${newName} berhasil ditambahkan ke direktori!`);
+                try {
+                  const res = await cmsJsonRequest('/api/cms/events', 'POST', {
+                    nama_pic: newName,
+                    no_wa: newWa,
+                    nama_acara: newEvent,
+                    tanggal_acara: newDate,
+                    nilai_kontrak: newPrice,
+                    lokasi: 'Venue TBD',
+                    status: 'Tentative',
+                    tipe_acara: 'Corporate',
+                    status_pembayaran: 'Belum Bayar',
+                  });
+                  const created = res.data || {};
+                  const newEventObj: EventItem = {
+                    id: created.id || Date.now(),
+                    title: created.nama_acara || newEvent,
+                    nama_acara: created.nama_acara || newEvent,
+                    date: created.tanggal_acara || newDate,
+                    time: '18:00 - 21:00 WIB',
+                    venue: created.lokasi || 'Venue TBD',
+                    lokasi: created.lokasi || 'Venue TBD',
+                    pic: `${newName} (${newWa})`,
+                    price: formatRupiah(newPrice),
+                    rawPrice: newPrice,
+                    status: 'Tentative',
+                    paymentStatus: 'MENUNGGU DP',
+                    category: 'Corporate',
+                    clientCategory: 'REGULAR',
+                  };
+                  setEvents(prev => [newEventObj, ...prev]);
+                  setShowAddCustomerModal(false);
+                  toast.success(`Klien baru ${newName} berhasil disimpan ke database!`);
+                } catch (err: any) {
+                  toast.error(err.message || 'Gagal menyimpan klien baru ke server.');
+                }
               }}
               className="space-y-3"
               style={{ fontSize: '0.85rem' }}
@@ -8678,7 +9305,7 @@ export default function Dashboard({
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label style={{ display: 'block', color: 'var(--adm-text-muted)', marginBottom: '0.2rem' }}>Kategori Busana:</label>
                   <select
@@ -8750,7 +9377,7 @@ export default function Dashboard({
             </div>
 
             <form onSubmit={handleSaveCashflow} className="space-y-3" style={{ fontSize: '0.85rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label style={{ display: 'block', color: 'var(--adm-text-muted)', marginBottom: '0.2rem' }}>Jenis Transaksi *</label>
                   <select
@@ -8783,7 +9410,7 @@ export default function Dashboard({
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label style={{ display: 'block', color: 'var(--adm-text-muted)', marginBottom: '0.2rem' }}>Kategori Transaksi *</label>
                   <select
@@ -8873,7 +9500,7 @@ export default function Dashboard({
             </div>
 
             <form onSubmit={(e) => { e.preventDefault(); handleSaveRundownSegment(); }} className="space-y-3" style={{ fontSize: '0.85rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label style={{ display: 'block', color: 'var(--adm-text-muted)', marginBottom: '0.2rem' }}>Jam Mulai *</label>
                   <input
@@ -8923,7 +9550,7 @@ export default function Dashboard({
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label style={{ display: 'block', color: 'var(--adm-text-muted)', marginBottom: '0.2rem' }}>Cue Musik / Lagu</label>
                   <input
@@ -9154,6 +9781,125 @@ export default function Dashboard({
       {/* =========================================================
           MODAL: EDIT RINCIAN TAGIHAN & INVOICE
           ========================================================= */}
+      {autoFillConfirm && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1200, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div className="ecc-card" style={{ maxWidth: '460px', width: '100%', border: '1px solid var(--adm-gold)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', borderBottom: '1px solid var(--adm-border)', paddingBottom: '0.65rem' }}>
+              <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--adm-gold)' }}>
+                ✨ {autoFillConfirm.title}
+              </div>
+              <button onClick={() => setAutoFillConfirm(null)} style={{ background: 'none', border: 'none', color: '#FFF', fontSize: '1.1rem', cursor: 'pointer' }}>✕</button>
+            </div>
+            <p style={{ fontSize: '0.85rem', color: 'var(--adm-text-secondary)', marginBottom: '1.25rem', lineHeight: 1.5 }}>
+              Data pada bagian ini sudah memiliki isi. Pilih bagaimana template referensi diterapkan ke dalam form (draft akan menunggu Anda klik <strong>Simpan</strong>):
+            </p>
+            <div className="flex flex-col sm:flex-row justify-end gap-2">
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setAutoFillConfirm(null)}>
+                Batal
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                style={{ borderColor: 'var(--adm-gold)', color: 'var(--adm-gold)' }}
+                onClick={() => applyAutoFill(autoFillConfirm.target, 'fill_empty')}
+              >
+                Isi yang Kosong / Tambahkan
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={() => applyAutoFill(autoFillConfirm.target, 'replace')}
+              >
+                Timpa Semua
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEditEventModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div className="ecc-card" style={{ maxWidth: '500px', width: '100%', border: '1px solid var(--adm-gold)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--adm-border)', paddingBottom: '0.75rem' }}>
+              <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#FFF' }}>✏️ Edit Jadwal & Venue Acara</div>
+              <button onClick={() => setShowEditEventModal(false)} style={{ background: 'none', border: 'none', color: '#FFF', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
+            </div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!activeEvent?.id) return;
+                try {
+                  await fetch(`/api/cms/events/${activeEvent.id}`, {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Accept': 'application/json',
+                      'X-CSRF-TOKEN': (window as any).CSRF_TOKEN || '',
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                      nama_acara: editEventForm.nama_acara,
+                      tanggal_acara: editEventForm.tanggal_acara,
+                      waktu_mulai: editEventForm.waktu_mulai,
+                      waktu_selesai: editEventForm.waktu_selesai,
+                      lokasi: editEventForm.lokasi,
+                    }),
+                  });
+                  setEvents((prev) =>
+                    prev.map((ev) =>
+                      ev.id === activeEvent.id
+                        ? {
+                            ...ev,
+                            title: editEventForm.nama_acara,
+                            nama_acara: editEventForm.nama_acara,
+                            date: editEventForm.tanggal_acara,
+                            time: `${editEventForm.waktu_mulai} - ${editEventForm.waktu_selesai} WIB`,
+                            venue: editEventForm.lokasi,
+                            lokasi: editEventForm.lokasi,
+                          }
+                        : ev
+                    )
+                  );
+                  setShowEditEventModal(false);
+                  toast.success('Jadwal & venue acara diperbarui!');
+                } catch {
+                  toast.error('Gagal memperbarui jadwal acara.');
+                }
+              }}
+              className="space-y-3"
+              style={{ fontSize: '0.85rem' }}
+            >
+              <div>
+                <label style={{ display: 'block', color: 'var(--adm-text-muted)', marginBottom: '0.2rem' }}>Nama Acara</label>
+                <input type="text" required className="form-input" value={editEventForm.nama_acara} onChange={(e) => setEditEventForm({ ...editEventForm, nama_acara: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label style={{ display: 'block', color: 'var(--adm-text-muted)', marginBottom: '0.2rem' }}>Tanggal</label>
+                  <input type="date" required className="form-input" value={editEventForm.tanggal_acara} onChange={(e) => setEditEventForm({ ...editEventForm, tanggal_acara: e.target.value })} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', color: 'var(--adm-text-muted)', marginBottom: '0.2rem' }}>Mulai</label>
+                  <input type="time" required className="form-input" value={editEventForm.waktu_mulai} onChange={(e) => setEditEventForm({ ...editEventForm, waktu_mulai: e.target.value })} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', color: 'var(--adm-text-muted)', marginBottom: '0.2rem' }}>Selesai</label>
+                  <input type="time" required className="form-input" value={editEventForm.waktu_selesai} onChange={(e) => setEditEventForm({ ...editEventForm, waktu_selesai: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <label style={{ display: 'block', color: 'var(--adm-text-muted)', marginBottom: '0.2rem' }}>Lokasi / Venue</label>
+                <input type="text" required className="form-input" value={editEventForm.lokasi} onChange={(e) => setEditEventForm({ ...editEventForm, lokasi: e.target.value })} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowEditEventModal(false)}>Batal</button>
+                <button type="submit" className="btn btn-primary">💾 Simpan Perubahan</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {isEditInvoiceModalOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div className="ecc-card" style={{ maxWidth: '500px', width: '100%', border: '1px solid var(--adm-gold)' }}>
@@ -9170,28 +9916,53 @@ export default function Dashboard({
               <div>
                 <label style={{ display: 'block', color: 'var(--adm-text-muted)', marginBottom: '0.2rem' }}>Status Pembayaran</label>
                 <select
-                  value={activeEvent?.payment_status || (activeEvent?.status === 'terkunci' ? 'dp' : 'unpaid')}
+                  value={activeEvent?.payment_status || activeEvent?.paymentStatus || 'Unpaid'}
                   onChange={(e) => handleUpdatePaymentStatus(e.target.value)}
                   style={{ width: '100%', background: 'var(--adm-bg-surface)', border: '1px solid var(--adm-border)', borderRadius: '6px', padding: '0.45rem', color: '#FFF' }}
                 >
-                  <option value="unpaid">Menunggu Pembayaran (Belum Bayar)</option>
-                  <option value="dp">DP / Cicilan (Sebagian Dibayar - Jadwal Terkunci)</option>
-                  <option value="paid">Lunas (100% Selesai)</option>
+                  <option value="Unpaid">Menunggu Pembayaran (Belum Bayar)</option>
+                  <option value="DP Paid">DP / Cicilan (Sebagian Dibayar - Jadwal Terkunci)</option>
+                  <option value="Fully Paid">Lunas (100% Selesai)</option>
                 </select>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label style={{ display: 'block', color: 'var(--adm-text-muted)', marginBottom: '0.2rem' }}>Nilai Kontrak (Rp)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    className="form-input"
+                    value={invoiceEditContract}
+                    onChange={(e) => setInvoiceEditContract(e.target.value)}
+                    placeholder={String(financialData?.nilai_kontrak || activeEvent?.rawPrice || 0)}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', color: 'var(--adm-text-muted)', marginBottom: '0.2rem' }}>DP Diterima (Rp)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    className="form-input"
+                    value={invoiceEditDp}
+                    onChange={(e) => setInvoiceEditDp(e.target.value)}
+                    placeholder={String(financialData?.dp_diterima || 0)}
+                  />
+                </div>
               </div>
 
               <div style={{ padding: '1rem', background: 'rgba(212,175,55,0.05)', borderRadius: '8px', border: '1px solid rgba(212,175,55,0.2)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                   <span style={{ color: 'var(--adm-text-secondary)' }}>Nilai Kontrak:</span>
-                  <strong style={{ color: '#FFF' }}>Rp {(financialData?.nilai_kontrak || activeEvent?.rawPrice || 0).toLocaleString('id-ID')}</strong>
+                  <strong style={{ color: '#FFF' }}>Rp {(Number(invoiceEditContract) || financialData?.nilai_kontrak || activeEvent?.rawPrice || 0).toLocaleString('id-ID')}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                   <span style={{ color: 'var(--adm-text-secondary)' }}>DP Diterima:</span>
-                  <strong style={{ color: '#10B981' }}>Rp {(financialData?.dp_diterima || Math.round((activeEvent?.rawPrice || 0) * 0.5)).toLocaleString('id-ID')}</strong>
+                  <strong style={{ color: '#10B981' }}>Rp {(Number(invoiceEditDp) || financialData?.dp_diterima || 0).toLocaleString('id-ID')}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed rgba(255,255,255,0.1)', paddingTop: '0.5rem' }}>
                   <span style={{ color: 'var(--adm-text-secondary)' }}>Sisa Tagihan:</span>
-                  <strong style={{ color: '#F87171' }}>Rp {Math.max(0, (financialData?.nilai_kontrak || activeEvent?.rawPrice || 0) - (financialData?.dp_diterima || Math.round((activeEvent?.rawPrice || 0) * 0.5))).toLocaleString('id-ID')}</strong>
+                  <strong style={{ color: '#F87171' }}>Rp {Math.max(0, (Number(invoiceEditContract) || financialData?.nilai_kontrak || activeEvent?.rawPrice || 0) - (Number(invoiceEditDp) || financialData?.dp_diterima || 0)).toLocaleString('id-ID')}</strong>
                 </div>
               </div>
 
@@ -9200,12 +9971,49 @@ export default function Dashboard({
                 <button
                   type="button"
                   className="btn btn-primary"
-                  onClick={() => {
-                    setIsEditInvoiceModalOpen(false);
-                    toast.success('Rincian tagihan tersimpan!');
+                  onClick={async () => {
+                    if (!activeEvent?.id) return;
+                    const newContract = Number(invoiceEditContract) || financialData?.nilai_kontrak || activeEvent.rawPrice || 0;
+                    const newDp = Number(invoiceEditDp) || 0;
+                    try {
+                      await fetch(`/api/cms/events/${activeEvent.id}`, {
+                        method: 'PUT',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Accept': 'application/json',
+                          'X-CSRF-TOKEN': (window as any).CSRF_TOKEN || '',
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({
+                          nilai_kontrak: newContract,
+                          metadata: { nominal_dp: newDp },
+                        }),
+                      });
+                      setEvents((prev) =>
+                        prev.map((ev) =>
+                          ev.id === activeEvent.id
+                            ? { ...ev, rawPrice: newContract, price: formatRupiah(newContract) }
+                            : ev
+                        )
+                      );
+                      setFinancialData((prev: any) =>
+                        prev
+                          ? {
+                              ...prev,
+                              nilai_kontrak: newContract,
+                              dp_diterima: newDp,
+                              sisa_tagihan: Math.max(0, newContract - newDp),
+                            }
+                          : prev
+                      );
+                      setIsEditInvoiceModalOpen(false);
+                      toast.success('Rincian tagihan berhasil disimpan ke server!');
+                    } catch {
+                      toast.error('Gagal menyimpan rincian tagihan.');
+                    }
                   }}
                 >
-                  Selesai
+                  💾 Simpan Tagihan
                 </button>
               </div>
             </div>
@@ -9351,7 +10159,7 @@ export default function Dashboard({
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label style={{ display: 'block', color: 'var(--adm-text-muted)', marginBottom: '0.35rem', fontWeight: 600 }}>
                     Ikon Pad

@@ -41,11 +41,16 @@ export default function StageMode({
   eventId?: number;
   onBackToDashboard?: () => void;
 }) {
-  const [activeSegmentIndex, setActiveSegmentIndex] = useState<number>(1);
+  const [activeSegmentIndex, setActiveSegmentIndex] = useState<number>(0);
   const [activeSegmentTitle, setActiveSegmentTitle] = useState<string>('Grand Entrance Pengantin & Keluarga');
   const [currentScript, setCurrentScript] = useState<string>('');
   const [currentTimeStr, setCurrentTimeStr] = useState<string>('');
   const [remainingTimeSeconds, setRemainingTimeSeconds] = useState<number>(6120); // 1h 42m
+  const [eventMeta, setEventMeta] = useState<{ title: string; date: string }>({
+    title: `Event #${eventId}`,
+    date: '',
+  });
+  const [mobileTab, setMobileTab] = useState<'prompter' | 'assistant'>('prompter');
 
   const {
     viewportRef,
@@ -143,6 +148,45 @@ Kepada seluruh keluarga besar dan tamu kehormatan, dipersilakan duduk kembali de
     return () => clearInterval(timer);
   }, []);
 
+  // Load event & rundown from database
+  useEffect(() => {
+    let active = true;
+    fetch('/api/cms/events', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((res) => {
+        if (!active || !res) return;
+        const list = Array.isArray(res.data) ? res.data : Array.isArray(res) ? res : [];
+        const ev = list.find((item: any) => Number(item.id) === Number(eventId)) || list[0];
+        if (!ev) return;
+        setEventMeta({
+          title: ev.nama_acara || ev.eventName || `Event #${ev.id}`,
+          date: ev.tanggal_acara || ev.date || '',
+        });
+        const rawRundown = ev.metadata?.rundown || ev.rundown;
+        if (Array.isArray(rawRundown) && rawRundown.length > 0) {
+          const mapped: StageSegment[] = rawRundown.map((seg: any, idx: number) => ({
+            id: seg.id || idx + 1,
+            time: seg.start_time && seg.end_time ? `${seg.start_time} - ${seg.end_time}` : seg.time || '--:--',
+            title: seg.title || seg.segment || `Segmen ${idx + 1}`,
+            isDone: Boolean(seg.isDone),
+            music: seg.cue_music || seg.music || 'BGM Standar',
+            pic: seg.pic || 'Tim WO',
+            script: seg.prompter || seg.script || seg.cue_instruction || '',
+          }));
+          setStageRundown(mapped);
+          const firstPending = mapped.findIndex((s) => !s.isDone);
+          const initialIdx = firstPending >= 0 ? firstPending : 0;
+          setActiveSegmentIndex(initialIdx);
+          setActiveSegmentTitle(mapped[initialIdx].title);
+          setCurrentScript(mapped[initialIdx].script || '');
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [eventId]);
+
   // Format remaining seconds into HH:MM:SS
   const formatCountdown = (secs: number) => {
     const h = Math.floor(secs / 3600);
@@ -207,12 +251,21 @@ Kepada seluruh keluarga besar dan tamu kehormatan, dipersilakan duduk kembali de
   };
 
   const advanceToNextSegment = () => {
+    const updated = stageRundown.map((s, idx) => (idx === activeSegmentIndex ? { ...s, isDone: true } : s));
+    setStageRundown(updated);
+    fetch(`/api/cms/events/${eventId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': (window as any).CSRF_TOKEN || '',
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({ metadata: { stage_rundown_done: updated.map((s) => ({ id: s.id, isDone: s.isDone })) } }),
+    }).catch(() => {});
+
     if (activeSegmentIndex < stageRundown.length - 1) {
       const nextIdx = activeSegmentIndex + 1;
-      // Mark current as done
-      setStageRundown((prev) =>
-        prev.map((s, idx) => (idx === activeSegmentIndex ? { ...s, isDone: true } : s))
-      );
       selectSegment(nextIdx);
     } else {
       toast.info('Seluruh segmen acara telah selesai!');
@@ -230,28 +283,28 @@ Kepada seluruh keluarga besar dan tamu kehormatan, dipersilakan duduk kembali de
   const currentDisplayScript = currentScript || stageRundown[activeSegmentIndex]?.script || '';
 
   return (
-    <div className="flex h-screen w-screen flex-col bg-slate-950 text-slate-100 overflow-hidden select-none">
+    <div className="flex h-screen w-full max-w-full flex-col bg-slate-950 text-slate-100 overflow-hidden select-none">
       {/* Top Bar Status */}
-      <header className="flex h-16 items-center justify-between border-b border-slate-800/80 bg-slate-900/95 px-6 backdrop-blur-md">
-        <div className="flex items-center gap-3">
+      <header className="flex flex-wrap min-h-14 items-center justify-between gap-2 border-b border-slate-800/80 bg-slate-900/95 px-3 sm:px-6 py-2 backdrop-blur-md">
+        <div className="flex items-center gap-2 min-w-0">
           {onBackToDashboard && (
-            <Button variant="ghost" size="sm" onClick={onBackToDashboard} className="text-slate-400 hover:text-white">
-              ← Dashboard
+            <Button variant="ghost" size="sm" onClick={onBackToDashboard} className="text-slate-400 hover:text-white px-2">
+              ← <span className="hidden sm:inline ml-1">Dashboard</span>
             </Button>
           )}
-          <Badge variant="purple" className="px-3 py-1 text-xs font-bold tracking-wider">
+          <Badge variant="purple" className="px-2.5 py-0.5 text-[10px] sm:text-xs font-bold tracking-wider shrink-0">
             STAGE CONSOLE
           </Badge>
-          <span className="text-sm font-semibold text-slate-200 hidden sm:inline">
-            Event #{eventId} • Panggung & Teleprompter
+          <span className="text-xs sm:text-sm font-semibold text-slate-200 truncate max-w-[160px] sm:max-w-xs">
+            {eventMeta.title}{eventMeta.date ? ` • ${eventMeta.date}` : ''}
           </span>
         </div>
 
         {/* Live Status Indicators */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 bg-slate-950/80 border border-slate-800 px-3 py-1 rounded-xl">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 bg-slate-950/80 border border-slate-800 px-2.5 py-1 rounded-xl">
             <span
-              className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
+              className={`h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full transition-all duration-300 ${
                 isSpeakingDetected
                   ? 'bg-emerald-400 shadow-[0_0_12px_#34d399]'
                   : isVoiceActive
@@ -259,25 +312,47 @@ Kepada seluruh keluarga besar dan tamu kehormatan, dipersilakan duduk kembali de
                   : 'bg-slate-600'
               }`}
             />
-            <span className="text-xs font-mono font-bold text-slate-300">
-              {isSpeakingDetected ? 'VOICE DETECTED' : isVoiceActive ? 'MIC LISTENING' : 'VOICE OFF'}
+            <span className="text-[10px] sm:text-xs font-mono font-bold text-slate-300">
+              {isSpeakingDetected ? 'VOICE' : isVoiceActive ? 'MIC ON' : 'VOICE OFF'}
             </span>
           </div>
 
-          <Badge variant="default" className="font-mono text-xs hidden md:inline-flex">
+          <Badge variant="default" className="font-mono text-[10px] sm:text-xs hidden md:inline-flex">
             SEGMEN {activeSegmentIndex + 1} / {stageRundown.length}
           </Badge>
 
-          <div className="font-mono text-xs text-amber-400 font-bold bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
+          <div className="font-mono text-[11px] sm:text-xs text-amber-400 font-bold bg-slate-950 px-2 py-1 rounded-lg border border-slate-800">
             {currentTimeStr || '18:45 WIB'}
           </div>
         </div>
       </header>
 
+      {/* Mobile Tab Switcher */}
+      <div className="flex lg:hidden gap-2 px-3 py-2 border-b border-slate-800 bg-slate-900/70">
+        <button
+          type="button"
+          onClick={() => setMobileTab('prompter')}
+          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+            mobileTab === 'prompter' ? 'bg-amber-500 text-slate-950' : 'bg-slate-950/80 text-slate-400 border border-slate-800'
+          }`}
+        >
+          📜 Teleprompter
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab('assistant')}
+          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+            mobileTab === 'assistant' ? 'bg-amber-500 text-slate-950' : 'bg-slate-950/80 text-slate-400 border border-slate-800'
+          }`}
+        >
+          🔊 Soundboard & Rundown
+        </button>
+      </div>
+
       {/* Main Stage Grid: 70% Teleprompter Viewport, 30% Soundboard & Rundown Assistant */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 flex-col lg:flex-row overflow-hidden min-h-0">
         {/* 70% Teleprompter Viewport */}
-        <div className="relative flex flex-1 flex-col border-r border-slate-800/80 bg-slate-950 p-6">
+        <div className={`${mobileTab === 'prompter' ? 'flex' : 'hidden lg:flex'} relative flex-1 flex-col lg:border-r border-slate-800/80 bg-slate-950 p-3 sm:p-6 min-h-0`}>
           {/* Controls Bar for Prompter */}
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-800 bg-slate-900/90 p-3 shadow-lg">
             <div className="flex items-center gap-2">
@@ -393,11 +468,11 @@ Kepada seluruh keluarga besar dan tamu kehormatan, dipersilakan duduk kembali de
             </div>
           </div>
 
-          {/* Bottom Floating Fast Action Button */}
-          <div className="absolute bottom-10 right-10 z-20">
+          {/* Bottom Fast Action Button (sticky full-width on mobile, floating on desktop) */}
+          <div className="mt-3 lg:mt-0 lg:absolute lg:bottom-10 lg:right-10 z-20 shrink-0">
             <Button
               size="md"
-              className="shadow-2xl font-bold bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950"
+              className="w-full lg:w-auto min-h-[48px] shadow-2xl font-bold bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950"
               onClick={advanceToNextSegment}
             >
               Lanjut ke Segmen Berikutnya <ChevronRight className="h-4 w-4 ml-1" />
@@ -406,7 +481,7 @@ Kepada seluruh keluarga besar dan tamu kehormatan, dipersilakan duduk kembali de
         </div>
 
         {/* 30% Stage Assistant & Soundboard */}
-        <div className="flex w-96 flex-col gap-4 bg-slate-900/60 p-5 overflow-y-auto border-l border-slate-800/60">
+        <div className={`${mobileTab === 'assistant' ? 'flex' : 'hidden lg:flex'} w-full lg:w-96 flex-col gap-4 bg-slate-900/60 p-4 sm:p-5 overflow-y-auto lg:border-l border-slate-800/60 flex-1 lg:flex-initial min-h-0`}>
           {/* Soundboard Quick Pads (Native Web Audio API) */}
           <Card className="border-slate-800 bg-slate-900/90 p-4">
             <div className="mb-3 flex items-center justify-between">

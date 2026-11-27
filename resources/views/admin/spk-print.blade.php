@@ -154,6 +154,15 @@
             font-size: 0.75rem;
             font-weight: 700;
         }
+        @media screen and (max-width: 640px) {
+            body { padding: 0.75rem; }
+            .contract-sheet { padding: 1.25rem; }
+            .header-section { flex-direction: column; gap: 0.75rem; }
+            .info-grid { grid-template-columns: 110px 8px 1fr; font-size: 0.85rem; }
+            .signatures-grid { grid-template-columns: 1fr; gap: 1.5rem; margin-top: 2rem; }
+            .sig-box { height: 120px; }
+            .btn-print { position: static; display: block; width: 100%; margin-bottom: 1rem; }
+        }
         @media print {
             body { background: #fff; padding: 0; }
             .contract-sheet { box-shadow: none; border: none; padding: 0; max-width: 100%; }

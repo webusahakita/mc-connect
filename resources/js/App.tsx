@@ -185,9 +185,9 @@ export default function App() {
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans antialiased flex flex-col">
       {/* Top Enterprise Modern App Shell Bar (Only shown on Stage/Vendor screens, Admin has its own full sidebar workspace) */}
       {(currentView === 'stage' || currentView === 'vendor') && (
-        <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-slate-800/80 bg-slate-900/95 px-4 backdrop-blur-md shadow-md">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigateTo('admin')}>
+        <header className="sticky top-0 z-50 flex h-14 items-center justify-between gap-2 border-b border-slate-800/80 bg-slate-900/95 px-3 sm:px-4 backdrop-blur-md shadow-md">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <div className="flex items-center gap-2 cursor-pointer shrink-0" onClick={() => navigateTo('admin')}>
               <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-black text-sm shadow-md shadow-amber-500/20">
                 MC
               </span>
@@ -201,56 +201,56 @@ export default function App() {
               </div>
             </div>
 
-            <div className="h-4 w-px bg-slate-800 hidden md:block" />
+            <div className="h-4 w-px bg-slate-800 hidden md:block shrink-0" />
 
             {/* Module Switcher Tabs */}
-            <nav className="flex items-center gap-1 bg-slate-950/70 p-1 rounded-xl border border-slate-800/80 text-xs font-medium">
+            <nav className="flex items-center gap-1 bg-slate-950/70 p-1 rounded-xl border border-slate-800/80 text-xs font-medium overflow-x-auto max-w-full">
               <button
                 onClick={() => navigateTo('admin')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg transition-all whitespace-nowrap shrink-0 ${
                   currentView === 'admin'
                     ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
-                <LayoutDashboard className="h-3.5 w-3.5" />
-                <span>Command Center</span>
+                <LayoutDashboard className="h-3.5 w-3.5 shrink-0" />
+                <span className="hidden sm:inline">Command Center</span>
               </button>
 
               <button
                 onClick={() => navigateTo('stage')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg transition-all whitespace-nowrap shrink-0 ${
                   currentView === 'stage'
                     ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
-                <Mic className="h-3.5 w-3.5" />
-                <span>Stage Mode</span>
+                <Mic className="h-3.5 w-3.5 shrink-0" />
+                <span className="hidden sm:inline">Stage Mode</span>
               </button>
 
               <button
                 onClick={() => navigateTo('vendor')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg transition-all whitespace-nowrap shrink-0 ${
                   currentView === 'vendor'
                     ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
-                <Headphones className="h-3.5 w-3.5" />
-                <span>Operator Musik</span>
+                <Headphones className="h-3.5 w-3.5 shrink-0" />
+                <span className="hidden sm:inline">Operator Musik</span>
               </button>
 
               <button
                 onClick={() => navigateTo('landing')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg transition-all whitespace-nowrap shrink-0 ${
                   currentView === 'landing'
                     ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
-                <Globe className="h-3.5 w-3.5" />
-                <span>Landing Klien</span>
+                <Globe className="h-3.5 w-3.5 shrink-0" />
+                <span className="hidden sm:inline">Landing Klien</span>
               </button>
             </nav>
           </div>
