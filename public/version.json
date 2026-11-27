@@ -1,11 +1,26 @@
 {
   "version": "2.5.0",
-  "commit_hash": "2913794473831cc9f3d23e6ba6958bfe88c3bc1a",
-  "commit_short": "2913794",
-  "commit_message": "feat: complete modern react spa audit, security hardening, mobile responsiveness, and proforma engine",
-  "commit_author": "MC Connect",
-  "commit_date": "2026-11-24T08:35:38+07:00",
+  "commit_hash": "969dd5d55e302443f4d0b394c1d3a5cbe53e2e6d",
+  "commit_short": "969dd5d",
+  "commit_message": "fix(deploy): render SPA via controller so routes survive route:cache",
+  "commit_author": "dimasachmad2",
+  "commit_date": "2026-11-24T20:48:43+07:00",
   "recent_commits": [
+    {
+      "hash": "969dd5d",
+      "message": "fix(deploy): render SPA via controller so routes survive route:cache",
+      "date": "2026-11-24T20:48:43+07:00"
+    },
+    {
+      "hash": "f7924dc",
+      "message": "fix(mobile): extend scroll-flicker mitigation to the React SPA dashboard",
+      "date": "2026-11-24T18:35:07+07:00"
+    },
+    {
+      "hash": "6374fe7",
+      "message": "fix: resolve admin mobile sidebar z-index collision with backdrop overlay",
+      "date": "2026-11-24T08:44:53+07:00"
+    },
     {
       "hash": "2913794",
       "message": "feat: complete modern react spa audit, security hardening, mobile responsiveness, and proforma engine",
@@ -15,24 +30,9 @@
       "hash": "7f56a13",
       "message": "feat: perbaiki hamburger menu mobile admin & landing page, hilangkan demo kredensial, dan tangani blank screen login",
       "date": "2026-11-24T06:55:12+07:00"
-    },
-    {
-      "hash": "620d15d",
-      "message": "fix(test): make booking collision DB-agnostic and align tests with SPA contract",
-      "date": "2026-11-23T19:03:03+07:00"
-    },
-    {
-      "hash": "bd6e998",
-      "message": "feat: sematkan tautan halaman SaaS (/bisnis) di navbar dan footer landing page",
-      "date": "2026-11-20T14:58:05+07:00"
-    },
-    {
-      "hash": "56a4dd5",
-      "message": "feat & fix: sempurnakan fitur pengaturan web, ECC, audit keamanan, dan optimasi SEO halaman bisnis",
-      "date": "2026-11-20T14:37:04+07:00"
     }
   ],
-  "updated_at": "2026-11-24T01:44:54.070Z",
-  "release_title": "Pembaruan: feat: complete modern react spa audit, security hardening, mobile responsiveness, and proforma engine",
+  "updated_at": "2026-11-27T01:10:05.576Z",
+  "release_title": "Pembaruan: fix(deploy): render SPA via controller so routes survive route:cache",
   "notification_active": true
 }

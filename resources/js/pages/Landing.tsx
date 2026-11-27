@@ -781,28 +781,28 @@ export default function Landing({
             </div>
 
             {/* Social Media Links */}
-            <div className="flex items-center gap-3 justify-center lg:justify-start pt-2">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 justify-center lg:justify-start pt-2">
               <a
                 href={`https://wa.me/${bio.no_telp?.replace(/[^0-9]/g, '')}`}
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition-all"
               >
-                <Phone className="h-3.5 w-3.5" /> WhatsApp Direct
+                <Phone className="h-3.5 w-3.5 shrink-0" /> WhatsApp Direct
               </a>
               <a
-                href={`https://instagram.com/${bio.ig}`}
+                href={`https://instagram.com/${bio.ig?.replace(/^@/, '')}`}
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-pink-500/30 bg-pink-500/10 text-pink-400 text-xs font-semibold hover:bg-pink-500/20 transition-all"
               >
-                <span>📸</span> @{bio.ig}
+                <span>📸</span> @{bio.ig?.replace(/^@/, '')}
               </a>
               <a
                 href={`mailto:${bio.email}`}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 text-blue-400 text-xs font-semibold hover:bg-blue-500/20 transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 text-blue-400 text-xs font-semibold hover:bg-blue-500/20 transition-all max-w-full"
               >
-                <Mail className="h-3.5 w-3.5" /> {bio.email}
+                <Mail className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">{bio.email}</span>
               </a>
             </div>
 
@@ -1108,7 +1108,7 @@ export default function Landing({
       {/* =========================================================
           6. KALENDER KETERSEDIAAN REAL-TIME
           ========================================================= */}
-      <section id="kalender" className="py-20 px-6 max-w-5xl w-full mx-auto">
+      <section id="kalender" className="py-16 sm:py-20 px-4 sm:px-6 max-w-5xl w-full mx-auto">
         <div className="text-center mb-10">
           <Badge variant="purple" className="mb-2.5 font-bold">
             LIVE SCHEDULE DATABASE
@@ -1119,7 +1119,7 @@ export default function Landing({
           </p>
         </div>
 
-        <Card className="border border-white/10 bg-slate-900/90 p-6 shadow-2xl backdrop-blur-xl">
+        <Card className="border border-white/10 bg-slate-900/90 p-3.5 sm:p-6 shadow-2xl backdrop-blur-xl">
           {/* Smart Calendar Scarcity Banner */}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-2.5 text-xs text-amber-300">
             <div className="flex items-center gap-2 font-semibold">
@@ -1173,42 +1173,52 @@ export default function Landing({
             </div>
           </div>
 
-          {/* Days Grid */}
-          <div className="grid grid-cols-7 gap-2.5 text-center">
-            {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map((d) => (
-              <span key={d} className="text-xs font-bold text-slate-500 py-1">
-                {d}
-              </span>
-            ))}
+          {/* Days Grid (Admin Calendar Style with horizontal scroll on narrow phones) */}
+          <div className="w-full max-w-full overflow-x-auto pb-2">
+            <div className="min-w-[460px] sm:min-w-0 grid grid-cols-7 gap-1.5 sm:gap-2">
+              {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map((d) => (
+                <span key={d} className="text-[11px] font-bold uppercase text-slate-400 py-1.5 text-center">
+                  {d}
+                </span>
+              ))}
 
-            {calendarDays.map((item) => {
-              if (item.empty) {
-                return <div key={item.key} className="p-3" />;
-              }
+              {calendarDays.map((item) => {
+                if (item.empty) {
+                  return <div key={item.key} className="min-h-[64px] sm:min-h-[82px] rounded-xl bg-slate-950/30 border border-white/5 opacity-30" />;
+                }
 
-              const isLocked = item.status === 'locked';
-              const isTentative = item.status === 'tentative';
+                const isLocked = item.status === 'locked';
+                const isTentative = item.status === 'tentative';
 
-              return (
-                <button
-                  key={item.key}
-                  disabled={isLocked}
-                  onClick={() => handleDateClick(item.fullDate!, isLocked)}
-                  className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-200 ${
-                    item.status === 'available'
-                      ? 'border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/20 text-emerald-300 hover:scale-105'
-                      : isTentative
-                      ? 'border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/25 text-amber-300 hover:scale-105'
-                      : 'border-rose-500/40 bg-rose-500/10 text-rose-400/60 cursor-not-allowed opacity-60'
-                  }`}
-                >
-                  <span className="text-base font-black">{item.day}</span>
-                  <span className="text-[9px] uppercase font-extrabold mt-0.5 truncate max-w-[55px]">
-                    {isLocked ? 'Booked' : isTentative ? 'Hold' : 'Tersedia'}
-                  </span>
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={item.key}
+                    disabled={isLocked}
+                    onClick={() => handleDateClick(item.fullDate!, isLocked)}
+                    className={`min-h-[64px] sm:min-h-[82px] flex flex-col justify-between items-stretch p-2 sm:p-2.5 rounded-xl border text-left transition-all duration-200 ${
+                      item.status === 'available'
+                        ? 'border-white/10 bg-slate-950/60 hover:border-amber-400/60 hover:-translate-y-0.5'
+                        : isTentative
+                        ? 'border-amber-500/40 bg-amber-500/5 hover:border-amber-400 hover:-translate-y-0.5'
+                        : 'border-rose-500/40 bg-rose-500/5 cursor-not-allowed opacity-70'
+                    }`}
+                  >
+                    <span className="text-xs sm:text-sm font-bold text-white">{item.day}</span>
+                    <span
+                      className={`rounded px-1.5 py-0.5 text-[10px] font-semibold text-center truncate ${
+                        isLocked
+                          ? 'bg-rose-500 text-white'
+                          : isTentative
+                          ? 'bg-amber-500 text-slate-950'
+                          : 'bg-emerald-500/15 text-emerald-400'
+                      }`}
+                    >
+                      {isLocked ? 'Terkunci' : isTentative ? 'Tentative' : 'Tersedia'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </Card>
       </section>
@@ -1354,7 +1364,7 @@ export default function Landing({
       {/* =========================================================
           9. FOOTER
           ========================================================= */}
-      <footer className="border-t border-white/10 bg-[#0B0F19] py-12 px-6 text-center text-xs text-slate-400">
+      <footer className="border-t border-white/10 bg-[#0B0F19] pt-12 pb-28 sm:pb-12 px-6 text-center text-xs text-slate-400">
         <div className="max-w-6xl mx-auto space-y-6">
           <div className="flex items-center justify-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-black text-xs">
@@ -1367,22 +1377,18 @@ export default function Landing({
             Portal resmi pemesanan jadwal Master of Ceremony terpadu. Dilengkapi sistem anti-collision, live teleprompter, dan transparansi invoice resmi.
           </p>
 
-          <div className="flex flex-wrap justify-center items-center gap-3 sm:gap-4 text-xs font-medium">
+          <div className="flex flex-col sm:flex-row flex-wrap justify-center items-center gap-2.5 sm:gap-4 text-xs font-medium">
             <a href="/bisnis" className="font-bold text-amber-400 hover:text-amber-300 hover:underline flex items-center gap-1">
               <span>👑</span> Buat Web MC Profesional Sendiri (Platform SaaS)
             </a>
-            <span className="text-slate-600">•</span>
+            <span className="hidden sm:inline text-slate-600">•</span>
             <button onClick={onOpenAdmin} className="text-slate-300 hover:text-amber-400 hover:underline">
               Buka Command Center Admin
             </button>
-            <span className="text-slate-600">•</span>
+            <span className="hidden sm:inline text-slate-600">•</span>
             <button onClick={onOpenStage} className="text-slate-300 hover:text-amber-400 hover:underline">
               Layar Tablet Stage Mode
             </button>
-            <span className="text-slate-600">•</span>
-            <a href="/legacy/landing" className="text-slate-500 hover:text-slate-300 hover:underline" title="Buka versi web HTML asli">
-              Versi Asli (Legacy)
-            </a>
           </div>
 
           <div className="pt-4 border-t border-white/5 text-[11px] text-slate-500">
@@ -1422,8 +1428,8 @@ export default function Landing({
           11. BOOKING REQUEST MODAL (WITH LIVE ANTI-COLLISION ENGINE)
           ========================================================= */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 overflow-y-auto">
-          <div className="w-full max-w-lg rounded-2xl border border-white/20 bg-slate-900 p-6 text-slate-100 shadow-2xl my-8">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-lg rounded-2xl border border-white/20 bg-slate-900 p-4 sm:p-6 text-slate-100 shadow-2xl my-4 sm:my-8">
             <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
               <h3 className="font-bold text-base text-white flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-amber-400" /> Formulir Request to Book MC
@@ -1620,15 +1626,15 @@ export default function Landing({
                 </label>
               </div>
 
-              <div className="pt-2 flex justify-end gap-2 border-t border-white/10">
-                <Button variant="ghost" type="button" size="sm" onClick={() => setIsModalOpen(false)}>
+              <div className="pt-2 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 border-t border-white/10">
+                <Button variant="ghost" type="button" size="sm" onClick={() => setIsModalOpen(false)} className="w-full sm:w-auto">
                   Batal
                 </Button>
                 <Button
                   type="submit"
                   size="sm"
                   disabled={isSubmitting || !collisionStatus.available}
-                  className="bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-bold"
+                  className="w-full sm:w-auto bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-bold"
                 >
                   {isSubmitting ? 'Mengunci Jadwal...' : 'Kirim Permintaan Booking'}
                 </Button>
@@ -1725,13 +1731,15 @@ export default function Landing({
               if (!bgm.isPlaying) bgm.start();
               setIsBgmWidgetOpen(true);
             }}
-            className="flex items-center gap-2.5 rounded-full border border-amber-400/40 bg-slate-900/95 px-4 py-3 text-xs font-bold text-amber-400 shadow-2xl backdrop-blur-md hover:scale-105 transition-all"
+            className="flex items-center justify-center gap-2.5 rounded-full border border-amber-400/40 bg-slate-900/95 p-3 sm:px-4 sm:py-3 text-xs font-bold text-amber-400 shadow-2xl backdrop-blur-md hover:scale-105 transition-all"
+            title={bgm.isPlaying ? 'Musik Aktif' : 'Putar Musik BGM'}
+            aria-label={bgm.isPlaying ? 'Musik Aktif' : 'Putar Musik BGM'}
           >
             <Music className={`h-4 w-4 ${bgm.isPlaying ? 'animate-spin' : ''}`} />
-            <span>{bgm.isPlaying ? 'Musik Aktif' : 'Putar Musik BGM'}</span>
+            <span className="hidden sm:inline">{bgm.isPlaying ? 'Musik Aktif' : 'Putar Musik BGM'}</span>
           </button>
         ) : (
-          <div className="w-80 rounded-2xl border border-amber-400/40 bg-slate-900/95 p-4 shadow-2xl backdrop-blur-xl text-xs space-y-3">
+          <div className="w-[calc(100vw-2rem)] max-w-xs sm:w-80 rounded-2xl border border-amber-400/40 bg-slate-900/95 p-4 shadow-2xl backdrop-blur-xl text-xs space-y-3">
             <div className="flex items-center justify-between border-b border-white/10 pb-2">
               <span className="font-bold text-white flex items-center gap-1.5">
                 <Music className="h-3.5 w-3.5 text-amber-400" /> Musik Latar Panggung (BGM)

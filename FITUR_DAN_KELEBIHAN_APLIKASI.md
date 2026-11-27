@@ -32,7 +32,7 @@ Antarmuka Admin dilengkapi 8 modul menu utama:
 | **2** | **Kalender Acara** | 📅 | Kalender pemantauan anti-bentrok, deteksi bentrok real-time, badge ketersediaan (Available, Tentative, Terkunci), dan aksi responsif mobile. |
 | **3** | **Data Pelanggan** | 👥 | Direktori CRM klien, riwayat acara, nilai total kontrak (*LTV*), kategori klien (VIP, Korporat, Regular, WO), dan pencarian instan. |
 | **4** | **Cash Flow** | 💰 | Pencatatan pemasukan & pengeluaran acara, validasi angka bersih (tanpa minus), bukti struk transaksi, dan laporan laba bersih. |
-| **5a**| **Pengaturan > CMS Konten** | ⚙️ | Pengaturan profil MC, bio panggung, foto avatar, sosmed (IG, TikTok, Facebook), katalog paket harga, event riders, dan galeri portofolio. |
+| **5a**| **Pengaturan > CMS Konten** | ⚙️ | Pengaturan profil MC, bio panggung, foto avatar, sosmed (IG, TikTok, Facebook), **Full CRUD** katalog paket layanan, Press Kit & Technical/Hospitality Riders, serta Galeri Portofolio (multi-upload, URL, edit caption, hapus). |
 | **5b**| **Pengaturan > Pengaturan Web** | ⚙️ | Rekening penerima, upload QRIS statis resmi bisnis, kelola kategori acara & klien, template WhatsApp, dan keamanan ganti password. |
 | **6** | **Event Command Center** | ⚡ | Pusat kendali per acara: Status tagihan QRIS, Expense tracker, Catatan VIP & Protokoler, Rundown timeline, AI Co-Pilot, dan WA gateway. |
 | **7** | **Wardrobe Tracker** | 👔 | Katalog digital busana MC (jas, kebaya, tuxedo, batik), tracking status cuci/siap, dan pemetaan busana per acara. |
@@ -43,17 +43,18 @@ Antarmuka Admin dilengkapi 8 modul menu utama:
 ## 3. Rincian Modul & Fitur Lengkap
 
 ### 🌟 Modul 1: Public Branding & Instant Booking Portal (`/`)
-* **Live Calendar Availability**: Klien publik dapat mengecek tanggal ketersediaan jadwal MC secara langsung (*Available*, *Booked*, atau *Tentative*) tanpa perlu konfirmasi manual berulang kali.
-* **Instant Booking Engine**: Formulir pemesanan langsung yang otomatis mencatat calon klien ke database server dengan status *Tentative* dan memicu draft invoice.
-* **Dynamic Media Showreel**: Pemutar video showreel YouTube terintegrasi dan kurasi galeri foto beresolusi tinggi dengan sistem upload banyak foto sekaligus.
-* **Paket Layanan & Riders**: Menampilkan paket harga panggung dan *hospitality & technical riders* secara transparan dan profesional.
-* **Integrasi Akun Media Sosial**: Tautan resmi ke akun Instagram, TikTok, dan Facebook MC dengan logo resmi dan dukungan tautan responsif.
-* **One-Click Press Kit PDF**: Pengunjung atau instansi dapat langsung mengunduh profil resmi MC dalam format PDF elegan yang di-*generate* dinamis dari database.
+* **Live Calendar Availability**: Klien publik dapat mengecek tanggal ketersediaan jadwal MC secara langsung (*Tersedia*, *Tentative*, atau *Terkunci*) dengan tampilan bergaya kalender admin yang responsif (*horizontal scroll* di layar HP) tanpa perlu konfirmasi manual berulang kali.
+* **Instant Booking Engine (Mobile-Ready)**: Formulir *Request to Book MC* responsif di HP dengan *anti-collision check* otomatis (jeda transit 90 menit) yang mencatat calon klien ke database server dengan status *Tentative* dan memicu draft invoice.
+* **Dynamic Media Showreel & BGM**: Pemutar video showreel YouTube terintegrasi, pemutar musik latar (BGM) sintetis dengan tombol ikon bulat ringkas di HP, serta kurasi galeri foto beresolusi tinggi.
+* **Paket Layanan & Riders**: Menampilkan paket harga panggung dan *hospitality & technical riders* secara transparan dan profesional, dikelola langsung melalui CMS Konten.
+* **Integrasi Akun Media Sosial**: Tautan resmi ke WhatsApp Direct, Instagram, TikTok, Facebook, dan Email MC dengan tampilan responsif (*flex-wrap* di HP).
+* **Micro Press-Kit (9:16) & Press Kit PDF**: Pengunjung atau instansi dapat melihat ringkasan portofolio format Story 9:16 maupun mengunduh profil resmi MC dalam format PDF elegan yang di-*generate* dinamis dari database.
 
 ---
 
 ### 💼 Modul 2: Admin Dashboard & CRM Klien
-* **Dual Interface Modern (React SPA + Legacy Admin)**: Ditenagai Modern React 18 + TypeScript SPA di `/admin` dengan performa super cepat dan transisi instan, serta fallback Legacy Admin di `/legacy/admin`.
+* **Modern React + TypeScript SPA**: Ditenagai antarmuka React + TypeScript SPA di `/admin` dengan performa cepat, transisi instan, dan tampilan bersih tanpa menu *legacy*.
+* **Full CRUD CMS Konten**: Pengelolaan langsung dari dashboard untuk **Paket Layanan & Harga**, **Informasi Press Kit & Technical/Hospitality Riders**, serta **Galeri Portofolio** (unggah multi-foto, tambah via URL, ubah caption, dan hapus).
 * **Dashboard Metrik Kinerja**: Ringkasan performa finansial (Total Omset Terkunci, Total Acara, DP Tertunda, Margin Keuntungan Bersih).
 * **Grafik Tren Pendapatan Interaktif**: Visualisasi grafik area chart bulanan untuk memantau performa bisnis kuartal berjalan.
 * **Manajemen Pipeline Acara**: Pelacakan status acara multi-tahap: `Review` $\rightarrow$ `Tentative` (dengan auto-cleanup batas 24 jam) $\rightarrow$ `Terkunci` (setelah DP) $\rightarrow$ `Selesai`.

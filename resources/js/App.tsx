@@ -11,10 +11,7 @@ import {
   Mic, 
   Headphones, 
   Globe, 
-  ExternalLink, 
-  ShieldCheck, 
   Sparkles,
-  ChevronDown,
   Lock,
   Mail,
   Key,
@@ -39,7 +36,6 @@ export default function App() {
 
   const [currentView, setCurrentView] = useState<'admin' | 'stage' | 'vendor' | 'landing'>(getInitialView);
   const [selectedEventId, setSelectedEventId] = useState<number>(1);
-  const [showLegacyMenu, setShowLegacyMenu] = useState<boolean>(false);
 
   // Authentication State (Unified SPA Auth Guard)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -264,113 +260,6 @@ export default function App() {
             <div className="hidden lg:flex items-center gap-2">
               <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
               <span className="text-[11px] font-mono text-slate-400">Laravel API :9000</span>
-            </div>
-
-            {/* Dual-Track Safe Bridge Menu */}
-            <div className="relative">
-              <button
-                onClick={() => setShowLegacyMenu(!showLegacyMenu)}
-                className="flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs text-amber-300 hover:text-white hover:bg-amber-500/20 transition-all font-medium"
-                title="Akses Halaman & Modul Legacy (Safe Bridge)"
-              >
-                <ShieldCheck className="h-3.5 w-3.5 text-amber-400" />
-                <span className="hidden sm:inline">Akses Modul Lama (Legacy)</span>
-                <ChevronDown className="h-3 w-3 text-amber-400/70" />
-              </button>
-
-              {showLegacyMenu && (
-                <div 
-                  className="absolute right-0 mt-2 w-64 rounded-xl border border-slate-800 bg-slate-900/95 backdrop-blur-xl p-2 shadow-2xl z-50 text-xs"
-                  onMouseLeave={() => setShowLegacyMenu(false)}
-                >
-                  <div className="px-2.5 py-1.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider border-b border-slate-800/80 mb-1 flex items-center justify-between">
-                    <span>Safe Bridge Fallback</span>
-                    <span className="bg-amber-500/20 px-1 rounded text-[9px] text-amber-300">100% Aktif</span>
-                  </div>
-                  
-                  <a
-                    href="/legacy/admin#sec-landing-settings"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-                  >
-                    <span className="flex items-center gap-2">⚙️ CMS Konten & Setting</span>
-                    <ExternalLink className="h-3 w-3 text-slate-500" />
-                  </a>
-
-                  <a
-                    href="/legacy/admin#sec-wardrobe"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-                  >
-                    <span className="flex items-center gap-2">👔 Wardrobe Tracker</span>
-                    <ExternalLink className="h-3 w-3 text-slate-500" />
-                  </a>
-
-                  <a
-                    href="/legacy/admin#sec-customers"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-                  >
-                    <span className="flex items-center gap-2">👥 Direktori CRM Klien</span>
-                    <ExternalLink className="h-3 w-3 text-slate-500" />
-                  </a>
-
-                  <a
-                    href="/legacy/admin#sec-musicbank"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-                  >
-                    <span className="flex items-center gap-2">📂 Master Bank Musik</span>
-                    <ExternalLink className="h-3 w-3 text-slate-500" />
-                  </a>
-
-                  <div className="h-px bg-slate-800 my-1" />
-
-                  <a
-                    href="/legacy/admin"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors"
-                  >
-                    <span>Admin HTML Monolitik Asli</span>
-                    <ExternalLink className="h-3 w-3 text-slate-500" />
-                  </a>
-
-                  <a
-                    href="/legacy/stage"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors"
-                  >
-                    <span>Stage Mode Asli</span>
-                    <ExternalLink className="h-3 w-3 text-slate-500" />
-                  </a>
-
-                  <a
-                    href="/legacy/vendor"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors"
-                  >
-                    <span>Vendor Layar Asli</span>
-                    <ExternalLink className="h-3 w-3 text-slate-500" />
-                  </a>
-
-                  <a
-                    href="/legacy/landing"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors"
-                  >
-                    <span>Landing Page HTML Asli</span>
-                    <ExternalLink className="h-3 w-3 text-slate-500" />
-                  </a>
-                </div>
-              )}
             </div>
           </div>
         </header>

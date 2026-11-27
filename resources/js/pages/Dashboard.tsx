@@ -222,11 +222,39 @@ export default function Dashboard({
   const [webSubTab, setWebSubTab] = useState<'web-payment' | 'cms-categories' | 'cms-client-categories' | 'cms-wa-templates' | 'cms-cashflow-categories' | 'web-logo' | 'web-security'>('web-payment');
 
   const [cmsPackages, setCmsPackages] = useState<any[]>([]);
+  const [showPackageForm, setShowPackageForm] = useState<boolean>(false);
+  const [editingPackageIdx, setEditingPackageIdx] = useState<number | null>(null);
+  const [packageForm, setPackageForm] = useState<{
+    name: string;
+    category: string;
+    price: string;
+    duration: string;
+    badge: string;
+    featuresText: string;
+  }>({ name: '', category: 'Wedding', price: '', duration: 'Max. 4 Jam', badge: '', featuresText: '' });
+
   const [cmsPolicies, setCmsPolicies] = useState<{ terms?: string; refund?: string; faq?: any[] }>({
     terms: '1. Booking tanggal dianggap sah (Terkunci) setelah klien membayar Down Payment (DP) 50% dari total nilai kontrak.\n2. Pelunasan sisa tagihan 50% wajib diselesaikan selambat-lambatnya H-2 sebelum hari acara.\n3. Durasi perform MC maksimal 4 jam per sesi acara. Kelebihan durasi dihitung overtime.\n4. Klien wajib menyediakan waktu Soundcheck / Gladi Bersih minimal 45 menit sebelum acara mulai.',
     refund: '1. Pembatalan >30 hari sebelum hari H: DP dapat dialihkan ke jadwal lain (reschedule) dalam waktu 6 bulan kalender.\n2. Pembatalan H-30 s/d H-14: DP dapat dipindahtangankan ke event lain dengan persetujuan manajemen MC.\n3. Pembatalan <14 hari: DP tidak dapat dikembalikan sebagai biaya kompensasi penolakan penawaran klien lain.\n4. Force Majeure: Tanggal acara dijadwalkan ulang tanpa penalti biaya.'
   });
+
+  const [cmsPressKit, setCmsPressKit] = useState<Record<string, string>>({
+    stageName: '', spesialisasi: '', tagline: '', bio: '',
+    pic: '', wa: '', email: '', sosmed: '', domisili: '',
+    scope1: '', scope2: '', scope3: '', scope4: '',
+    footerNote: '', ridersFooter: '',
+  });
+  const [cmsRiders, setCmsRiders] = useState<any[]>([]);
+  const [showRiderForm, setShowRiderForm] = useState<boolean>(false);
+  const [editingRiderId, setEditingRiderId] = useState<number | null>(null);
+  const [riderForm, setRiderForm] = useState<{ title: string; notes: string }>({ title: '', notes: '' });
+
   const [cmsGallery, setCmsGallery] = useState<any[]>([]);
+  const [galleryUrlInput, setGalleryUrlInput] = useState<string>('');
+  const [galleryCaptionInput, setGalleryCaptionInput] = useState<string>('');
+  const [editingGalleryId, setEditingGalleryId] = useState<string | number | null>(null);
+  const [editingGalleryCaption, setEditingGalleryCaption] = useState<string>('');
+  const [isUploadingGallery, setIsUploadingGallery] = useState<boolean>(false);
   const [calBuffer, setCalBuffer] = useState<number>(7);
   const [calMode, setCalMode] = useState<string>('request_to_book');
   const [calNotice, setCalNotice] = useState<string>('Tanggal bertanda merah telah terisi DP klien lain. Tanggal bertanda kuning masih dalam proses konfirmasi DP.');
@@ -497,6 +525,8 @@ export default function Dashboard({
           }
           if (Array.isArray(d.packages)) setCmsPackages(d.packages);
           if (d.policies) setCmsPolicies(d.policies);
+          if (d.presskit) setCmsPressKit((prev) => ({ ...prev, ...d.presskit }));
+          if (Array.isArray(d.riders)) setCmsRiders(d.riders);
           if (Array.isArray(d.gallery)) setCmsGallery(d.gallery);
           if (d.payment_settings) {
             const rawAccounts = d.payment_settings.accounts || d.payment_settings.banks || [];
@@ -873,6 +903,220 @@ export default function Dashboard({
       toast.error('Gagal menghubungi server: ' + err.message);
     } finally {
       setIsSavingSettings(false);
+    }
+  };
+
+  // Shared JSON POST/DELETE helper for CMS CRUD
+  const cmsJsonRequest = async (url: string, method: 'POST' | 'DELETE', payload?: unknown) => {
+    const res = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': (window as any).CSRF_TOKEN || '',
+      },
+      credentials: 'same-origin',
+      ...(payload !== undefined ? { body: JSON.stringify(payload) } : {}),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok && !data.success) {
+      throw new Error(data.message || 'Operasi gagal.');
+    }
+    return data;
+  };
+
+  // CRUD Layanan (Paket & Tarif)
+  const savePackagesToServer = async (nextPackages: any[], successMsg: string) => {
+    setIsSavingSettings(true);
+    try {
+      await cmsJsonRequest('/api/cms/packages', 'POST', { packages: nextPackages });
+      setCmsPackages(nextPackages);
+      toast.success(successMsg);
+      return true;
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal menyimpan paket layanan.');
+      return false;
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
+
+  const handleSubmitPackage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!packageForm.name.trim()) {
+      toast.error('Nama paket wajib diisi.');
+      return;
+    }
+    const parsedPrice = Number(String(packageForm.price).replace(/[^0-9]/g, '')) || 0;
+    const features = packageForm.featuresText
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const item = {
+      ...(editingPackageIdx !== null ? cmsPackages[editingPackageIdx] : {}),
+      name: packageForm.name.trim(),
+      category: packageForm.category.trim() || 'Standard',
+      price: parsedPrice,
+      duration: packageForm.duration.trim() || 'Max. 4 Jam',
+      badge: packageForm.badge.trim() || null,
+      features,
+    };
+    const next = editingPackageIdx !== null
+      ? cmsPackages.map((p, i) => (i === editingPackageIdx ? item : p))
+      : [...cmsPackages, item];
+    const ok = await savePackagesToServer(
+      next,
+      editingPackageIdx !== null ? 'Paket layanan diperbarui!' : 'Paket layanan ditambahkan!'
+    );
+    if (ok) {
+      setShowPackageForm(false);
+      setEditingPackageIdx(null);
+    }
+  };
+
+  const handleDeletePackage = async (idx: number) => {
+    if (!confirm('Hapus paket layanan ini dari etalase?')) return;
+    const next = cmsPackages.filter((_, i) => i !== idx);
+    await savePackagesToServer(next, 'Paket layanan dihapus.');
+  };
+
+  // CRUD Press Kit & Riders
+  const handleSavePressKit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingSettings(true);
+    try {
+      const data = await cmsJsonRequest('/api/cms/presskit', 'POST', cmsPressKit);
+      toast.success(data.message || 'Press Kit berhasil disimpan!');
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal menyimpan Press Kit.');
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
+
+  const handleSubmitRider = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!riderForm.title.trim()) {
+      toast.error('Judul rider wajib diisi.');
+      return;
+    }
+    setIsSavingSettings(true);
+    try {
+      const res = await cmsJsonRequest('/api/cms/riders', 'POST', {
+        db_id: editingRiderId,
+        title: riderForm.title.trim(),
+        notes: riderForm.notes.trim(),
+      });
+      const saved = res.data;
+      if (editingRiderId) {
+        setCmsRiders((prev) => prev.map((r) => (r.db_id === editingRiderId ? saved : r)));
+        toast.success('Rider diperbarui!');
+      } else {
+        setCmsRiders((prev) => [...prev, saved]);
+        toast.success('Rider ditambahkan!');
+      }
+      setShowRiderForm(false);
+      setEditingRiderId(null);
+      setRiderForm({ title: '', notes: '' });
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal menyimpan rider.');
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
+
+  const handleDeleteRider = async (dbId: number) => {
+    if (!confirm('Hapus item rider ini?')) return;
+    try {
+      await cmsJsonRequest(`/api/cms/riders/${dbId}`, 'DELETE');
+      setCmsRiders((prev) => prev.filter((r) => r.db_id !== dbId));
+      toast.success('Rider dihapus.');
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal menghapus rider.');
+    }
+  };
+
+  // CRUD Galeri Portofolio
+  const handleUploadGalleryFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setIsUploadingGallery(true);
+    try {
+      const fd = new FormData();
+      Array.from(files).forEach((f) => fd.append('files[]', f));
+      const res = await fetch('/api/cms/gallery/upload', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': (window as any).CSRF_TOKEN || '',
+        },
+        credentials: 'same-origin',
+        body: fd,
+      });
+      const data = await res.json();
+      if (!res.ok && !data.success) throw new Error(data.message || 'Upload gagal.');
+      setCmsGallery((prev) => [...prev, ...(data.data || [])]);
+      toast.success(data.message || 'Foto berhasil diunggah!');
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal mengunggah foto.');
+    } finally {
+      setIsUploadingGallery(false);
+    }
+  };
+
+  const handleAddGalleryByUrl = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!galleryUrlInput.trim()) {
+      toast.error('URL foto wajib diisi.');
+      return;
+    }
+    setIsUploadingGallery(true);
+    try {
+      const next = [
+        ...cmsGallery.map((g) => ({ url: g.url || g.image_url, caption: g.caption || '' })),
+        { url: galleryUrlInput.trim(), caption: galleryCaptionInput.trim() || 'Dokumentasi Panggung' },
+      ];
+      await cmsJsonRequest('/api/cms/gallery', 'POST', { gallery: next });
+      const fresh = await fetch('/api/cms/gallery', { credentials: 'same-origin' }).then((r) => r.json());
+      if (Array.isArray(fresh.data)) setCmsGallery(fresh.data);
+      setGalleryUrlInput('');
+      setGalleryCaptionInput('');
+      toast.success('Foto portofolio ditambahkan!');
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal menambah foto.');
+    } finally {
+      setIsUploadingGallery(false);
+    }
+  };
+
+  const handleSaveGalleryCaption = async (item: any) => {
+    if (!item.db_id) {
+      toast.error('Item belum tersimpan di database.');
+      return;
+    }
+    try {
+      await cmsJsonRequest(`/api/cms/gallery/${item.db_id}/caption`, 'POST', { caption: editingGalleryCaption });
+      setCmsGallery((prev) =>
+        prev.map((g) => (g.db_id === item.db_id ? { ...g, caption: editingGalleryCaption } : g))
+      );
+      setEditingGalleryId(null);
+      toast.success('Caption diperbarui!');
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal memperbarui caption.');
+    }
+  };
+
+  const handleDeleteGalleryItem = async (item: any, idx: number) => {
+    if (!confirm('Hapus foto ini dari galeri portofolio?')) return;
+    try {
+      if (item.db_id) {
+        await cmsJsonRequest(`/api/cms/gallery/${item.db_id}`, 'DELETE');
+        setCmsGallery((prev) => prev.filter((g) => g.db_id !== item.db_id));
+      } else {
+        setCmsGallery((prev) => prev.filter((_, i) => i !== idx));
+      }
+      toast.success('Foto dihapus.');
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal menghapus foto.');
     }
   };
 
@@ -6461,49 +6705,182 @@ export default function Dashboard({
               {cmsSubTab === 'cms-packages' && (
                 <div className="cms-subpanel active" id="cms-packages">
                   <div className="ecc-card">
-                    <div className="ecc-card-header">
+                    <div className="ecc-card-header" style={{ flexWrap: 'wrap', gap: '0.75rem' }}>
                       <div className="ecc-card-title">Kelola Paket Layanan & Harga Panggung</div>
-                      <span className="badge badge-available">Katalog Online</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span className="badge badge-available">Katalog Online</span>
+                        <button
+                          type="button"
+                          className="btn btn-primary btn-sm"
+                          onClick={() => {
+                            setEditingPackageIdx(null);
+                            setPackageForm({ name: '', category: 'Wedding', price: '', duration: 'Max. 4 Jam', badge: '', featuresText: '' });
+                            setShowPackageForm(true);
+                          }}
+                        >
+                          + Tambah Paket
+                        </button>
+                      </div>
                     </div>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--adm-text-secondary)', marginBottom: '1.5rem' }}>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--adm-text-secondary)', marginBottom: '1.25rem' }}>
                       Paket yang Anda kelola di sini langsung tampil pada etalase landing page publik.
                     </p>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
-                      {cmsPackages.length === 0 ? (
-                        [
-                          { name: 'Silver Classic Wedding', price: 'Rp 6.500.000', desc: 'Durasi maksimal 3 jam, 1 sesi resepsi wedding standar.' },
-                          { name: 'Diamond Royal Wedding', price: 'Rp 12.500.000', desc: 'Pemberkatan/Akad & Resepsi, gladi bersih, bilingual ID/EN.' },
-                          { name: 'Corporate Gala & Awarding', price: 'Rp 15.000.000', desc: 'Annual Dinner, Awarding Night, protokol formal kenegaraan.' }
-                        ].map((pkg, idx) => (
-                          <div key={idx} className="ecc-card" style={{ border: '1px solid var(--adm-border)', background: 'rgba(255,255,255,0.02)' }}>
-                            <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--adm-gold)', marginBottom: '0.25rem' }}>
-                              {pkg.name}
-                            </div>
-                            <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#34D399', marginBottom: '0.5rem' }}>
-                              {pkg.price}
-                            </div>
-                            <p style={{ fontSize: '0.82rem', color: 'var(--adm-text-secondary)', margin: 0 }}>
-                              {pkg.desc}
-                            </p>
+                    {showPackageForm && (
+                      <form
+                        onSubmit={handleSubmitPackage}
+                        className="ecc-card"
+                        style={{ border: '1px solid var(--adm-gold)', background: 'rgba(212,175,55,0.04)', marginBottom: '1.5rem' }}
+                      >
+                        <div style={{ fontWeight: 700, color: 'var(--adm-gold)', marginBottom: '1rem' }}>
+                          {editingPackageIdx !== null ? '✏️ Edit Paket Layanan' : '➕ Tambah Paket Layanan Baru'}
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem' }}>
+                          <div>
+                            <label className="form-label" style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.25rem', color: 'var(--adm-text-secondary)' }}>Nama Paket *</label>
+                            <input
+                              type="text"
+                              required
+                              className="form-input"
+                              placeholder="Contoh: Gold Luxury Wedding"
+                              value={packageForm.name}
+                              onChange={(e) => setPackageForm({ ...packageForm, name: e.target.value })}
+                            />
                           </div>
-                        ))
-                      ) : (
-                        cmsPackages.map((pkg, idx) => (
-                          <div key={idx} className="ecc-card" style={{ border: '1px solid var(--adm-border)', background: 'rgba(255,255,255,0.02)' }}>
-                            <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--adm-gold)', marginBottom: '0.25rem' }}>
-                              {pkg.name}
-                            </div>
-                            <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#34D399', marginBottom: '0.5rem' }}>
-                              {formatRupiah(pkg.price)}
-                            </div>
-                            <p style={{ fontSize: '0.82rem', color: 'var(--adm-text-secondary)', margin: 0 }}>
-                              {pkg.description || pkg.desc || '-'}
-                            </p>
+                          <div>
+                            <label className="form-label" style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.25rem', color: 'var(--adm-text-secondary)' }}>Kategori</label>
+                            <input
+                              type="text"
+                              className="form-input"
+                              placeholder="Wedding / Corporate / Gala"
+                              value={packageForm.category}
+                              onChange={(e) => setPackageForm({ ...packageForm, category: e.target.value })}
+                            />
                           </div>
-                        ))
-                      )}
-                    </div>
+                          <div>
+                            <label className="form-label" style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.25rem', color: 'var(--adm-text-secondary)' }}>Harga (Rp) *</label>
+                            <input
+                              type="number"
+                              min={0}
+                              required
+                              className="form-input"
+                              placeholder="7500000"
+                              value={packageForm.price}
+                              onChange={(e) => setPackageForm({ ...packageForm, price: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <label className="form-label" style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.25rem', color: 'var(--adm-text-secondary)' }}>Durasi</label>
+                            <input
+                              type="text"
+                              className="form-input"
+                              placeholder="Max. 4 Jam"
+                              value={packageForm.duration}
+                              onChange={(e) => setPackageForm({ ...packageForm, duration: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <label className="form-label" style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.25rem', color: 'var(--adm-text-secondary)' }}>Badge (Opsional)</label>
+                            <input
+                              type="text"
+                              className="form-input"
+                              placeholder="Best Seller / Populer"
+                              value={packageForm.badge}
+                              onChange={(e) => setPackageForm({ ...packageForm, badge: e.target.value })}
+                            />
+                          </div>
+                        </div>
+                        <div style={{ marginTop: '0.85rem' }}>
+                          <label className="form-label" style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.25rem', color: 'var(--adm-text-secondary)' }}>
+                            Fitur / Fasilitas (1 baris = 1 poin)
+                          </label>
+                          <textarea
+                            rows={3}
+                            className="form-textarea"
+                            placeholder={'Bilingual ID/EN\nGladi Bersih H-1\nCustom Script & Rundown'}
+                            value={packageForm.featuresText}
+                            onChange={(e) => setPackageForm({ ...packageForm, featuresText: e.target.value })}
+                            style={{ width: '100%', background: 'var(--adm-bg-surface)', border: '1px solid var(--adm-border)', borderRadius: '6px', padding: '0.5rem', color: '#FFF' }}
+                          />
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
+                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setShowPackageForm(false); setEditingPackageIdx(null); }}>
+                            Batal
+                          </button>
+                          <button type="submit" className="btn btn-primary btn-sm" disabled={isSavingSettings}>
+                            {isSavingSettings ? 'Menyimpan...' : '💾 Simpan Paket'}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+
+                    {cmsPackages.length === 0 ? (
+                      <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--adm-text-secondary)', border: '1px dashed var(--adm-border)', borderRadius: '10px' }}>
+                        Belum ada paket layanan tersimpan. Klik <strong>+ Tambah Paket</strong> untuk membuat etalase paket pertama Anda.
+                      </div>
+                    ) : (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+                        {cmsPackages.map((pkg, idx) => (
+                          <div key={pkg.id || idx} className="ecc-card" style={{ border: '1px solid var(--adm-border)', background: 'rgba(255,255,255,0.02)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '0.75rem' }}>
+                            <div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                                <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--adm-gold)' }}>
+                                  {pkg.name}
+                                </div>
+                                {pkg.badge && (
+                                  <span className="badge badge-available" style={{ fontSize: '0.68rem' }}>{pkg.badge}</span>
+                                )}
+                              </div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--adm-text-secondary)', marginBottom: '0.35rem' }}>
+                                {pkg.category || 'Standard'} • {pkg.duration || 'Max. 4 Jam'}
+                              </div>
+                              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#34D399', marginBottom: '0.5rem' }}>
+                                {formatRupiah(pkg.price)}
+                              </div>
+                              {Array.isArray(pkg.features) && pkg.features.length > 0 ? (
+                                <ul style={{ paddingLeft: '1.1rem', margin: 0, fontSize: '0.8rem', color: 'var(--adm-text-secondary)', lineHeight: 1.5 }}>
+                                  {pkg.features.map((f: string, fIdx: number) => (
+                                    <li key={fIdx}>{f}</li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p style={{ fontSize: '0.8rem', color: 'var(--adm-text-secondary)', margin: 0 }}>
+                                  {pkg.description || pkg.desc || '-'}
+                                </p>
+                              )}
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => {
+                                  setEditingPackageIdx(idx);
+                                  setPackageForm({
+                                    name: pkg.name || '',
+                                    category: pkg.category || 'Standard',
+                                    price: String(pkg.price ?? 0),
+                                    duration: pkg.duration || 'Max. 4 Jam',
+                                    badge: pkg.badge || '',
+                                    featuresText: Array.isArray(pkg.features) ? pkg.features.join('\n') : '',
+                                  });
+                                  setShowPackageForm(true);
+                                }}
+                              >
+                                ✏️ Edit
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                style={{ color: '#F87171', borderColor: 'rgba(239,68,68,0.35)' }}
+                                onClick={() => handleDeletePackage(idx)}
+                              >
+                                🗑️ Hapus
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -6562,33 +6939,207 @@ export default function Dashboard({
 
               {/* CMS 4: PRESS KIT & RIDERS */}
               {cmsSubTab === 'cms-presskit' && (
-                <div className="cms-subpanel active" id="cms-presskit">
+                <div className="cms-subpanel active" id="cms-presskit" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   <div className="ecc-card">
                     <div className="ecc-card-header">
-                      <div className="ecc-card-title">📁 Press Kit & Technical Riders MC</div>
+                      <div className="ecc-card-title">📁 Informasi Resmi Press Kit MC</div>
                       <span className="badge badge-available">Dokumen Resmi</span>
                     </div>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--adm-text-secondary)', marginBottom: '1.5rem' }}>
-                      Kebutuhan panggung resmi, sound system minimal, wireless microphone, dan hospitality rider.
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="ecc-card" style={{ border: '1px solid var(--adm-border)', background: 'rgba(255,255,255,0.02)' }}>
-                        <h4 style={{ fontWeight: 800, color: 'var(--adm-gold)', marginBottom: '0.5rem' }}>🎤 Technical Sound Riders</h4>
-                        <ul style={{ paddingLeft: '1.25rem', fontSize: '0.85rem', color: 'var(--adm-text-secondary)', lineHeight: 1.8 }}>
-                          <li>2x Wireless Handheld Mic (Shure / Sennheiser UHF)</li>
-                          <li>1x Dedicated Sound Monitor di posisi Stage MC</li>
-                          <li>Kabel audio aux / bluetooth untuk soundboard cues</li>
-                        </ul>
+                    <form onSubmit={handleSavePressKit} className="space-y-4">
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.85rem' }}>
+                        {[
+                          { key: 'stageName', label: 'Nama Panggung (Stage Name)', placeholder: 'Vanya Arsyad' },
+                          { key: 'spesialisasi', label: 'Spesialisasi', placeholder: 'Wedding, Corporate Gala & Awarding' },
+                          { key: 'tagline', label: 'Tagline', placeholder: 'Elegan, Bilingual & Berkarisma' },
+                          { key: 'domisili', label: 'Domisili', placeholder: 'Jakarta & Surabaya' },
+                          { key: 'pic', label: 'Nama PIC / Manajemen', placeholder: 'Arif (Manager)' },
+                          { key: 'wa', label: 'WhatsApp Manajemen', placeholder: '0812xxxxxxxx' },
+                          { key: 'email', label: 'Email Resmi', placeholder: 'booking@mc-connect.id' },
+                          { key: 'sosmed', label: 'Sosial Media', placeholder: '@vanyaarsyad' },
+                        ].map((field) => (
+                          <div key={field.key}>
+                            <label className="form-label" style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.25rem', color: 'var(--adm-text-secondary)' }}>
+                              {field.label}
+                            </label>
+                            <input
+                              type="text"
+                              className="form-input"
+                              placeholder={field.placeholder}
+                              value={cmsPressKit[field.key] || ''}
+                              onChange={(e) => setCmsPressKit({ ...cmsPressKit, [field.key]: e.target.value })}
+                            />
+                          </div>
+                        ))}
                       </div>
-                      <div className="ecc-card" style={{ border: '1px solid var(--adm-border)', background: 'rgba(255,255,255,0.02)' }}>
-                        <h4 style={{ fontWeight: 800, color: 'var(--adm-gold)', marginBottom: '0.5rem' }}>☕ Hospitality Riders</h4>
-                        <ul style={{ paddingLeft: '1.25rem', fontSize: '0.85rem', color: 'var(--adm-text-secondary)', lineHeight: 1.8 }}>
-                          <li>Ruang transit / ganti pakaian AC yang bersih</li>
-                          <li>Air mineral hangat, kopi / teh sebelum naik panggung</li>
-                          <li>1x Meal box untuk MC & 1 Asisten Lapangan</li>
-                        </ul>
+
+                      <div>
+                        <label className="form-label" style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.25rem', color: 'var(--adm-text-secondary)' }}>
+                          Bio / Profil Singkat Press Kit
+                        </label>
+                        <textarea
+                          rows={3}
+                          className="form-textarea"
+                          value={cmsPressKit.bio || ''}
+                          onChange={(e) => setCmsPressKit({ ...cmsPressKit, bio: e.target.value })}
+                          style={{ width: '100%', background: 'var(--adm-bg-surface)', border: '1px solid var(--adm-border)', borderRadius: '6px', padding: '0.5rem', color: '#FFF' }}
+                        />
                       </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.85rem' }}>
+                        {[
+                          { key: 'scope1', label: 'Scope Corporate' },
+                          { key: 'scope2', label: 'Scope Wedding' },
+                          { key: 'scope3', label: 'Scope Entertainment' },
+                          { key: 'scope4', label: 'Nilai Tambah' },
+                        ].map((s) => (
+                          <div key={s.key}>
+                            <label className="form-label" style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.25rem', color: 'var(--adm-text-secondary)' }}>
+                              {s.label}
+                            </label>
+                            <textarea
+                              rows={2}
+                              className="form-textarea"
+                              value={cmsPressKit[s.key] || ''}
+                              onChange={(e) => setCmsPressKit({ ...cmsPressKit, [s.key]: e.target.value })}
+                              style={{ width: '100%', background: 'var(--adm-bg-surface)', border: '1px solid var(--adm-border)', borderRadius: '6px', padding: '0.5rem', color: '#FFF' }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.85rem' }}>
+                        <div>
+                          <label className="form-label" style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.25rem', color: 'var(--adm-text-secondary)' }}>
+                            Catatan Footer Press Kit
+                          </label>
+                          <input
+                            type="text"
+                            className="form-input"
+                            value={cmsPressKit.footerNote || ''}
+                            onChange={(e) => setCmsPressKit({ ...cmsPressKit, footerNote: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="form-label" style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.25rem', color: 'var(--adm-text-secondary)' }}>
+                            Catatan Footer Riders
+                          </label>
+                          <input
+                            type="text"
+                            className="form-input"
+                            value={cmsPressKit.ridersFooter || ''}
+                            onChange={(e) => setCmsPressKit({ ...cmsPressKit, ridersFooter: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <button type="submit" className="btn btn-primary" disabled={isSavingSettings}>
+                          {isSavingSettings ? 'Menyimpan...' : '💾 Simpan Press Kit'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+
+                  {/* CRUD TECHNICAL & HOSPITALITY RIDERS */}
+                  <div className="ecc-card">
+                    <div className="ecc-card-header" style={{ flexWrap: 'wrap', gap: '0.75rem' }}>
+                      <div className="ecc-card-title">🎤 Daftar Technical & Hospitality Riders</div>
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={() => {
+                          setEditingRiderId(null);
+                          setRiderForm({ title: '', notes: '' });
+                          setShowRiderForm(true);
+                        }}
+                      >
+                        + Tambah Rider
+                      </button>
                     </div>
+
+                    {showRiderForm && (
+                      <form
+                        onSubmit={handleSubmitRider}
+                        className="ecc-card"
+                        style={{ border: '1px solid var(--adm-gold)', background: 'rgba(212,175,55,0.04)', marginBottom: '1rem' }}
+                      >
+                        <div style={{ fontWeight: 700, color: 'var(--adm-gold)', marginBottom: '0.75rem' }}>
+                          {editingRiderId ? '✏️ Edit Rider' : '➕ Tambah Rider Baru'}
+                        </div>
+                        <div className="space-y-3">
+                          <div>
+                            <label className="form-label" style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.25rem', color: 'var(--adm-text-secondary)' }}>Judul Rider *</label>
+                            <input
+                              type="text"
+                              required
+                              className="form-input"
+                              placeholder="Contoh: 🎤 Technical Sound Riders"
+                              value={riderForm.title}
+                              onChange={(e) => setRiderForm({ ...riderForm, title: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <label className="form-label" style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.25rem', color: 'var(--adm-text-secondary)' }}>Detail / Catatan</label>
+                            <textarea
+                              rows={3}
+                              className="form-textarea"
+                              placeholder="2x Wireless Handheld Mic (Shure / Sennheiser UHF)..."
+                              value={riderForm.notes}
+                              onChange={(e) => setRiderForm({ ...riderForm, notes: e.target.value })}
+                              style={{ width: '100%', background: 'var(--adm-bg-surface)', border: '1px solid var(--adm-border)', borderRadius: '6px', padding: '0.5rem', color: '#FFF' }}
+                            />
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                            <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setShowRiderForm(false); setEditingRiderId(null); }}>
+                              Batal
+                            </button>
+                            <button type="submit" className="btn btn-primary btn-sm" disabled={isSavingSettings}>
+                              {isSavingSettings ? 'Menyimpan...' : '💾 Simpan Rider'}
+                            </button>
+                          </div>
+                        </div>
+                      </form>
+                    )}
+
+                    {cmsRiders.length === 0 ? (
+                      <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--adm-text-secondary)', border: '1px dashed var(--adm-border)', borderRadius: '10px' }}>
+                        Belum ada rider terdaftar. Klik <strong>+ Tambah Rider</strong> untuk menambahkan kebutuhan panggung & hospitality.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {cmsRiders.map((rider) => (
+                          <div key={rider.id || rider.db_id} className="ecc-card" style={{ border: '1px solid var(--adm-border)', background: 'rgba(255,255,255,0.02)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '0.75rem' }}>
+                            <div>
+                              <h4 style={{ fontWeight: 800, color: 'var(--adm-gold)', marginBottom: '0.5rem' }}>{rider.title}</h4>
+                              <p style={{ fontSize: '0.85rem', color: 'var(--adm-text-secondary)', whiteSpace: 'pre-line', margin: 0, lineHeight: 1.6 }}>
+                                {rider.notes || '-'}
+                              </p>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => {
+                                  setEditingRiderId(rider.db_id);
+                                  setRiderForm({ title: rider.title || '', notes: rider.notes || '' });
+                                  setShowRiderForm(true);
+                                }}
+                              >
+                                ✏️ Edit
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                style={{ color: '#F87171', borderColor: 'rgba(239,68,68,0.35)' }}
+                                onClick={() => handleDeleteRider(rider.db_id)}
+                              >
+                                🗑️ Hapus
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -6597,26 +7148,114 @@ export default function Dashboard({
               {cmsSubTab === 'cms-gallery' && (
                 <div className="cms-subpanel active" id="cms-gallery">
                   <div className="ecc-card">
-                    <div className="ecc-card-header">
+                    <div className="ecc-card-header" style={{ flexWrap: 'wrap', gap: '0.75rem' }}>
                       <div className="ecc-card-title">🖼️ Galeri Foto & Portofolio Dokumentasi Panggung</div>
-                      <button className="btn btn-secondary btn-sm" onClick={() => toast.info('Fitur upload foto galeri')}>
-                        + Upload Foto Baru
+                      <label className="btn btn-primary btn-sm" style={{ cursor: isUploadingGallery ? 'wait' : 'pointer', margin: 0 }}>
+                        {isUploadingGallery ? 'Mengunggah...' : '+ Upload Foto Baru'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          disabled={isUploadingGallery}
+                          style={{ display: 'none' }}
+                          onChange={(e) => {
+                            handleUploadGalleryFiles(e.target.files);
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    {/* Tambah via URL */}
+                    <form
+                      onSubmit={handleAddGalleryByUrl}
+                      style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', alignItems: 'flex-end', marginTop: '0.75rem', padding: '0.85rem', borderRadius: '8px', border: '1px solid var(--adm-border)', background: 'rgba(255,255,255,0.02)' }}
+                    >
+                      <div style={{ flex: '2 1 220px' }}>
+                        <label className="form-label" style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.2rem', color: 'var(--adm-text-secondary)' }}>Tambah via URL Gambar</label>
+                        <input
+                          type="url"
+                          className="form-input"
+                          placeholder="https://..."
+                          value={galleryUrlInput}
+                          onChange={(e) => setGalleryUrlInput(e.target.value)}
+                        />
+                      </div>
+                      <div style={{ flex: '1 1 180px' }}>
+                        <label className="form-label" style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.2rem', color: 'var(--adm-text-secondary)' }}>Caption Foto</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="Contoh: Gala Dinner Jakarta"
+                          value={galleryCaptionInput}
+                          onChange={(e) => setGalleryCaptionInput(e.target.value)}
+                        />
+                      </div>
+                      <button type="submit" className="btn btn-secondary btn-sm" disabled={isUploadingGallery}>
+                        + Tambah URL
                       </button>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
-                      {(cmsGallery.length > 0 ? cmsGallery : [
-                        { url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80', caption: 'The Grand Ballroom Wedding' },
-                        { url: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=600&q=80', caption: 'Corporate Gala Dinner' },
-                        { url: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=600&q=80', caption: 'Awarding Night Kenegaraan' }
-                      ]).map((item, idx) => (
-                        <div key={idx} style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--adm-border)', background: 'var(--adm-bg-surface)' }}>
-                          <img src={item.url || item.image_url} alt={item.caption || 'Galeri'} style={{ width: '100%', height: '140px', objectFit: 'cover' }} />
-                          <div style={{ padding: '0.5rem', fontSize: '0.78rem', color: 'var(--adm-text-secondary)' }}>
-                            {item.caption || 'Dokumentasi Panggung'}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    </form>
+
+                    {cmsGallery.length === 0 ? (
+                      <div style={{ marginTop: '1rem', padding: '2rem', textAlign: 'center', color: 'var(--adm-text-secondary)', border: '1px dashed var(--adm-border)', borderRadius: '10px' }}>
+                        Belum ada foto portofolio di database. Upload foto baru atau tambahkan via URL di atas.
+                      </div>
+                    ) : (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+                        {cmsGallery.map((item, idx) => {
+                          const isEditing = editingGalleryId === (item.db_id ?? idx);
+                          return (
+                            <div key={item.id || item.db_id || idx} style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--adm-border)', background: 'var(--adm-bg-surface)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                              <img src={item.url || item.image_url} alt={item.caption || 'Galeri'} style={{ width: '100%', height: '150px', objectFit: 'cover' }} />
+                              <div style={{ padding: '0.65rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                {isEditing ? (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                    <input
+                                      type="text"
+                                      className="form-input"
+                                      value={editingGalleryCaption}
+                                      onChange={(e) => setEditingGalleryCaption(e.target.value)}
+                                    />
+                                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem' }}>
+                                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => setEditingGalleryId(null)}>Batal</button>
+                                      <button type="button" className="btn btn-primary btn-sm" onClick={() => handleSaveGalleryCaption(item)}>Simpan</button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--adm-text-secondary)' }}>
+                                      {item.caption || 'Dokumentasi Panggung'}
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem', paddingTop: '0.35rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                                      {item.db_id && (
+                                        <button
+                                          type="button"
+                                          className="btn btn-secondary btn-sm"
+                                          onClick={() => {
+                                            setEditingGalleryId(item.db_id);
+                                            setEditingGalleryCaption(item.caption || '');
+                                          }}
+                                        >
+                                          ✏️ Caption
+                                        </button>
+                                      )}
+                                      <button
+                                        type="button"
+                                        className="btn btn-secondary btn-sm"
+                                        style={{ color: '#F87171', borderColor: 'rgba(239,68,68,0.35)' }}
+                                        onClick={() => handleDeleteGalleryItem(item, idx)}
+                                      >
+                                        🗑️ Hapus
+                                      </button>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
