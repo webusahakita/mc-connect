@@ -25,24 +25,12 @@ test('SaaS Update Notifier 2: Script and hook configurations exist', () => {
     assert.ok(scriptContent.includes('saasUpdateBanner'), 'Update banner DOM element must be defined');
     assert.ok(scriptContent.includes('saasChangelogModal'), 'Changelog modal DOM element must be defined');
 
-    // 3. Script tags: ONLY on Admin Workspace, NOT on public landing pages
-    const adminHtml = fs.readFileSync('resources/views/workspace/admin.html', 'utf8');
-    assert.ok(adminHtml.includes('saas-update-notifier.js'), 'admin.html must load saas-update-notifier.js');
-
-    const indexHtml = fs.readFileSync('public/index.html', 'utf8');
-    assert.ok(!indexHtml.includes('saas-update-notifier.js'), 'index.html (landing page) must NOT load saas-update-notifier.js');
-
+    // 3. Script tags: must NOT leak onto public sales/landing pages that still ship as HTML.
     const keunggulanHtml = fs.readFileSync('public/keunggulan.html', 'utf8');
     assert.ok(!keunggulanHtml.includes('saas-update-notifier.js'), 'keunggulan.html (sales page) must NOT load saas-update-notifier.js');
 
     const publicBlade = fs.readFileSync('resources/views/layouts/public.blade.php', 'utf8');
     assert.ok(!publicBlade.includes('saas-update-notifier.js'), 'public.blade.php layout must NOT load saas-update-notifier.js');
-
-    const stageHtml = fs.readFileSync('resources/views/workspace/stage.html', 'utf8');
-    assert.ok(!stageHtml.includes('saas-update-notifier.js'), 'stage.html must NOT load saas-update-notifier.js');
-
-    const vendorHtml = fs.readFileSync('resources/views/workspace/vendor.html', 'utf8');
-    assert.ok(!vendorHtml.includes('saas-update-notifier.js'), 'vendor.html must NOT load saas-update-notifier.js');
 
     // 4. Guard logic exists in script
     assert.ok(scriptContent.includes('isAdminContext'), 'saas-update-notifier.js must contain isAdminContext guard');

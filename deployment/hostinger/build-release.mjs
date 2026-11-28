@@ -57,9 +57,11 @@ export function buildRelease({ projectRoot = path.resolve(here, '../..'), output
     copy(path.join(projectRoot, 'public/uploads/.htaccess'), path.join(web, 'uploads/.htaccess'));
 
     // Every release gives first-party styles/scripts a fresh URL for existing visitors.
+    // Legacy monolithic HTML pages were removed in favour of the React SPA; only process
+    // whatever static HTML pages still ship.
     for (const file of ['index.html', 'login.html'].map(name => path.join(web, name)).concat(
         ['admin', 'stage', 'vendor'].map(name => path.join(app, 'resources/views/workspace', `${name}.html`))
-    )) {
+    ).filter(file => fs.existsSync(file))) {
         const html = fs.readFileSync(file, 'utf8').replace(
             /((?:src|href)=")(\/?(?:js|css)\/[^"?#]+)(?:\?[^"#]*)?"/g,
             `$1$2?v=${revision.slice(0, 12)}"`

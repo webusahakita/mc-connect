@@ -28,19 +28,6 @@ function createMockDom() {
     return dom;
 }
 
-test('1. Post-Event Review feature is completely removed from admin.html and workspace view', () => {
-    const adminHtml = fs.readFileSync('resources/views/workspace/admin.html', 'utf8');
-    
-    // Check tab button
-    assert.ok(!adminHtml.includes('data-tab="tab-review"'), 'tab-review button must not exist');
-    assert.ok(!adminHtml.includes('Post-Event Review</span>'), 'Post-Event Review text in button must not exist');
-    
-    // Check tab panel
-    assert.ok(!adminHtml.includes('id="tab-review"'), 'tab-review container must not exist');
-    assert.ok(!adminHtml.includes('id="postEventReviewTemplate"'), 'postEventReviewTemplate textarea must not exist');
-    assert.ok(!adminHtml.includes('⭐ Review Harvester via WhatsApp'), 'Review Harvester card must not exist');
-});
-
 test('2. WhatsApp Automation Gateway helper extracts client info and cleans phone numbers correctly', async () => {
     const adminCoreJs = fs.readFileSync('public/js/admin-core.js', 'utf8');
     const dom = createMockDom();
@@ -124,16 +111,6 @@ test('4. sendWaTemplate produces direct WhatsApp URL with custom edited message 
     assert.ok(openedUrl.startsWith('https://api.whatsapp.com/send?phone=628567891234&text='), 'Phone number must be clean and formatted');
     assert.ok(openedUrl.includes('%5BEDITED%20BY%20ADMIN%5D'), 'URL must encode the exact edited message');
     assert.ok(openedUrl.includes('Arkanza%20Radja%20Maulana'), 'URL must contain MC name');
-});
-
-test('5. Change password UI exists with security meter in admin layout', () => {
-    const adminHtml = fs.readFileSync('resources/views/workspace/admin.html', 'utf8');
-    assert.ok(adminHtml.includes('id="web-security"'), 'Security tab pane must exist');
-    assert.ok(adminHtml.includes('id="currPassword"'), 'Current password input must exist');
-    assert.ok(adminHtml.includes('id="newPassword"'), 'New password input must exist');
-    assert.ok(adminHtml.includes('id="confirmPassword"'), 'Confirm password input must exist');
-    assert.ok(adminHtml.includes('id="passStrengthContainer"'), 'Password strength meter must exist');
-    assert.ok(adminHtml.includes('id="btnSubmitChangePassword"'), 'Submit button must exist');
 });
 
 test('6. Mobile responsive classes and styles are configured properly', () => {

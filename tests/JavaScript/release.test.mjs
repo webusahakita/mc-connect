@@ -15,9 +15,9 @@ test('release contains only deployable sources, refreshes assets and detects tam
     assert.deepEqual(files.filter(file => file.startsWith('public_html/uploads/')), ['public_html/uploads/.htaccess']);
     assert.ok(!files.some(file => file.startsWith('mc-connect/storage/') || file.startsWith('mc-connect/bootstrap/cache/')));
     assert.ok(!files.includes('public_html/admin.html'));
-    assert.ok(files.includes('mc-connect/resources/views/workspace/admin.html'));
-    const admin = fs.readFileSync(path.join(release.root, 'mc-connect/resources/views/workspace/admin.html'), 'utf8');
-    assert.match(admin, /session-client\.js\?v=aaaaaaaaaaaa/);
+    assert.ok(files.includes('mc-connect/resources/views/spa.blade.php'));
+    const login = fs.readFileSync(path.join(release.root, 'public_html/login.html'), 'utf8');
+    assert.match(login, /session-client\.js\?v=aaaaaaaaaaaa/);
     const sw = fs.readFileSync(path.join(release.root, 'public_html/sw.js'), 'utf8');
     assert.match(sw, /const CACHE_NAME = 'mc-connect-aaaaaaaaaaaa'/);
 
@@ -28,7 +28,7 @@ test('release contains only deployable sources, refreshes assets and detects tam
         return;
     }
     assert.equal(valid.status, 0, valid.stderr || (valid.error && valid.error.message) || 'PHP verification failed');
-    fs.appendFileSync(path.join(release.root, 'public_html/index.html'), 'tampered');
+    fs.appendFileSync(path.join(release.root, 'public_html/login.html'), 'tampered');
     assert.notEqual(verify().status, 0, 'A changed file must fail integrity verification');
 });
 
